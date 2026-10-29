@@ -2,7 +2,7 @@
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const app = $("#app");
-const XP_PER_TASK = 50, XP_ASSISTED = 25, XP_QUIZ = 20;
+const XP_PER_TASK = 50, XP_ASSISTED = 25, XP_QUIZ = 20, XP_HARD = 75, XP_HARD_ASSISTED = 35;
 
 const DEMO_USERS = [["gopher", 1000], ["bitebayev", 950], ["sleepyhead", 900], ["akerke", 850], ["arigana", 800]];
 
@@ -15,9 +15,42 @@ const getUser = () => store.get("user", null);
 const getDone = (u) => store.get("done:" + u, {});
 const getCode = (u, id, starter) => store.get(`code:${u}:${id}`, null) || starter;
 // задача: 50 XP (25, если открывали ответ), мини-тест: 20 XP. Ключи тестов начинаются с "q".
-const xpOf = (u) => Object.entries(getDone(u)).reduce((s, [k, v]) => s + (k[0] === "q" ? XP_QUIZ : v === "a" ? XP_ASSISTED : XP_PER_TASK), 0);
+// задачи со звёздочкой (hard) стоят 75 XP, с открытым ответом - 35
+const xpFor = (k, v) => !v ? 0 : k.hard ? (v === "a" ? XP_HARD_ASSISTED : XP_HARD) : (v === "a" ? XP_ASSISTED : XP_PER_TASK);
+const taskById = id => TOPICS.flatMap(t => t.tasks).find(k => k.id === id);
+const xpOf = (u) => Object.entries(getDone(u)).reduce((s, [k, v]) => s + (k[0] === "q" ? XP_QUIZ : xpFor(taskById(k) || {}, v)), 0);
 const topicDone = (t, done) => t.tasks.every(k => done[k.id]);
-const topicXp = (t, done) => t.tasks.reduce((s, k) => s + (done[k.id] === "a" ? XP_ASSISTED : done[k.id] ? XP_PER_TASK : 0), 0) + (done["q" + t.id] ? XP_QUIZ : 0);
+// тема считается пройденной, когда решены все задачи и пройден мини-тест
+const topicComplete = (t, done) => topicDone(t, done) && (!t.quiz || !!done["q" + t.id]);
+const topicXp = (t, done) => t.tasks.reduce((s, k) => s + xpFor(k, done[k.id]), 0) + (done["q" + t.id] ? XP_QUIZ : 0);
+
+// ---------- блокировки ----------
+// режим просмотра для жюри: адрес с ?open=1 открывает всё, ?open=0 включает замки обратно
+const viewAll = () => store.get("open", false);
+// тема открыта, если предыдущая пройдена целиком
+const topicLock = (t, done) => {
+  if (viewAll()) return null;
+  const prev = TOPICS[TOPICS.indexOf(t) - 1];
+  return prev && !topicComplete(prev, done) ? prev : null;
+};
+// причина, по которой задача закрыта (или null)
+const taskLock = (t, k, done) => {
+  if (viewAll()) return null;
+  if (t.quiz && !done["q" + t.id]) return "Сначала пройдите мини-тест выше (шаг 3).";
+  const prev = t.tasks[t.tasks.indexOf(k) - 1];
+  if (prev && !done[prev.id]) return `Сначала решите задачу «${prev.title}».`;
+  return null;
+};
+// следующий шаг для кнопки «Продолжить»
+function nextStep(done) {
+  for (const t of TOPICS) {
+    if (topicComplete(t, done)) continue;
+    if (t.quiz && !done["q" + t.id]) return { topic: t, label: "Мини-тест" };
+    const k = t.tasks.find(k => !done[k.id]);
+    return { topic: t, label: k.title };
+  }
+  return null;
+}
 const allTasks = () => TOPICS.flatMap(t => t.tasks.map(k => ({ ...k, topic: t })));
 const tLabel = t => t.id === 0 ? "Введение" : "Тема " + t.id;
 const isMobile = () => matchMedia("(max-width: 860px)").matches;
@@ -37,7 +70,7 @@ $("#fsp").onclick = () => { store.set("fs", Math.min(FS.length - 1, store.get("f
 applyPrefs();
 
 // ---------- подсветка Go ----------
-const GO_RE = /(\/\/.*)|("(?:\\.|[^"\\\n])*")|(`[^`]*`)|\b(package|import|func|var|const|if|else|for|range|switch|case|default|return|break|continue)\b|\b(int|float64|string|bool|byte|rune)\b|\b(true|false|nil)\b|\b(\d+(?:\.\d+)?)\b|\b([A-Za-z_]\w*)(?=\()/g;
+const GO_RE = /(\/\/.*)|("(?:\\.|[^"\\\n])*")|(`[^`]*`)|\b(package|import|func|var|const|if|else|for|range|switch|case|default|return|break|continue|type|struct|map|defer)\b|\b(int|float64|string|bool|byte|rune|error)\b|\b(true|false|nil)\b|\b(\d+(?:\.\d+)?)\b|\b([A-Za-z_]\w*)(?=\()/g;
 function hl(code) {
   let out = "", last = 0, m;
   GO_RE.lastIndex = 0;
@@ -107,7 +140,8 @@ document.addEventListener("click", e => {
 });
 
 // ---------- разбор ошибок для новичков ----------
-const isSkeleton = (c, i, k) => c === "package main" || c === 'import "fmt"' || c === "func main() {" || i === k.lines.length - 1;
+// каркас: package, import (в том числе списком), func main и то, что уже введено в редактор (третий элемент строки)
+const isSkeleton = (c, i, k) => /^(package main|import\b.*|func main\(\) \{|\)|\s+(_ )?"[\w\/.-]+")$/.test(c) || i === k.lines.length - 1 || !!k.lines[i]?.[2];
 const isCloser = c => ["}", "})"].includes(c.trim());
 
 function diagnose(src) {
@@ -198,34 +232,37 @@ function viewDashboard(u) {
   const nDone = tasks.filter(t => done[t.id]).length;
   const pct = Math.round(nDone / tasks.length * 100);
   const board = [...DEMO_USERS.filter(([n]) => n !== u), [u, xpOf(u)]].sort((a, b) => b[1] - a[1]);
-  const next = tasks.find(t => !done[t.id]);
+  const next = nextStep(done);
 
   app.innerHTML = `
     <div class="wrap">
       <h1>Добро пожаловать, ${esc(u)}!</h1>
       <p class="sub">${TOPICS.length} тем · ${tasks.length} задач · выполнено ${nDone} (${pct}%)</p>
       <div class="progress"><i style="width:${pct}%"></i></div>
+      ${viewAll() ? `<div class="viewall">Режим просмотра: все темы открыты. <a href="#/" id="closeAll">Включить замки обратно</a></div>` : ""}
       <div class="grid">
         <div>
           <h3 class="sec">Темы</h3>
           <div class="topics">
-            ${TOPICS.map(t => `
-              <a class="topic ${topicDone(t, done) ? "complete" : ""}" href="#/topic/${t.id}">
-                <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${topicDone(t, done) ? " · пройдена" : ""}</span>
+            ${TOPICS.map(t => {
+    const lock = topicLock(t, done), complete = topicComplete(t, done);
+    return `
+              <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
+                <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}</span>
                 <h2>${esc(t.title)}</h2>
-                <div class="rows">${t.tasks.map(k =>
-    `<span><span class="dot ${done[k.id] ? "done" : ""}"></span>${esc(k.title)}</span>`).join("")}
-                  <span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>Мини-тест</span></div>
-              </a>`).join("")}
+                <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>Мини-тест</span>` : ""}${t.tasks.map(k =>
+      `<span><span class="dot ${done[k.id] ? "done" : ""}"></span>${k.hard ? "★ " : ""}${esc(k.title)}</span>`).join("")}</div>
+              </a>`;
+  }).join("")}
           </div>
         </div>
         <aside>
           <div class="side" style="margin-bottom:16px">
             <h3 class="sec">Что дальше</h3>
             ${next
-      ? `<p style="margin:0 0 12px">${tLabel(next.topic)}: ${esc(next.topic.title)}<br><span class="empty">${esc(next.title)}</span></p>
+      ? `<p style="margin:0 0 12px">${tLabel(next.topic)}: ${esc(next.topic.title)}<br><span class="empty">${esc(next.label)}</span></p>
                  <a class="btn" style="display:inline-block;text-decoration:none" href="#/topic/${next.topic.id}">Продолжить →</a>`
-      : `<p style="margin:0">Все задачи решены. Отличная работа!</p>`}
+      : `<p style="margin:0">Все темы пройдены. Отличная работа!</p>`}
           </div>
           <div class="side">
             <h3 class="sec">Лидерборд</h3>
@@ -237,6 +274,27 @@ function viewDashboard(u) {
         </aside>
       </div>
     </div>`;
+  const ca = $("#closeAll");
+  if (ca) ca.onclick = e => { e.preventDefault(); store.set("open", false); viewDashboard(u); };
+}
+
+// страница закрытой темы
+function viewLocked(u, topic, prev) {
+  chrome(`<a href="#/">dashboard</a> / <span>тема ${topic.id}</span>`);
+  const done = getDone(u);
+  const left = [];
+  if (prev.quiz && !done["q" + prev.id]) left.push("пройти мини-тест");
+  const todo = prev.tasks.filter(k => !done[k.id]).length;
+  if (todo) left.push(`решить задач: ${todo}`);
+  app.innerHTML = `
+    <div class="wrap lockedpage">
+      <div class="lockicon">🔒</div>
+      <h1>${tLabel(topic)} пока закрыта</h1>
+      <p class="sub">${esc(topic.title)} откроется, когда будет полностью пройдена ${tLabel(prev).toLowerCase()} - ${esc(prev.title)}.</p>
+      <p>Осталось: ${left.map(esc).join(", ")}.</p>
+      <p><a class="btn" style="display:inline-block;text-decoration:none" href="#/topic/${prev.id}">Перейти: ${tLabel(prev).toLowerCase()} →</a>
+      <a class="btn ghost" style="display:inline-block;text-decoration:none" href="#/">На дашборд</a></p>
+    </div>`;
 }
 
 function viewTopic(u, tid) {
@@ -244,6 +302,7 @@ function viewTopic(u, tid) {
   if (!topic) return (location.hash = "#/");
   const done = getDone(u);
   const idx = TOPICS.indexOf(topic), prev = TOPICS[idx - 1], next = TOPICS[idx + 1];
+  if (topicLock(topic, done)) return viewLocked(u, topic, prev);
   const crumb = `<a href="#/">dashboard</a> / <a href="#/topic/${topic.id}">${topic.id === 0 ? "введение" : "тема " + topic.id}</a>`;
   chrome(crumb);
   const hasQuiz = !!topic.quiz;
@@ -253,7 +312,7 @@ function viewTopic(u, tid) {
     <section class="sec-block quiz" id="s-quiz">
       <div class="kicker">Шаг 3 · Мини-тест</div>
       <h2>Проверьте себя</h2>
-      <p>Выберите правильный ответ. Это не экзамен, а способ закрепить материал (+${XP_QUIZ} XP).</p>
+      <p>Выберите правильный ответ. Это не экзамен, а способ закрепить материал (+${XP_QUIZ} XP).${viewAll() ? "" : " Пока тест не пройден, задачи ниже закрыты."}</p>
       ${topic.quiz.map((q, qi) => `
         <div class="qq" data-qi="${qi}">
           <div class="qtext">${qi + 1}. ${inline(q.q)}</div>
@@ -264,10 +323,14 @@ function viewTopic(u, tid) {
       <div class="quiz-done" id="qdone"></div>
     </section>`;
 
-  const taskBlock = (k, i) => `
-    <section class="sec-block" id="s-t${i}" data-k="${k.id}">
-      <div class="kicker">Шаг ${i + stepBase} · Практика</div>
-      <h2>Задача ${i + 1}: ${esc(k.title)} <span class="badge" data-badge="${k.id}"></span></h2>
+  const lockBox = why => `<div class="lockbox"><span>🔒</span><div><b>Задача пока закрыта</b>${esc(why)}</div></div>`;
+  const taskBody = k => k.hard ? `
+      ${render(k.desc)}
+      <div class="note-box">Это задача посложнее: готовых строк здесь нет. Каркас (package, import, func main) уже введён в редактор справа. Идите по плану и открывайте подсказки, если застрянете. За решение - ${XP_HARD} XP.</div>
+      <div class="plan"><b>План</b><ol class="steps">${k.plan.map(p => `<li>${inline(p)}</li>`).join("")}</ol></div>
+      <div class="expect"><b>Ожидаемый вывод</b><pre>${esc(k.output)}</pre></div>
+      <div class="hintbox" data-hint="${k.id}"></div>
+      <button class="btn ghost open" data-open="${k.id}">Открыть в редакторе →</button>` : `
       ${render(k.desc)}
       <div class="note-box">Часть кода уже введена в редактор справа - остаётся лишь дополнить его, чтобы программа стала полной.</div>
       <ol class="steps">
@@ -277,12 +340,20 @@ function viewTopic(u, tid) {
       </ol>
       <div class="annot">
         ${k.lines.map(([c, e], i) => c === "" ? `<div class="gap"></div>` :
-        `<div class="ln${isSkeleton(c, i, k) ? "" : " click"}" data-k="${k.id}" data-i="${i}"><pre><code>${hl(c)}</code></pre><span>${esc(e)}</span></div>`).join("")}
+    `<div class="ln${isSkeleton(c, i, k) ? "" : " click"}" data-k="${k.id}" data-i="${i}"><pre><code>${hl(c)}</code></pre><span>${esc(e)}</span></div>`).join("")}
       </div>
       <div class="expect"><b>Ожидаемый вывод</b><pre>${esc(k.output)}</pre></div>
       <div class="hintbox" data-hint="${k.id}"></div>
-      <button class="btn ghost open" data-open="${k.id}">Открыть в редакторе →</button>
+      <button class="btn ghost open" data-open="${k.id}">Открыть в редакторе →</button>`;
+  const taskBlock = (k, i) => {
+    const why = taskLock(topic, k, done);
+    return `
+    <section class="sec-block${why ? " locked" : ""}${k.hard ? " hard" : ""}" id="s-t${i}" data-k="${k.id}">
+      <div class="kicker">Шаг ${i + stepBase} · ${k.hard ? "★ Посложнее" : "Практика"}</div>
+      <h2>Задача ${i + 1}: ${esc(k.title)} <span class="badge" data-badge="${k.id}"></span></h2>
+      <div class="tbody" data-state="${why ? "locked" : "open"}">${why ? lockBox(why) : taskBody(k)}</div>
     </section>`;
+  };
 
   app.innerHTML = `
     <div class="learn" data-pane="left">
@@ -369,8 +440,11 @@ function viewTopic(u, tid) {
         showWhy(qq, true, inline(q.why)); qq.dataset.solved = "1";
         if ($$(".qq").every(x => x.dataset.solved)) {
           const d = getDone(u), first = !d["q" + topic.id];
+          const wasComplete = topicComplete(topic, d);
           d["q" + topic.id] = true; store.set("done:" + u, d); chrome(crumb);
           $("#qdone").textContent = first ? `Тест пройден! +${XP_QUIZ} XP` : "Тест пройден ✓";
+          refreshLocks(); refreshBadges();
+          if (!wasComplete && topicComplete(topic, d)) setTimeout(() => celebrate(topic), 450);
         }
       } else { b.classList.add("wrong"); b.disabled = true; showWhy(qq, false, "Не совсем. Подумайте ещё и выберите другой вариант."); }
     });
@@ -378,7 +452,9 @@ function viewTopic(u, tid) {
 
   // --- подсказки трёх уровней
   function renderHints(k) {
-    const box = $(`[data-hint="${k.id}"]`), lv = hintLevels(k), n = store.get(`hint:${u}:${k.id}`, 0);
+    const box = $(`[data-hint="${k.id}"]`);
+    if (!box) return;                                   // задача закрыта - подсказок нет
+    const lv = hintLevels(k), n = store.get(`hint:${u}:${k.id}`, 0);
     box.innerHTML = lv.slice(0, n).map((h, i) => `<p class="hl-item"><b>Подсказка ${i + 1} из ${lv.length}</b>${h}</p>`).join("") +
       (n < lv.length ? `<button class="more" data-more="${k.id}">${n ? "Ещё подсказка" : "Нужна подсказка?"} (${n + 1}/${lv.length})</button>`
         : `<span class="empty">Все подсказки открыты. Если не получается - после двух неудачных проверок справа появится «Показать ответ».</span>`);
@@ -420,19 +496,44 @@ function viewTopic(u, tid) {
     }
   };
 
+  // открывает или закрывает блоки задач в зависимости от прогресса (мини-тест, предыдущие задачи)
+  function refreshLocks() {
+    const d = getDone(u);
+    topic.tasks.forEach((k, i) => {
+      const sec = $("#s-t" + i), body = $(".tbody", sec), why = taskLock(topic, k, d), state = why ? "locked" : "open";
+      if (body.dataset.state === state) return;
+      body.dataset.state = state; sec.classList.toggle("locked", !!why);
+      body.innerHTML = why ? lockBox(why) : taskBody(k);
+      renderHints(k);
+    });
+    applyEditorLock();
+  }
+  // закрытая задача: редактор только для чтения, «Проверить» выключено
+  function applyEditorLock() {
+    const why = active && taskLock(topic, active, getDone(u));
+    ta.readOnly = !!why; $("#run").disabled = $("#reset").disabled = !!why;
+    if (why) { out.innerHTML = `<div class="h">Результат</div><div class="bad">🔒 ${esc(why)}</div>`; out.dataset.locked = "1"; }
+    else if (out.dataset.locked) { out.innerHTML = `<div class="h">Результат</div><span class="empty">Нажмите «Проверить» (Ctrl+Enter)</span>`; out.dataset.locked = ""; }
+  }
+
   function refreshBadges() {
     const d = getDone(u);
     topic.tasks.forEach(k => {
-      const b = $(`[data-badge="${k.id}"]`); b.textContent = d[k.id] ? "решено" : ""; b.className = "badge" + (d[k.id] ? " ok" : "");
-      const s = $(`#seg [data-k="${k.id}"] i`); s.textContent = d[k.id] ? "✓" : "";
+      const lk = taskLock(topic, k, d);
+      const b = $(`[data-badge="${k.id}"]`); b.textContent = d[k.id] ? "решено" : lk ? "закрыто" : ""; b.className = "badge" + (d[k.id] ? " ok" : lk ? " lock" : "");
+      const s = $(`#seg [data-k="${k.id}"] i`); s.textContent = d[k.id] ? "✓" : lk ? "🔒" : (k.hard ? "★" : "");
     });
-    const complete = topicDone(topic, d);
-    $("#nextTopic").classList.toggle("primary", complete);
+    const complete = topicComplete(topic, d);
+    const nt = $("#nextTopic"), blocked = !!next && !complete && !viewAll();
+    nt.classList.toggle("primary", complete);
+    nt.classList.toggle("disabled", blocked);
+    nt.title = blocked ? "Откроется, когда тема будет пройдена" : (next ? next.title : "");
+    nt.textContent = next ? (blocked ? "🔒 " : "") + tLabel(next) + " →" : "На дашборд";
     $("#endpad").innerHTML = complete
       ? `<div class="endcard"><b>${tLabel(topic)} пройден${topic.id === 0 ? "о" : "а"}</b>${next
         ? `<span>Дальше: ${tLabel(next).toLowerCase()} - ${esc(next.title)}. Узнаем ${esc(next.about)}.</span><a class="btn" href="#/topic/${next.id}">Перейти: ${tLabel(next).toLowerCase()} →</a>`
         : `<span>Это была последняя тема. Курс пройден!</span><a class="btn" href="#/">На дашборд</a>`}</div>`
-      : `<div class="endcard muted">Решите ${topic.tasks.length > 1 ? "обе задачи" : "задачу"}, чтобы открыть следующую тему.${next ? `<a href="#/topic/${next.id}">Пропустить →</a>` : ""}</div>`;
+      : `<div class="endcard muted">${next ? "🔒 Чтобы открыть следующую тему, пройдите мини-тест и решите все задачи." : "Пройдите мини-тест и решите все задачи, чтобы завершить курс."}</div>`;
     if (active) { const ok = !!d[active.id]; $("#st").className = "status " + (ok ? "done" : "todo"); $("#st").textContent = ok ? "passed" : "waiting"; }
   }
 
@@ -442,10 +543,10 @@ function viewTopic(u, tid) {
     ta.value = getCode(u, id, active.starter); paint(); setBands([]);
     const at = ta.value.indexOf("Пишите решение здесь");
     if (at >= 0) { const e = ta.value.indexOf("\n", at); ta.setSelectionRange(e, e); }
-    out.innerHTML = `<div class="h">Результат</div><span class="empty">Нажмите «Проверить» (Ctrl+Enter)</span>`;
-    refreshBadges();
+    out.innerHTML = `<div class="h">Результат</div><span class="empty">Нажмите «Проверить» (Ctrl+Enter)</span>`; out.dataset.locked = "";
+    refreshBadges(); applyEditorLock();
     if (scrollLeft) scrollToSec("s-t" + topic.tasks.indexOf(active));
-    if (!isMobile()) ta.focus();
+    if (!isMobile() && !ta.readOnly) ta.focus();
   }
   $$("#seg button").forEach(b => b.onclick = () => open(b.dataset.k));
   $$("[data-open]").forEach(b => b.onclick = () => { open(b.dataset.open, false); toEditor(); });
@@ -477,17 +578,22 @@ function viewTopic(u, tid) {
   });
 
   function check() {
+    if (taskLock(topic, active, getDone(u))) return;
     if (ta.value.trim() === active.starter.trim()) { out.innerHTML = `<div class="h">Результат</div><div class="bad">Вы ещё ничего не дописали. Напечатайте код из задачи слева внутрь func main.</div>`; setBands([]); return; }
     const code = ta.value.replace(/\/\/.*$/gm, "");
     const results = active.checks.map(c => ({ ok: c.re.test(code), msg: c.msg }));
+    // общее правило для всех задач: скобки и кавычки должны быть парными
+    const bare = code.replace(/"(?:[^"\\\n]|\\.)*"/g, '""').replace(/`[^`]*`/g, "``");
+    const paired = ["{}", "()", "[]"].every(([o, c]) => bare.split(o).length === bare.split(c).length) && !/"/.test(bare.replace(/""/g, ""));
+    results.push({ ok: paired, msg: "Скобки { } ( ) [ ] и кавычки должны быть парными: каждой открывающей нужна закрывающая" });
     const pass = results.every(r => r.ok);
-    const done = getDone(u), was = !!done[active.id], wasTopic = topicDone(topic, done);
+    const done = getDone(u), was = !!done[active.id], wasTopic = topicComplete(topic, done);
     let html = `<div class="h">Результат</div>` + results.map(r =>
       `<div class="row ${r.ok ? "ok" : "bad"}"><span>${r.ok ? "✓" : "✗"}</span><span>${r.ok ? "проверка пройдена" : esc(r.msg)}</span></div>`).join("");
     let showAnswer = false;
     if (pass) {
       const assisted = !!store.get(`assist:${u}:${active.id}`, false);
-      const gain = was ? 0 : (assisted ? XP_ASSISTED : XP_PER_TASK);
+      const gain = was ? 0 : xpFor(active, assisted ? "a" : true);
       html += `<div class="ok" style="margin-top:10px">Тест пройден. +${gain} XP${assisted && !was ? " (ответ был открыт)" : ""}</div><pre>${esc(active.output)}</pre>`;
       if (!was) { done[active.id] = assisted ? "a" : true; store.set("done:" + u, done); }
       setBands([]);
@@ -495,19 +601,19 @@ function viewTopic(u, tid) {
       if (other) html += `<button class="btn" id="go" style="margin-top:12px">Следующая задача →</button>`;
     } else {
       const tries = store.get(`tries:${u}:${active.id}`, 0) + 1; store.set(`tries:${u}:${active.id}`, tries);
-      const a = analyze(ta.value, active);
-      setBands(a.bad);
+      const a = analyze(ta.value, active), hard = active.hard;
+      setBands(hard ? [] : a.bad);                       // в задачах посложнее решений может быть несколько, поэтому красных полос нет
       const tips = [];
-      if (a.bad.length) tips.push(`Подсвеченные красным строки (${a.bad.map(i => i + 1).join(", ")}) отличаются от образца слева.`);
-      if (a.missing.length) tips.push("Не хватает строки: " + a.missing.slice(0, 2).map(m => `<code>${esc(m)}</code>`).join(", ") + ".");
+      if (!hard && a.bad.length) tips.push(`Подсвеченные красным строки (${a.bad.map(i => i + 1).join(", ")}) отличаются от образца слева.`);
+      if (!hard && a.missing.length) tips.push("Не хватает строки: " + a.missing.slice(0, 2).map(m => `<code>${esc(m)}</code>`).join(", ") + ".");
       tips.push(...a.tips);
-      html += `<div class="bad" style="margin-top:10px">Что-то не совпало. Сравните свой код с кодом слева и попробуйте ещё раз.</div>`;
+      html += `<div class="bad" style="margin-top:10px">${hard ? "Пока не всё совпало. Сверьтесь с планом слева и откройте подсказку." : "Что-то не совпало. Сравните свой код с кодом слева и попробуйте ещё раз."}</div>`;
       if (tips.length) html += `<div class="tips"><b>Возможные причины</b><ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul></div>`;
-      showAnswer = tries >= 2 && !was;
-      if (showAnswer) html += `<div class="assist"><button class="btn ghost small" id="showAns">Показать ответ</button><small>Ответ вставится в редактор, а XP за задачу будет ${XP_ASSISTED} вместо ${XP_PER_TASK}.</small></div>`;
+      showAnswer = tries >= (hard ? 3 : 2) && !was;
+      if (showAnswer) html += `<div class="assist"><button class="btn ghost small" id="showAns">Показать ответ</button><small>Ответ вставится в редактор, а XP за задачу будет ${xpFor(active, "a")} вместо ${xpFor(active, true)}.</small></div>`;
     }
     out.innerHTML = html;
-    chrome(crumb); refreshBadges();
+    chrome(crumb); refreshLocks(); refreshBadges();
     const go = $("#go"); if (go) go.onclick = () => open(topic.tasks.find(k => !getDone(u)[k.id]).id);
     const ans = $("#showAns");
     if (ans) ans.onclick = () => {
@@ -515,7 +621,7 @@ function viewTopic(u, tid) {
       ta.value = active.solution; ta.oninput();
       out.innerHTML = `<div class="h">Результат</div><span class="empty">Ответ вставлен в редактор. Нажмите «Проверить», чтобы засчитать задачу.</span>`;
     };
-    if (pass && !wasTopic && topicDone(topic, done)) setTimeout(() => celebrate(topic), 450);
+    if (pass && !wasTopic && topicComplete(topic, done)) setTimeout(() => celebrate(topic), 450);
   }
   $("#run").onclick = check;
 
@@ -538,7 +644,7 @@ function celebrate(topic) {
         <div class="m-actions"><a class="btn" href="#/topic/${next.id}">Перейти: ${tLabel(next).toLowerCase()} →</a><a class="btn ghost" href="#/">На дашборд</a></div>`
       : `
         <h2>Курс пройден!</h2>
-        <p class="m-sub">Вы завершили все темы и освоили основы Go. Отличная работа!</p>
+        <p class="m-sub">Вы прошли путь от первой программы до маленького веб-сервиса с JSON и базами данных. Отличная работа!</p>
         <div class="m-actions"><a class="btn" href="#/">На дашборд</a></div>`}
     </div>`;
   document.body.appendChild(el);
@@ -551,6 +657,11 @@ function celebrate(topic) {
 function route() {
   $$(".overlay").forEach(o => o.remove());
   window.gpPrefs = null;
+  const flag = (location.search + location.hash).match(/[?&]open=([01])/);   // режим просмотра: ?open=1 или #/?open=1
+  if (flag) {
+    store.set("open", flag[1] === "1");
+    history.replaceState(null, "", location.pathname + "#/");
+  }
   const u = getUser(), h = location.hash || "#/";
   if (!u) { if (h !== "#/login") { location.hash = "#/login"; return; } return viewLogin(); }
   if (h === "#/login") { location.hash = "#/"; return; }

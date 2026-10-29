@@ -126,3 +126,24 @@ pre.code, .annot pre, .editor textarea, .editor .hl, .gutter, .console pre { fon
 :root[data-theme="light"] .mobbar button.on { color: var(--text); }
 :root[data-theme="light"] .quiz .opt.right { background: rgba(20,128,74,.1); }
 :root[data-theme="light"] .overlay { background: rgba(60,50,90,.5); }
+
+/* ---------- блокировки и задачи со звёздочкой ---------- */
+.topic.locked { opacity: .55; filter: grayscale(.6); }
+.topic.locked:hover { opacity: .8; }
+.viewall { margin: 10px 0 0; padding: 8px 12px; border: 1px dashed var(--accent-d); color: var(--muted); font-size: 13px; border-radius: 2px; }
+.viewall a { color: var(--accent-l); margin-left: 6px; }
+.lockedpage { text-align: center; max-width: 560px; padding-top: 80px; }
+.lockedpage .lockicon { font-size: 54px; margin-bottom: 8px; }
+.lockedpage .btn + .btn { margin-left: 8px; }
+.lockbox { display: flex; gap: 14px; align-items: flex-start; padding: 16px 18px; border: 1px dashed var(--dim); border-radius: 2px; color: var(--muted); background: rgba(255,255,255,.02); }
+.lockbox > span { font-size: 24px; line-height: 1; }
+.lockbox b { display: block; color: var(--text); margin-bottom: 2px; }
+.sec-block.locked h2 { color: var(--dim); }
+.badge.lock { background: transparent; border: 1px solid var(--dim); color: var(--dim); }
+.sec-block.hard .kicker { color: var(--warn); }
+.sec-block.hard { border-left: 3px solid var(--warn); padding-left: 16px; }
+.plan { margin-bottom: 14px; }
+.plan > b { font: 500 11px var(--mono); text-transform: uppercase; color: var(--accent-l); display: block; margin-bottom: 4px; }
+.btn.disabled, .actions a.disabled { opacity: .45; pointer-events: none; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.editor textarea:read-only { cursor: not-allowed; opacity: .6; }
