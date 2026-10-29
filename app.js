@@ -69,7 +69,7 @@ function viewLogin() {
     </div>`;
   $("#f").onsubmit = e => {
     e.preventDefault();
-    const name = $("#n").value.trim().replace(/[^\w.-]/g, "");
+    const name = $("#n").value.trim().replace(/[^\p{L}\p{N}_. -]/gu, "").replace(/\s+/g, " ");
     if (!name) return $("#n").focus();
     store.set("user", name);
     location.hash = "#/";
