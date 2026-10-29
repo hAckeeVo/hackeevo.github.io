@@ -36,7 +36,7 @@ kbd { font: 12px var(--mono); background: #333; border: 1px solid #555; border-b
 .annot .ln { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px; padding: 3px 14px; align-items: baseline; }
 .annot .ln:hover { background: #1c1a22; }
 .annot pre { margin: 0; font: 13.5px/1.6 var(--mono); white-space: pre; overflow-x: auto; }
-.annot .ln span { font-size: 13px; color: var(--muted); line-height: 1.4; }
+.annot .ln > span { font-size: 13px; color: var(--muted); line-height: 1.4; }
 .annot .gap { height: 10px; }
 .expect { background: var(--text); color: #1a1a1a; padding: 12px 14px; border-radius: 2px; margin-bottom: 14px; }
 .expect b { font: 500 11px var(--mono); text-transform: uppercase; color: #555; display: block; margin-bottom: 4px; }
@@ -107,3 +107,14 @@ kbd { font: 12px var(--mono); background: #333; border: 1px solid #555; border-b
 .endcard .btn { text-decoration: none; }
 .endcard.muted { border-color: var(--line); color: var(--dim); font-size: 14px; }
 .endcard.muted a { color: var(--accent-l); font: 13px var(--mono); }
+.note-box { background: #2a2438; border: 1px solid var(--accent-d); border-left: 4px solid var(--accent); padding: 10px 14px; margin: 0 0 14px; font-size: 14px; color: var(--text); border-radius: 2px; }
+
+/* шрифт кода: JetBrains Mono с лигатурами */
+:root { --code: "JetBrains Mono", "Fira Code", "IBM Plex Mono", ui-monospace, monospace; }
+pre.code, pre.code code, .annot pre, .annot code, .editor textarea, .editor .hl, .editor .hl code, .gutter, .expect pre, .console pre, .sec-block code {
+  font-family: var(--code); font-variant-ligatures: none; font-feature-settings: "calt" 0, "liga" 0;
+}
+.annot pre, pre.code { font-size: 14px; }
+.annot .ln { padding: 4px 14px; }
+.tk-k { color: #c792ea; font-weight: 500; } .tk-t { color: #7fdbca; } .tk-s { color: #ecc48d; } .tk-c { color: #6b7088; font-style: italic; }
+.tk-n { color: #f78c6c; } .tk-b { color: #ff869a; } .tk-f { color: #82aaff; }

@@ -13,7 +13,7 @@ const store = {
 };
 const getUser = () => store.get("user", null);
 const getDone = (u) => store.get("done:" + u, {});
-const getCode = (u, id) => store.get(`code:${u}:${id}`, "");
+const getCode = (u, id, starter) => store.get(`code:${u}:${id}`, null) || starter;
 const xpOf = (u) => Object.keys(getDone(u)).length * XP_PER_TASK;
 const topicDone = (t, done) => t.tasks.every(k => done[k.id]);
 const allTasks = () => TOPICS.flatMap(t => t.tasks.map(k => ({ ...k, topic: t })));
@@ -42,6 +42,7 @@ function render(text) {
       .map(p => `<p>${esc(p.trim()).replace(/\{\{(.+?)\}\}(?!\})/g, "<code>$1</code>")}</p>`).join("");
   }).join("");
 }
+
 
 // ---------- chrome ----------
 function chrome(crumbHtml) {
@@ -135,13 +136,14 @@ function viewTopic(u, tid) {
       <div class="kicker">Шаг ${i + 3} · Практика</div>
       <h2>Задача ${i + 1}: ${esc(k.title)} <span class="badge" data-badge="${k.id}"></span></h2>
       ${render(k.desc)}
+      <div class="note-box">Часть кода уже введена в редактор справа - остаётся лишь дополнить его, чтобы программа стала полной.</div>
       <ol class="steps">
         <li>Читайте код ниже сверху вниз - у каждой строки справа есть пояснение.</li>
-        <li>Печатайте те же строки в редакторе справа. Отступ - клавиша <kbd>Tab</kbd>.</li>
+        <li>Печатайте недостающие строки в редакторе справа. Отступ - клавиша <kbd>Tab</kbd>.</li>
         <li>Нажмите «Проверить» (или <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).</li>
       </ol>
       <div class="annot">
-        ${k.lines.map(([c, e]) => c === "" ? `<div class="gap"></div>` :
+        ${k.lines.map(([c, e], i) => c === "" ? `<div class="gap"></div>` :
     `<div class="ln"><pre><code>${hl(c)}</code></pre><span>${esc(e)}</span></div>`).join("")}
       </div>
       <div class="expect"><b>Ожидаемый вывод</b><pre>${esc(k.output)}</pre></div>
@@ -180,11 +182,11 @@ function viewTopic(u, tid) {
         <div class="editor">
           <div class="gutter" id="gut"></div>
           <pre class="hl" aria-hidden="true"><code id="hl"></code></pre>
-          <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" placeholder="// Перепечатайте код задачи сюда"></textarea>
+          <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off" ></textarea>
         </div>
         <div class="actions">
           <button class="btn" id="run">Проверить</button>
-          <button class="btn ghost" id="reset">Очистить</button>
+          <button class="btn ghost" id="reset">Сбросить</button>
           <span class="grow"></span>
           ${prev ? `<a class="btn ghost" href="#/topic/${prev.id}" title="${esc(prev.title)}">← Тема ${prev.id}</a>` : ""}
           ${next ? `<a class="btn ghost" id="nextTopic" href="#/topic/${next.id}" title="${esc(next.title)}">Тема ${next.id} →</a>` : `<a class="btn ghost" id="nextTopic" href="#/">На дашборд</a>`}
@@ -249,7 +251,9 @@ function viewTopic(u, tid) {
   function open(id, scrollLeft = true) {
     active = topic.tasks.find(k => k.id === id);
     $$("#seg button").forEach(b => b.classList.toggle("on", b.dataset.k === id));
-    ta.value = getCode(u, id); paint();
+    ta.value = getCode(u, id, active.starter); paint();
+    const at = ta.value.indexOf("Пишите решение здесь");
+    if (at >= 0) { const e = ta.value.indexOf("\n", at); ta.setSelectionRange(e, e); }
     out.innerHTML = `<div class="h">Результат</div><span class="empty">Нажмите «Проверить» (Ctrl+Enter)</span>`;
     refreshBadges();
     if (scrollLeft) scrollToSec("s-t" + topic.tasks.indexOf(active));
@@ -257,10 +261,10 @@ function viewTopic(u, tid) {
   }
   $$("#seg button").forEach(b => b.onclick = () => open(b.dataset.k));
   $$("[data-open]").forEach(b => b.onclick = () => open(b.dataset.open, false));
-  $("#reset").onclick = () => { ta.value = ""; ta.oninput(); out.innerHTML = `<div class="h">Результат</div><span class="empty">Редактор очищен</span>`; ta.focus(); };
+  $("#reset").onclick = () => { ta.value = active.starter; ta.oninput(); out.innerHTML = `<div class="h">Результат</div><span class="empty">Код сброшен к каркасу</span>`; ta.focus(); };
 
   function check() {
-    if (!ta.value.trim()) { out.innerHTML = `<div class="h">Результат</div><div class="bad">Редактор пуст. Перепечатайте код из задачи слева.</div>`; return; }
+    if (ta.value.trim() === active.starter.trim()) { out.innerHTML = `<div class="h">Результат</div><div class="bad">Вы ещё ничего не дописали. Напечатайте код из задачи слева внутрь func main.</div>`; return; }
     const code = ta.value.replace(/\/\/.*$/gm, "");
     const results = active.checks.map(c => ({ ok: c.re.test(code), msg: c.msg }));
     const pass = results.every(r => r.ok);
