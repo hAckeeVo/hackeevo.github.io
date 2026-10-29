@@ -10,18 +10,25 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="learn.css">
+  <link rel="stylesheet" href="extra.css">
 </head>
 <body>
   <header class="top">
     <a class="logo" href="#/">01</a>
     <span class="crumb" id="crumb"></span>
     <span class="spacer"></span>
+    <span class="tools">
+      <button id="fsm" title="Мельче шрифт" aria-label="Мельче шрифт">A−</button>
+      <button id="fsp" title="Крупнее шрифт" aria-label="Крупнее шрифт">A+</button>
+      <button id="theme" title="Светлая / тёмная тема" aria-label="Сменить тему">◐</button>
+    </span>
     <span class="xp" id="xp" hidden></span>
     <span class="user" id="user" hidden></span>
     <button class="link" id="logout" hidden>выйти</button>
   </header>
   <main id="app"></main>
   <script src="lessons.js"></script>
+  <script src="extra.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

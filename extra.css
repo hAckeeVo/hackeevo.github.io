@@ -1,0 +1,128 @@
+/* ---------- переключатели в шапке ---------- */
+.tools { display: flex; gap: 4px; }
+.tools button { background: transparent; border: 1px solid var(--line); color: var(--muted); font: 500 12px var(--mono); padding: 4px 8px; border-radius: 2px; cursor: pointer; min-width: 30px; }
+.tools button:hover { border-color: var(--accent); color: var(--text); }
+
+/* ---------- размер шрифта (A− / A+) ---------- */
+:root { --fs: 1; }
+.sec-block p, .sec-block li { font-size: calc(16px * var(--fs)); }
+.steps, .note-box, .hintbox, .quiz .opt, .quiz .why { font-size: calc(14px * var(--fs)); }
+pre.code, .annot pre, .editor textarea, .editor .hl, .gutter, .console pre { font-size: calc(14px * var(--fs)); }
+.annot .ln > span { font-size: calc(13px * var(--fs)); }
+.console { font-size: calc(13.5px * var(--fs)); }
+
+/* ---------- подсказки по терминам ---------- */
+.term { border-bottom: 1px dotted var(--accent-l); cursor: help; }
+.term:hover, .term:focus { color: var(--accent-l); outline: none; }
+#tip { position: fixed; z-index: 80; max-width: 280px; background: var(--text); color: #1a1a1a; font: 13px/1.45 var(--sans); padding: 9px 12px; border-radius: 2px; border-left: 3px solid var(--accent); box-shadow: 0 6px 24px rgba(0,0,0,.4); pointer-events: none; opacity: 0; transition: opacity .12s; }
+#tip.on { opacity: 1; }
+#tip b { display: block; font: 500 11px var(--mono); text-transform: uppercase; color: var(--accent-d); margin-bottom: 2px; }
+
+/* ---------- копирование кода ---------- */
+.codewrap { position: relative; }
+.codewrap .copy { position: absolute; top: 8px; right: 8px; z-index: 2; background: var(--panel); border: 1px solid var(--line); color: var(--muted); font: 500 11px var(--mono); padding: 3px 8px; border-radius: 2px; cursor: pointer; opacity: 0; transition: opacity .15s; }
+.codewrap:hover .copy, .codewrap .copy:focus { opacity: 1; }
+.codewrap .copy:hover { color: var(--text); border-color: var(--accent); }
+.codewrap .copy.ok { color: var(--ok); border-color: var(--ok); opacity: 1; }
+@media (hover: none) { .codewrap .copy { opacity: 1; } }
+
+/* клик по строке задачи - вставка в редактор */
+.annot .ln.click { cursor: pointer; position: relative; }
+.annot .ln.click:hover { background: rgba(153,105,255,.14); }
+.annot .ln.click:hover::after { content: "+ вставить"; position: absolute; right: 10px; top: 4px; font: 500 10px var(--mono); color: var(--accent-l); background: var(--panel); padding: 1px 6px; border-radius: 2px; }
+.annot-tip { font-size: 13px; color: var(--dim); margin: -4px 0 10px; }
+
+/* ---------- мини-тест ---------- */
+.quiz .qq { margin-bottom: 22px; }
+.quiz .qtext { font-weight: 500; margin-bottom: 10px; }
+.quiz .opts { display: flex; flex-direction: column; gap: 8px; }
+.quiz .opt { text-align: left; background: var(--panel); border: 1px solid var(--line); color: var(--text); border-radius: 2px; padding: 11px 14px; font-family: var(--sans); cursor: pointer; transition: border-color .12s, background .12s; }
+.quiz .opt:hover:not(:disabled) { border-color: var(--accent); }
+.quiz .opt.right { border-color: var(--ok); background: rgba(79,209,139,.12); }
+.quiz .opt.wrong { border-color: var(--bad); background: rgba(230,106,125,.12); }
+.quiz .opt:disabled { cursor: default; }
+.quiz .why { margin-top: 10px; padding: 10px 14px; border-left: 3px solid var(--ok); background: rgba(79,209,139,.08); display: none; }
+.quiz .why.on { display: block; }
+.quiz .why.no { border-color: var(--bad); background: rgba(230,106,125,.08); }
+.quiz-done { margin-top: 6px; font: 500 13px var(--mono); color: var(--ok); }
+
+/* ---------- подсказки трёх уровней ---------- */
+.hintbox { margin-bottom: 14px; border: 1px dashed var(--dim); border-radius: 2px; padding: 10px 14px; }
+.hintbox .hl-item { margin: 0 0 10px; color: var(--muted); line-height: 1.55; }
+.hintbox .hl-item b { font: 500 11px var(--mono); text-transform: uppercase; color: var(--accent-l); display: block; margin-bottom: 2px; }
+.hintbox code { background: var(--chip, #3a3445); padding: 1px 6px; border-radius: 2px; font-family: var(--code); font-size: .9em; }
+.hintbox .more { background: transparent; border: 1px solid var(--accent-d); color: var(--accent-l); font: 500 12px var(--mono); padding: 6px 12px; border-radius: 2px; cursor: pointer; }
+.hintbox .more:hover { background: var(--accent-d); color: #fff; }
+.hintbox .empty { font-size: 12px; }
+
+/* ---------- ошибки в консоли и редакторе ---------- */
+.console .tips { margin-top: 10px; padding: 10px 12px; background: rgba(230,106,125,.1); border-left: 3px solid var(--bad); color: var(--text); font-family: var(--sans); font-size: calc(13.5px * var(--fs)); line-height: 1.5; }
+.console .tips b { display: block; font: 500 11px var(--mono); text-transform: uppercase; color: var(--bad); margin-bottom: 4px; }
+.console .tips ul { margin: 0; padding-left: 18px; }
+.console .tips code { background: rgba(0,0,0,.25); padding: 0 4px; border-radius: 2px; font-family: var(--code); }
+.console .assist { margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-family: var(--sans); }
+.console .assist small { color: var(--dim); }
+.btn.small { padding: 8px 12px; font-size: 12px; }
+
+.bands { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.bands .in { position: absolute; left: 0; right: 0; top: 0; }
+.bands .band { position: absolute; left: 0; right: 0; background: rgba(230,106,125,.16); border-left: 3px solid var(--bad); }
+
+/* ---------- введение: подпись темы ---------- */
+.topic.intro .n { color: var(--ok); }
+
+/* ---------- мобильная версия ---------- */
+.mobbar { display: none; }
+@media (max-width: 860px) {
+  .top { padding: 0 12px; gap: 8px; }
+  .crumb, .user { display: none; }
+  .tools button { padding: 4px 6px; min-width: 26px; }
+  .learn { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; height: 100%; }
+  .left, .right { grid-row: 1; height: auto; min-height: 0; border: 0; }
+  .learn[data-pane="left"] .right { display: none; }
+  .learn[data-pane="right"] .left { display: none; }
+  .scroll { padding: 0 16px; }
+  .hero h1 { font-size: 26px; }
+  .editor { min-height: 0; }
+  .console { max-height: 45%; }
+  .mobbar { display: flex; grid-row: 2; border-top: 1px solid var(--line); background: var(--bg); }
+  .mobbar button { flex: 1; background: transparent; border: 0; color: var(--muted); font: 500 13px var(--mono); padding: 14px 0; cursor: pointer; border-top: 2px solid transparent; }
+  .mobbar button.on { color: #fff; border-top-color: var(--accent); background: rgba(153,105,255,.12); }
+  .annot .ln { grid-template-columns: 1fr; gap: 2px; }
+  .actions { flex-wrap: wrap; }
+  .wrap { padding: 20px 14px 40px; }
+  .wrap h1 { font-size: 26px; }
+}
+
+/* ---------- светлая тема ---------- */
+:root[data-theme="light"] {
+  --bg: #f5f2fb; --panel: #ffffff; --line: #ddd5ea; --text: #1f1b2e; --muted: #5b5670; --dim: #8a85a0;
+  --accent-l: #6d3fe0; --warn: #b07d00; --chip: #ece6fa;
+}
+:root[data-theme="light"] body { background-image: radial-gradient(circle at 20% 0%, #e7ddfb 0, transparent 40%); }
+:root[data-theme="light"] .logo { color: var(--text); border-color: var(--text); }
+:root[data-theme="light"] .crumb a:hover, :root[data-theme="light"] .chips button:hover { color: var(--text); }
+:root[data-theme="light"] .left { background: rgba(255,255,255,.55); }
+:root[data-theme="light"] .sec-block code { background: var(--chip); }
+:root[data-theme="light"] pre.code, :root[data-theme="light"] .annot, :root[data-theme="light"] .editor, :root[data-theme="light"] .console pre { background: #fbfaff; }
+:root[data-theme="light"] .gutter { background: #f0ecf8; }
+:root[data-theme="light"] .annot .ln:hover { background: #f1ecfb; }
+:root[data-theme="light"] kbd { background: #eee; border-color: #ccc; }
+:root[data-theme="light"] .note-box { background: #efe9fb; }
+:root[data-theme="light"] .expect, :root[data-theme="light"] .login .card, :root[data-theme="light"] .modal { background: #fff; border: 1px solid #d8d0e6; }
+:root[data-theme="light"] .next { background: #f6f2fd; }
+:root[data-theme="light"] .editor .hl { color: var(--text); }
+:root[data-theme="light"] .editor textarea { caret-color: var(--text); }
+:root[data-theme="light"] .editor textarea::selection { background: rgba(117,56,255,.25); }
+:root[data-theme="light"] .console .ok { color: #14804a; }
+:root[data-theme="light"] .console .bad { color: #c0344c; }
+:root[data-theme="light"] .console .tips code { background: rgba(0,0,0,.08); }
+:root[data-theme="light"] .badge.ok, :root[data-theme="light"] .status.done { background: #bdeed4; color: #0c4a29; }
+:root[data-theme="light"] .tk-k { color: #7c3aed; } :root[data-theme="light"] .tk-t { color: #0f766e; }
+:root[data-theme="light"] .tk-s { color: #b45309; } :root[data-theme="light"] .tk-c { color: #8b8aa0; }
+:root[data-theme="light"] .tk-n { color: #c2410c; } :root[data-theme="light"] .tk-b { color: #be185d; }
+:root[data-theme="light"] .tk-f { color: #2563eb; }
+:root[data-theme="light"] .scroll::-webkit-scrollbar-thumb { background: #cfc3ea; }
+:root[data-theme="light"] .mobbar button.on { color: var(--text); }
+:root[data-theme="light"] .quiz .opt.right { background: rgba(20,128,74,.1); }
+:root[data-theme="light"] .overlay { background: rgba(60,50,90,.5); }
