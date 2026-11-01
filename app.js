@@ -407,7 +407,8 @@ function viewDashboard(u) {
 
   const renderTopicCard = t => {
     const lock = topicLock(t, done), complete = topicComplete(t, done);
-    const vizBadge = t.track === "piscine" ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">🎮 Симулятор</span>` : "";
+    const hasSim = !!t.widgetTitle || t.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(t.id));
+    const vizBadge = hasSim ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">🎮 Симулятор</span>` : "";
     return `
       <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
         <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}${vizBadge}</span>
@@ -552,6 +553,8 @@ function viewTopic(u, tid) {
   chrome(crumb);
   const hasQuiz = !!topic.quiz;
   const stepBase = hasQuiz ? 4 : 3;
+  const hasSim = !!topic.widgetTitle || topic.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(topic.id));
+  const simTitle = topic.widgetTitle || (window.getWidgetTitle && window.getWidgetTitle(topic.id)) || "Интерактивный симулятор";
 
   const quizBlock = () => !hasQuiz ? "" : `
     <section class="sec-block quiz" id="s-quiz">
@@ -609,7 +612,7 @@ function viewTopic(u, tid) {
         <nav class="chips" id="chips">
           <button data-s="s-theory">Лекция</button>
           <button data-s="s-examples">Примеры</button>
-          ${topic.track === "piscine" ? `<button data-s="s-interactive">🎮 Симулятор</button>` : ""}
+          ${hasSim ? `<button data-s="s-interactive">🎮 Симулятор</button>` : ""}
           ${hasQuiz ? `<button data-s="s-quiz">Тест</button>` : ""}
           ${topic.tasks.map((k, i) => `<button data-s="s-t${i}">Задача ${i + 1}</button>`).join("")}
         </nav>
@@ -621,10 +624,10 @@ function viewTopic(u, tid) {
           </header>
           <section class="sec-block" id="s-theory"><div class="kicker">Шаг 1 · Лекция</div><h2>Что нужно знать</h2>${render(topic.theory)}</section>
           <section class="sec-block" id="s-examples"><div class="kicker">Шаг 2 · Примеры</div><h2>Как это выглядит</h2>${render(topic.examples)}</section>
-          ${topic.track === "piscine" ? `
+          ${hasSim ? `
             <section class="sec-block interactive-sec" id="s-interactive">
-              <div class="kicker">🎮 01 Edu · Интерактивный симулятор</div>
-              <h2>${esc(topic.widgetTitle || "Визуализатор алгоритма")}</h2>
+              <div class="kicker">🎮 Интерактивный симулятор · Практика</div>
+              <h2>${esc(simTitle)}</h2>
               <div id="piscineWidgetArea" class="piscine-widget-mount"></div>
             </section>
           ` : ""}
@@ -659,7 +662,8 @@ function viewTopic(u, tid) {
       <nav class="mobbar"><button data-p="left" class="on">Учебник</button><button data-p="right">Код</button></nav>
     </div>`;
 
-  window.initPiscineWidgets?.(topic.id);
+  if (window.initPiscineWidgets) { try { window.initPiscineWidgets(topic.id); } catch (e) { } }
+  if (window.initTopicWidgets) { try { window.initTopicWidgets(topic.id); } catch (e) { } }
 
   // --- мобильная версия: переключатель «Учебник / Код»
   const learn = $(".learn");
@@ -671,7 +675,7 @@ function viewTopic(u, tid) {
   const scroll = $("#scroll");
   $$("#chips button").forEach(b => b.onclick = () => scrollToSec(b.dataset.s));
   function scrollToSec(id) { scroll.scrollTo({ top: $("#" + id).offsetTop - 8, behavior: "smooth" }); }
-  const secIds = ["s-theory", "s-examples", ...(topic.track === "piscine" ? ["s-interactive"] : []), ...(hasQuiz ? ["s-quiz"] : []), ...topic.tasks.map((_, i) => "s-t" + i)];
+  const secIds = ["s-theory", "s-examples", ...(hasSim ? ["s-interactive"] : []), ...(hasQuiz ? ["s-quiz"] : []), ...topic.tasks.map((_, i) => "s-t" + i)];
   const spy = () => {
     let cur = secIds[0];
     secIds.forEach(id => { if ($("#" + id).offsetTop - 80 <= scroll.scrollTop) cur = id; });
