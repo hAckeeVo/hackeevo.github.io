@@ -181,21 +181,44 @@ function diagnose(src) {
 // сравнение с образцом слева: какие строки отличаются и чего не хватает
 function analyze(src, k) {
   const norm = s => s.replace(/\/\/.*$/, "").replace(/\s+/g, "");
-  const sol = new Set(k.lines.map(l => l[0].replace(/\s+/g, "")).filter(Boolean));
+  const sol = new Set((k.lines || []).map(l => l[0].replace(/\s+/g, "")).filter(Boolean));
   const bad = [], have = new Set();
   src.split("\n").forEach((l, i) => { const n = norm(l); if (!n) return; have.add(n); if (!sol.has(n)) bad.push(i); });
-  const missing = k.lines.filter(([c], i) => c.trim() && !isSkeleton(c, i, k) && !isCloser(c) && !have.has(c.replace(/\s+/g, ""))).map(l => l[0].trim());
+  const missing = (k.lines || []).filter(([c], i) => c.trim() && !isSkeleton(c, i, k) && !isCloser(c) && !have.has(c.replace(/\s+/g, ""))).map(l => l[0].trim());
   return { bad, missing, tips: diagnose(src) };
 }
 
 // подсказки трёх уровней: намёк -> шаги -> первая строка
 function hintLevels(k) {
-  const core = k.lines.map(([c, e], i) => ({ c, e, i })).filter(x => x.c.trim() && !isSkeleton(x.c, x.i, k) && !isCloser(x.c));
-  return [
-    esc(k.hint),
-    "Что нужно сделать по шагам: " + core.map((x, n) => `${n + 1}) ${esc(x.e)}`).join(" "),
-    `Почти ответ - первая нужная строка: <code>${esc(core[0].c.trim())}</code>` + (core.length > 1 ? ". Остальные строки - в таблице выше." : "."),
-  ];
+  const core = (k.lines || []).map(([c, e], i) => ({ c, e, i })).filter(x => x.c.trim() && !isSkeleton(x.c, x.i, k) && !isCloser(x.c));
+  const hints = [esc(k.hint || "")];
+
+  if (k.plan && k.plan.length) {
+    hints.push("План решения по шагам: " + k.plan.map((p, i) => `${i + 1}) ${esc(p)}`).join(" "));
+  } else if (core.length) {
+    hints.push("Что нужно сделать по шагам: " + core.map((x, n) => `${n + 1}) ${esc(x.e)}`).join(" "));
+  } else {
+    hints.push("Внимательно изучите условие задачи и план решения.");
+  }
+
+  if (core.length > 0) {
+    hints.push(`Почти ответ - первая нужная строка: <code>${esc(core[0].c.trim())}</code>` + (core.length > 1 ? ". Остальные строки - в таблице выше." : "."));
+  } else if (k.solution) {
+    const lines = k.solution.split("\n");
+    const first = lines.find(l => {
+      const s = l.trim();
+      return s && !s.startsWith("package ") && !s.startsWith("import") && !s.startsWith("func main") && !s.startsWith("/*") && !s.startsWith("//") && s !== "}" && s !== "})";
+    });
+    if (first) {
+      hints.push(`Почти ответ - строка из решения: <code>${esc(first.trim())}</code>`);
+    } else {
+      hints.push("Почти ответ: сопоставьте типы данных в сигнатуре функции и верните правильный результат.");
+    }
+  } else {
+    hints.push("Почти ответ: следуйте шагам из плана задачи.");
+  }
+
+  return hints;
 }
 
 // ---------- chrome ----------
@@ -674,11 +697,17 @@ function viewTopic(u, tid) {
   // --- левая панель: навигация и scrollspy
   const scroll = $("#scroll");
   $$("#chips button").forEach(b => b.onclick = () => scrollToSec(b.dataset.s));
-  function scrollToSec(id) { scroll.scrollTo({ top: $("#" + id).offsetTop - 8, behavior: "smooth" }); }
+  function scrollToSec(id) {
+    const el = $("#" + id);
+    if (el) scroll.scrollTo({ top: el.offsetTop - 8, behavior: "smooth" });
+  }
   const secIds = ["s-theory", "s-examples", ...(hasSim ? ["s-interactive"] : []), ...(hasQuiz ? ["s-quiz"] : []), ...topic.tasks.map((_, i) => "s-t" + i)];
   const spy = () => {
     let cur = secIds[0];
-    secIds.forEach(id => { if ($("#" + id).offsetTop - 80 <= scroll.scrollTop) cur = id; });
+    secIds.forEach(id => {
+      const el = $("#" + id);
+      if (el && el.offsetTop - 80 <= scroll.scrollTop) cur = id;
+    });
     $$("#chips button").forEach(b => b.classList.toggle("on", b.dataset.s === cur));
   };
   scroll.onscroll = spy; spy();
@@ -714,17 +743,27 @@ function viewTopic(u, tid) {
 
   // --- подсказки трёх уровней
   function renderHints(k) {
-    const box = $(`[data-hint="${k.id}"]`);
-    if (!box) return;                                   // задача закрыта - подсказок нет
-    const lv = hintLevels(k), n = store.get(`hint:${u}:${k.id}`, 0);
-    box.innerHTML = lv.slice(0, n).map((h, i) => `<p class="hl-item"><b>Подсказка ${i + 1} из ${lv.length}</b>${h}</p>`).join("") +
-      (n < lv.length ? `<button class="more" data-more="${k.id}">${n ? "Ещё подсказка" : "Нужна подсказка?"} (${n + 1}/${lv.length})</button>`
-        : `<span class="empty">Все подсказки открыты. Если не получается - после двух неудачных проверок справа появится «Показать ответ».</span>`);
+    try {
+      const box = $(`[data-hint="${k.id}"]`);
+      if (!box) return;                                   // задача закрыта - подсказок нет
+      const lv = hintLevels(k), n = store.get(`hint:${u}:${k.id}`, 0);
+      box.innerHTML = lv.slice(0, n).map((h, i) => `<p class="hl-item"><b>Подсказка ${i + 1} из ${lv.length}</b>${h}</p>`).join("") +
+        (n < lv.length ? `<button class="more" data-more="${k.id}">${n ? "Ещё подсказка" : "Нужна подсказка?"} (${n + 1}/${lv.length})</button>`
+          : `<span class="empty">Все подсказки открыты. Если не получается - после двух неудачных проверок справа появится «Показать ответ».</span>`);
+    } catch (e) {
+      console.error("renderHints error for task", k && k.id, e);
+    }
   }
   topic.tasks.forEach(renderHints);
   scroll.addEventListener("click", e => {
     const m = e.target.closest("[data-more]");
-    if (m) { const k = topic.tasks.find(x => x.id === m.dataset.more); store.set(`hint:${u}:${k.id}`, store.get(`hint:${u}:${k.id}`, 0) + 1); renderHints(k); }
+    if (m) {
+      const k = topic.tasks.find(x => x.id === m.dataset.more);
+      if (k) {
+        store.set(`hint:${u}:${k.id}`, store.get(`hint:${u}:${k.id}`, 0) + 1);
+        renderHints(k);
+      }
+    }
   });
 
   // --- редактор
@@ -802,8 +841,10 @@ function viewTopic(u, tid) {
 
   function open(id, scrollLeft = true) {
     active = topic.tasks.find(k => k.id === id);
-    $$("#seg button").forEach(b => b.classList.toggle("on", b.dataset.k === id));
-    ta.value = getCode(u, id, active.starter); paint(); setBands([]);
+    if (!active) active = topic.tasks[0];
+    if (!active) return;
+    $$("#seg button").forEach(b => b.classList.toggle("on", b.dataset.k === active.id));
+    ta.value = getCode(u, active.id, active.starter || ""); paint(); setBands([]);
     const at = ta.value.indexOf("Пишите решение здесь");
     if (at >= 0) { const e = ta.value.indexOf("\n", at); ta.setSelectionRange(e, e); }
     out.innerHTML = `<div class="h">Результат</div><span class="empty">Нажмите «Проверить» (Ctrl+Enter)</span>`; out.dataset.locked = "";
@@ -813,10 +854,16 @@ function viewTopic(u, tid) {
   }
   $$("#seg button").forEach(b => b.onclick = () => open(b.dataset.k));
   $$("[data-open]").forEach(b => b.onclick = () => { open(b.dataset.open, false); toEditor(); });
-  $("#reset").onclick = () => { ta.value = active.starter; ta.oninput(); out.innerHTML = `<div class="h">Результат</div><span class="empty">Код сброшен к каркасу</span>`; if (!isMobile()) ta.focus(); };
+  $("#reset").onclick = () => {
+    if (!active) return;
+    ta.value = active.starter || ""; ta.oninput();
+    out.innerHTML = `<div class="h">Результат</div><span class="empty">Код сброшен к каркасу</span>`;
+    if (!isMobile()) ta.focus();
+  };
 
   // клик по строке образца вставляет её в редактор
   function insertLine(k, i) {
+    if (!k || !k.lines || !k.lines[i]) return;
     if (!active || active.id !== k.id) open(k.id, false);
     const line = k.lines[i][0], mainIdx = k.lines.findIndex(l => l[0] === "func main() {");
     let v = ta.value, caret;
