@@ -1,5 +1,5 @@
-// 01 Edu Piscine Go: Квесты 2, 3, 4 (Quad, Указатели, Рекурсия, Алгоритмы, 8 Ферзей).
-// Подключается после more.js.
+// 01 Edu Piscine Go: Квесты 2, 3, 4 (Quad, Указатели, Строки/Руны, Рекурсия, Алгоритмы, 8 Ферзей).
+// Подключается перед more.js или сортируется в app.js. Темы 14-19.
 
 (function () {
   const R = String.raw;
@@ -32,11 +32,12 @@
 
   const PISCINE_TOPICS = [
     // ==========================================
-    // ТЕМА 19: Сетка и координаты: Quad (01 Edu)
+    // ТЕМА 14: Сетка и координаты: Quad (01 Edu)
     // ==========================================
     {
-      id: 19,
+      id: 14,
       track: "piscine",
+      widgetTitle: "Интерактивный симулятор Quad и 2D-координат",
       title: "Сетка и координаты: Quad (01 Edu)",
       about: "как работают вложенные циклы, система координат (x, y), строки и столбцы на примере легендарной задачи Quad",
       theory: R`
@@ -58,9 +59,6 @@
 - **Верх и низ**: {{row == 0 || row == y-1}} (но не углы) — печатаем {{"-"}}.
 - **Левый и правый бока**: {{col == 0 || col == x-1}} (но не углы) — печатаем {{"|"}}.
 - **Середина**: всё остальное — это пробел {{" "}}!
-
-Попробуйте интерактивный симулятор ниже — подвигайте ползунки и кликните «Шаг за шагом»!
-<div id="quadVizContainer"></div>
 `,
       examples: R`
 Вот как выглядит работающая функция {{QuadA(5, 3)}}:
@@ -156,7 +154,7 @@ ${F}
           title: "QuadB (углы / и \\, границы *)",
           desc: R`Решите задачу QuadB самостоятельно! В QuadB:
 - Верхний левый угол и нижний правый угол — это слэш {{"/"}}.
-- Верхний правый угол и нижний левый угол — это обратный слэш {{"\\\\"}}.
+- Верхний правый угол и нижний левый угол — это обратный слэш {{"\\"}}.
 - Все остальные границы (верх, низ, лево, право) — это звёздочка {{"*"}}.
 - Внутри — пробел {{" "}}.`,
           plan: [
@@ -174,7 +172,7 @@ ${F}
           checks: [
             { re: /func\s+QuadB\s*\(\s*x\s*,\s*y\s+int\s*\)/, msg: "func QuadB(x, y int)" },
             { re: /"\/"/, msg: 'Печать слэша: "/"' },
-            { re: /"\\\\"|"\\"/, msg: 'Печать обратного слэша: "\\\\"' },
+            { re: /"\\\\"|"\\"|'\\'/, msg: 'Печать обратного слэша: "\\"' },
             { re: /"\*"/, msg: 'Печать границы: "*"' },
             { re: /QuadB\s*\(\s*5\s*,\s*3\s*\)/, msg: "Вызов QuadB(5, 3) в main" },
           ],
@@ -212,15 +210,73 @@ func main() {
 }
 `,
         }),
+        makeTask({
+          id: "p_quad_c",
+          hard: true,
+          exam: true,
+          title: "QuadC (Экзамен 01 Edu: углы A и C, границы B)",
+          desc: R`Экзаменационная версия Quad! Напишите функцию {{QuadC(x, y int)}}:
+- Верхний левый и верхний правый углы — буква {{"A"}}.
+- Нижний левый и нижний правый углы — буква {{"C"}}.
+- Все границы (верх, низ, лево, право) — буква {{"B"}}.
+- Внутри — пробелы {{" "}}.`,
+          plan: [
+            "Создайте func QuadC(x, y int)",
+            "Если x <= 0 || y <= 0, ничего не выводите",
+            "Верхние углы (row == 0 && (col == 0 || col == x-1)): печать 'A'",
+            "Нижние углы (row == y-1 && (col == 0 || col == x-1)): печать 'C'",
+            "Границы (row == 0 || row == y-1 || col == 0 || col == x-1): печать 'B'",
+            "Внутри: пробел ' '",
+          ],
+          output: "ABBA\nB  B\nCBBC",
+          hint: "В QuadC верхние углы одинаковые (A), а нижние тоже одинаковые (C).",
+          checks: [
+            { re: /func\s+QuadC\s*\(\s*x\s*,\s*y\s+int\s*\)/, msg: "func QuadC(x, y int)" },
+            { re: /"A"/, msg: 'Печать углов "A"' },
+            { re: /"C"/, msg: 'Печать углов "C"' },
+            { re: /"B"/, msg: 'Печать границы "B"' },
+            { re: /QuadC\s*\(\s*4\s*,\s*3\s*\)/, msg: "Вызов QuadC(4, 3) в main" },
+          ],
+          starter: "package main\n\nimport \"fmt\"\n\n// Напишите QuadC(x, y int) здесь\n\nfunc main() {\n    QuadC(4, 3)\n}\n",
+          solution: `package main
+
+import "fmt"
+
+func QuadC(x, y int) {
+    if x <= 0 || y <= 0 {
+        return
+    }
+    for row := 0; row < y; row++ {
+        for col := 0; col < x; col++ {
+            if row == 0 && (col == 0 || col == x-1) {
+                fmt.Print("A")
+            } else if row == y-1 && (col == 0 || col == x-1) {
+                fmt.Print("C")
+            } else if row == 0 || row == y-1 || col == 0 || col == x-1 {
+                fmt.Print("B")
+            } else {
+                fmt.Print(" ")
+            }
+        }
+        fmt.Println()
+    }
+}
+
+func main() {
+    QuadC(4, 3)
+}
+`,
+        }),
       ],
     },
 
     // ==========================================
-    // ТЕМА 20: Указатели и память: Pointers (01 Edu)
+    // ТЕМА 15: Указатели и память: Pointers (01 Edu)
     // ==========================================
     {
-      id: 20,
+      id: 15,
       track: "piscine",
+      widgetTitle: "Интерактивная память (RAM) и разыменование указателей",
       title: "Указатели и память: Pointers (01 Edu)",
       about: "что такое адреса в памяти, операторы & и *, и как передавать переменные в функции по ссылке",
       theory: R`
@@ -228,135 +284,316 @@ func main() {
 
 Представьте память компьютера как улицу с пронумерованными домами:
 - **Переменная** — это дом. У него есть **номер (адрес)**, например {{0x1004}}, и **жилец (значение)** внутри, например число {{42}}.
-- **Оператор {{&}} (взятие адреса)**: {{&x}} отвечает на вопрос: «По какому адресу живёт x?».
-- **Тип указателя {{*int}}**: переменная, в которую записан адрес дома, а не само число.
-- **Оператор {{*}} (разыменование)**: {{*p = 100}} говорит: «Иди по адресу, который записан в p, открой дверь и посели туда 100».
+- **Обычная передача в функцию**: функция получает копию жильца. Если функция изменит число внутри себя, оригинал в main останется нетронутым!
+- **Указатель**: это записка с адресом дома! Тип указателя на int пишется как {{*int}}.
 
-**Зачем указатели функциям?**
-В Go все аргументы передаются **по значению (копируются)**!
-Если вы передадите в функцию число:
-{{func double(n int) { n = n * 2 }}}
-Создастся временная копия-двойник. Функция изменит двойника, а оригинал в {{main()}} останется нетронутым!
+Два волшебных знака:
+1. {{&a}} («взять адрес»): даёт адрес переменной {{a}} в памяти.
+2. {{*p}} («разыменование» / «пойти по адресу»): открывает дверь дома по адресу {{p}} и меняет то, что внутри!
 
-А если передать указатель:
-{{func double(n *int) { *n = *n * 2 }}}
-Функция получает настоящий адрес дома и меняет оригинал!
-
-Попробуйте интерактивный симулятор памяти ниже:
-<div id="pointerVizContainer"></div>
+Пример:
+- {{var a int = 10}}
+- {{var p *int = &a}} (указатель p хранит адрес переменной a)
+- {{*p = 20}} (мы пошли по адресу и положили 20. Теперь и {{a}} равна 20!).
 `,
       examples: R`
-Вот классический пример обмена двух переменных через указатели:
+Как функция меняет переменную снаружи:
 
 ${F}
 package main
 
 import "fmt"
 
-func Swap(a, b *int) {
-    *a, *b = *b, *a
+func SetToZero(ptr *int) {
+    *ptr = 0 // идём по адресу и записываем 0
 }
 
 func main() {
-    x, y := 10, 20
-    Swap(&x, &y)
-    fmt.Println(x, y) // Выведет 20 10!
+    n := 42
+    fmt.Println("До:", n) // 42
+    SetToZero(&n)         // передаём адрес n через &
+    fmt.Println("После:", n) // 0!
 }
 ${F}
 `,
       quiz: [
         {
-          q: "Что вернёт выражение &a?",
-          o: ["Адрес ячейки памяти, где хранится a", "Значение переменной a", "Умножит a на адрес"],
-          why: "Символ & - оператор взятия адреса памяти.",
+          q: "Что делает оператор & перед именем переменной (&x)?",
+          o: ["Возвращает адрес переменной в памяти", "Умножает x на 2", "Создаёт копию переменной"],
+          why: "Знак & берёт адрес ячейки памяти, где живёт переменная.",
         },
         {
-          q: "Что делает запись *ptr = 50?",
-          o: ["Записывает 50 по адресу, хранящемуся в ptr", "Умножает ptr на 50", "Создаёт новый указатель"],
-          why: "Звёздочка перед указателем разыменовывает его и обращается к значению в ячейке.",
+          q: "Что делает *ptr внутри функции (*ptr = 5)?",
+          o: ["Идёт по адресу и записывает 5 в исходную ячейку", "Объявляет новую переменную", "Умножает ptr на 5"],
+          why: "*ptr разыменовывает указатель — обращается к ячейке памяти по записанному в нём адресу.",
         },
       ],
       tasks: [
         makeTask({
           id: "t47",
-          title: "BasicPointer (запись 42 по адресу)",
-          desc: R`Напишите функцию {{BasicPointer(n *int)}}, которая принимает указатель на целое число и записывает туда число {{42}}. В {{main}} создайте переменную {{a := 0}}, передайте её адрес {{&a}} в функцию и напечатайте {{a}}.`,
+          title: "PointOne: изменить значение через указатель",
+          desc: R`Напишите функцию {{PointOne(n *int)}}, которая принимает указатель на int и записывает по этому адресу число {{1}}.`,
           body: [
-            ["func BasicPointer(n *int) {", "Функция принимает указатель n на int."],
-            ["    *n = 42", "Разыменовываем указатель и записываем 42."],
+            ["func PointOne(n *int) {", "Функция принимает указатель n на число int."],
+            ["    *n = 1", "Разыменовываем указатель n и кладём по адресу единицу."],
             ["}", "Конец функции."],
             ["", ""],
-            ["func main() {", "Начало main."],
-            ["    a := 0", "Создаём обычную переменную a."],
-            ["    BasicPointer(&a)", "Передаём её адрес &a в функцию."],
-            ["    fmt.Println(a)", "Печатаем 42."],
+            ["func main() {", "Точка входа."],
+            ["    val := 42", "Переменная val равна 42."],
+            ["    PointOne(&val)", "Передаём адрес переменной val."],
+            ["    fmt.Println(val)", "Печатаем val - она стала 1."],
             ["}", "Конец main."],
           ],
-          output: "42",
-          hint: "Чтобы передать указатель в функцию, используйте знак амперсанда: &a.",
+          output: "1",
+          hint: "Не забудьте звёздочку: *n = 1.",
           checks: [
-            { re: /func\s+BasicPointer\s*\(\s*n\s+\*int\s*\)/, msg: "func BasicPointer(n *int)" },
-            { re: /\*n\s*=\s*42/, msg: "Запись по адресу: *n = 42" },
-            { re: /BasicPointer\s*\(\s*&\w+\s*\)/, msg: "Передача адреса: BasicPointer(&a)" },
+            { re: /func\s+PointOne\s*\(\s*n\s+\*int\s*\)/, msg: "func PointOne(n *int)" },
+            { re: /\*n\s*=\s*1/, msg: "*n = 1" },
+            { re: /PointOne\s*\(\s*&\w+\s*\)/, msg: "Вызов PointOne(&val) с передачей адреса" },
           ],
         }),
         makeTask({
+          id: "p_ult_point1",
+          hard: true,
+          exam: true,
+          title: "UltimatePointOne: указатель на указатель (****int)",
+          desc: R`Легендарная задача 01 Edu на 4 уровня указателей! Напишите функцию {{UltimatePointOne(n ****int)}}, которая принимает четырёхкратный указатель и записывает по конечному адресу число {{1}}.`,
+          plan: [
+            "Объявите func UltimatePointOne(n ****int)",
+            "Разыменуйте 4 раза: ****n = 1",
+            "В main создайте n := 0, затем p1 := &n, p2 := &p1, p3 := &p2, p4 := &p3",
+            "Вызовите UltimatePointOne(p4) и выведите n",
+          ],
+          output: "1",
+          hint: "Сколько звёздочек в типе параметра (****int), столько же звёздочек нужно для разыменования: ****n = 1.",
+          checks: [
+            { re: /func\s+UltimatePointOne\s*\(\s*n\s+\*\*\*\*int\s*\)/, msg: "func UltimatePointOne(n ****int)" },
+            { re: /\*\*\*\*n\s*=\s*1/, msg: "****n = 1" },
+          ],
+          starter: "package main\n\nimport \"fmt\"\n\n// func UltimatePointOne(n ****int)\n\nfunc main() {\n    n := 0\n    p1 := &n\n    p2 := &p1\n    p3 := &p2\n    UltimatePointOne(&p3)\n    fmt.Println(n)\n}\n",
+          solution: `package main
+
+import "fmt"
+
+func UltimatePointOne(n ****int) {
+    ****n = 1
+}
+
+func main() {
+    n := 0
+    p1 := &n
+    p2 := &p1
+    p3 := &p2
+    UltimatePointOne(&p3)
+    fmt.Println(n)
+}
+`,
+        }),
+        makeTask({
           id: "t48",
-          title: "Swap (обмен значениями)",
-          desc: R`Напишите функцию {{Swap(a, b *int)}}, которая меняет местами значения двух целых чисел по их адресам.`,
+          title: "Swap: поменять местами две переменные",
+          desc: R`Напишите функцию {{Swap(a *int, b *int)}}, которая меняет местами значения переменных, на которые указывают {{a}} и {{b}}.`,
           body: [
-            ["func Swap(a, b *int) {", "Функция принимает два указателя на int."],
-            ["    *a, *b = *b, *a", "В Go можно поменять значения в одну строчку."],
-            ["}", "Конец функции Swap."],
+            ["func Swap(a *int, b *int) {", "Функция принимает два указателя a и b."],
+            ["    *a, *b = *b, *a", "В Go можно поменять значения в одну строчку без временной переменной!"],
+            ["}", "Конец Swap."],
             ["", ""],
-            ["func main() {", "Начало main."],
-            ["    x, y := 1, 2", "Создаём x=1 и y=2."],
-            ["    Swap(&x, &y)", "Передаём адреса &x и &y."],
-            ["    fmt.Println(x, y)", "Печатаем результат: 2 1."],
+            ["func main() {", "Точка входа."],
+            ["    x, y := 10, 20", "Создаём x=10 и y=20."],
+            ["    Swap(&x, &y)", "Меняем местами."],
+            ["    fmt.Println(x, y)", "Печатаем 20 10."],
             ["}", "Конец main."],
           ],
-          output: "2 1",
-          hint: "В Go поддерживается множественное присваивание: *a, *b = *b, *a.",
+          output: "20 10",
+          hint: "Либо *a, *b = *b, *a, либо через временную переменную: tmp := *a; *a = *b; *b = tmp.",
           checks: [
-            { re: /func\s+Swap\s*\(\s*a\s*,\s*b\s+\*int\s*\)/, msg: "func Swap(a, b *int)" },
-            { re: /(\*a\s*,\s*\*b\s*=\s*\*b\s*,\s*\*a)|(tmp\s*:=\s*\*a)/, msg: "*a, *b = *b, *a" },
+            { re: /func\s+Swap\s*\(\s*a\s*,\s*b\s+\*int\s*\)|func\s+Swap\s*\(\s*a\s+\*int\s*,\s*b\s+\*int\s*\)/, msg: "func Swap(a *int, b *int)" },
+            { re: /\*a.*=.*\*b|\*b.*=.*\*a/, msg: "Обмен значений через разыменование" },
             { re: /Swap\s*\(\s*&\w+\s*,\s*&\w+\s*\)/, msg: "Вызов Swap(&x, &y)" },
           ],
         }),
         makeTask({
           id: "t49",
-          hard: true,
-          title: "DivMod (деление и остаток через указатели)",
-          desc: R`Решите задачу 01 Edu {{DivMod(a int, b int, div *int, mod *int)}} самостоятельно!
-Функция делит {{a}} на {{b}}, записывает результат деления по адресу {{div}}, а остаток от деления — по адресу {{mod}}.`,
-          plan: [
-            "Опишите функцию func DivMod(a int, b int, div *int, mod *int)",
-            "Вычислите деление и запишите по адресу div: *div = a / b",
-            "Вычислите остаток и запишите по адресу mod: *mod = a % b",
-            "В main объявите var d, m int, вызовите DivMod(13, 4, &d, &m) и напечатайте d и m",
+          title: "DivMod: деление и остаток через указатели",
+          desc: R`Напишите функцию {{DivMod(a int, b int, div *int, mod *int)}}, которая делит {{a}} на {{b}} и записывает результат деления в {{*div}}, а остаток — в {{*mod}}.`,
+          body: [
+            ["func DivMod(a int, b int, div *int, mod *int) {", "Функция принимает числа a, b и два указателя."],
+            ["    *div = a / b", "Записываем частное по указателю div."],
+            ["    *mod = a % b", "Записываем остаток по указателю mod."],
+            ["}", "Конец функции."],
+            ["", ""],
+            ["func main() {", "Точка входа."],
+            ["    var d, m int", "Переменные под результат."],
+            ["    DivMod(13, 5, &d, &m)", "Делим 13 на 5."],
+            ['    fmt.Println("div:", d, "mod:", m)', "Печатаем div: 2 mod: 3."],
+            ["}", "Конец main."],
           ],
-          output: "3 1",
-          hint: "Помните про звёздочку: *div = a / b, а не div = a / b.",
+          output: "div: 2 mod: 3",
+          hint: "*div = a / b и *mod = a % b.",
           checks: [
-            { re: /func\s+DivMod\s*\(\s*a\s*,\s*b\s+int\s*,\s*div\s*,\s*mod\s+\*int\s*\)/, msg: "func DivMod(a, b int, div, mod *int)" },
+            { re: /func\s+DivMod\s*\(/, msg: "func DivMod(a int, b int, div *int, mod *int)" },
             { re: /\*div\s*=\s*a\s*\/\s*b/, msg: "*div = a / b" },
             { re: /\*mod\s*=\s*a\s*%\s*b/, msg: "*mod = a % b" },
-            { re: /DivMod\s*\(/, msg: "Вызов DivMod в main" },
+            { re: /DivMod\s*\(\s*13\s*,\s*5\s*,\s*&\w+\s*,\s*&\w+\s*\)/, msg: "Вызов DivMod(13, 5, &d, &m)" },
           ],
-          starter: "package main\n\nimport \"fmt\"\n\n// Напишите DivMod здесь\n\nfunc main() {\n    var d, m int\n    DivMod(13, 4, &d, &m)\n    fmt.Println(d, m)\n}\n",
+        }),
+      ],
+    },
+
+    // ==========================================
+    // ТЕМА 16: Строки, руны и ASCII (01 Edu Piscine)
+    // ==========================================
+    {
+      id: 16,
+      track: "piscine",
+      widgetTitle: "Интерактивный сканер строк, байтов, рун и ASCII",
+      title: "Строки, руны и ASCII (01 Edu Piscine)",
+      about: "почему len(\"Привет\") не равен количеству букв, как устроена таблица ASCII и как вручную парсить строки без strconv",
+      theory: R`
+В бассейне 01 Edu работа со строками — это ежедневная рутина. И здесь спотыкаются 90% новичков, потому что в Go строки хранятся в кодировке **UTF-8**.
+
+Главные правила:
+1. **Байт vs Руна**:
+   - Английская буква или цифра занимает **1 байт** (например, 'A' — код 65, '0' — код 48).
+   - Русская буква или эмодзи занимает **2 или 4 байта** (например, 'П' — код 1055, но в памяти занимает 2 байта).
+   - Поэтому стандартный {{len("Привет")}} вернёт 12, а не 6!
+   - Чтобы получить честное количество символов, строку преобразуют в срез рун: {{[]rune(s)}}. Длина {{len([]rune("Привет"))}} будет ровно 6!
+
+2. **ASCII-магия (как превратить цифру в int без strconv)**:
+   - В компьютере символ {{'0'}} имеет код 48, {{'1'}} — код 49, а {{'9'}} — код 57.
+   - Если из кода символа вычесть код символа {{'0'}}, получится настоящее число:
+     {{'5' - '0' = 53 - 48 = 5}}!
+   - Чтобы собрать число из строки {{"123"}}: берём 1, умножаем на 10 и прибавляем 2 (12), умножаем на 10 и прибавляем 3 (123).
+`,
+      examples: R`
+Разворот строки на месте:
+
+${F}
+package main
+
+import "fmt"
+
+func StrRev(s string) string {
+    r := []rune(s)
+    for i, j := 0, len(r)-1; i < j; i, j = i+1, j-1 {
+        r[i], r[j] = r[j], r[i]
+    }
+    return string(r)
+}
+
+func main() {
+    fmt.Println(StrRev("Hello"))  // olleH
+    fmt.Println(StrRev("Привет")) // тевирП (не ломается!)
+}
+${F}
+`,
+      quiz: [
+        {
+          q: "Почему len(\"Привет\") в Go равен 12, а не 6?",
+          o: ["Потому что каждая кириллическая буква в UTF-8 занимает 2 байта", "Это ошибка компилятора Go", "Потому что считаются невидимые пробелы"],
+          why: "В Go функция len(string) считает количество байт, а не символов. В UTF-8 русские буквы двухбайтовые.",
+        },
+        {
+          q: "Чему равно выражение int('7' - '0') в Go?",
+          o: ["Числу 7", "Символу '70'", "Ошибке компиляции"],
+          why: "Код '7' (55) минус код '0' (48) равен 7. Это стандартный трюк перевода символа в число.",
+        },
+      ],
+      tasks: [
+        makeTask({
+          id: "p_strlen",
+          title: "StrLen: честный подсчёт длины строки",
+          desc: R`Напишите функцию {{StrLen(s string) int}}, которая считает количество символов (рун) в строке. Строка может содержать как английские, так и русские буквы. Использовать пакет strings запрещено.`,
+          body: [
+            ["func StrLen(s string) int {", "Функция принимает строку s."],
+            ["    return len([]rune(s))", "Преобразуем строку в срез рун и возвращаем его длину."],
+            ["}", "Конец функции."],
+            ["", ""],
+            ["func main() {", "Точка входа."],
+            ['    fmt.Println(StrLen("Hello"))', "Печатаем длину Hello: 5."],
+            ['    fmt.Println(StrLen("Привет"))', "Печатаем длину Привет: 6."],
+            ["}", "Конец main."],
+          ],
+          output: "5\n6",
+          hint: "Используйте len([]rune(s)) или цикл for range s со счётчиком.",
+          checks: [
+            { re: /func\s+StrLen\s*\(\s*s\s+string\s*\)\s+int/, msg: "func StrLen(s string) int" },
+            { re: /\[\]rune|range/, msg: "Подсчёт рун через []rune(s) или range" },
+            { re: /StrLen\s*\(\s*"Hello"\s*\)/, msg: 'Вызов StrLen("Hello")' },
+          ],
+        }),
+        makeTask({
+          id: "p_strrev",
+          hard: true,
+          title: "StrRev: разворот строки задом наперёд",
+          desc: R`Напишите функцию {{StrRev(s string) string}}, которая возвращает перевёрнутую строку. Не забывайте о преобразовании в руны {{[]rune(s)}}, иначе русские символы разломаются на битые байты!`,
+          plan: [
+            "Преобразуйте строку в срез рун: r := []rune(s)",
+            "Используйте два указателя: i := 0 в начале и j := len(r)-1 в конце",
+            "Пока i < j, меняйте местами r[i] и r[j], сдвигая i++ и j--",
+            "Верните string(r)",
+          ],
+          output: "olleH\nтевирП",
+          hint: "Два указателя i и j сходятся к центру строки, меняя руны местами: r[i], r[j] = r[j], r[i].",
+          checks: [
+            { re: /func\s+StrRev\s*\(\s*s\s+string\s*\)\s+string/, msg: "func StrRev(s string) string" },
+            { re: /\[\]rune/, msg: "Преобразование в []rune" },
+            { re: /StrRev\s*\(\s*"Hello"\s*\)/, msg: 'Вызов StrRev("Hello")' },
+          ],
+          starter: "package main\n\nimport \"fmt\"\n\n// Напишите StrRev(s string) string здесь\n\nfunc main() {\n    fmt.Println(StrRev(\"Hello\"))\n    fmt.Println(StrRev(\"Привет\"))\n}\n",
           solution: `package main
 
 import "fmt"
 
-func DivMod(a int, b int, div *int, mod *int) {
-    *div = a / b
-    *mod = a % b
+func StrRev(s string) string {
+    r := []rune(s)
+    for i, j := 0, len(r)-1; i < j; i, j = i+1, j-1 {
+        r[i], r[j] = r[j], r[i]
+    }
+    return string(r)
 }
 
 func main() {
-    var d, m int
-    DivMod(13, 4, &d, &m)
-    fmt.Println(d, m)
+    fmt.Println(StrRev("Hello"))
+    fmt.Println(StrRev("Привет"))
+}
+`,
+        }),
+        makeTask({
+          id: "p_basic_atoi",
+          hard: true,
+          exam: true,
+          title: "BasicAtoi: строка цифр в число (без strconv)",
+          desc: R`Классика 01 Edu Piscine! Напишите функцию {{BasicAtoi(s string) int}}, которая переводит строку из цифр (например, {{"12345"}}) в число {{12345}} без использования пакета strconv. Строка гарантированно содержит только корректные цифры.`,
+          plan: [
+            "Создайте переменную результата: n := 0",
+            "Пройдитесь циклом for _, r := range s",
+            "Для каждой цифры сдвигайте разряд и прибавляйте значение: n = n*10 + int(r - '0')",
+            "Верните n",
+          ],
+          output: "12345\n0",
+          hint: "Символ '0' вычитается из r: int(r - '0').",
+          checks: [
+            { re: /func\s+BasicAtoi\s*\(\s*s\s+string\s*\)\s+int/, msg: "func BasicAtoi(s string) int" },
+            { re: /'0'/, msg: "Вычитание символа '0': r - '0'" },
+            { re: /BasicAtoi\s*\(\s*"12345"\s*\)/, msg: 'Вызов BasicAtoi("12345")' },
+          ],
+          starter: "package main\n\nimport \"fmt\"\n\n// Напишите BasicAtoi(s string) int здесь\n\nfunc main() {\n    fmt.Println(BasicAtoi(\"12345\"))\n    fmt.Println(BasicAtoi(\"0\"))\n}\n",
+          solution: `package main
+
+import "fmt"
+
+func BasicAtoi(s string) int {
+    n := 0
+    for _, r := range s {
+        n = n*10 + int(r-'0')
+    }
+    return n
+}
+
+func main() {
+    fmt.Println(BasicAtoi("12345"))
+    fmt.Println(BasicAtoi("0"))
 }
 `,
         }),
@@ -364,121 +601,108 @@ func main() {
     },
 
     // ==========================================
-    // ТЕМА 21: Итерация vs Рекурсия (Piscine)
+    // ТЕМА 17: Итерация vs Рекурсия (01 Edu)
     // ==========================================
     {
-      id: 21,
+      id: 17,
       track: "piscine",
+      widgetTitle: "Интерактивный стек вызовов (Call Stack) рекурсии",
       title: "Итерация vs Рекурсия: Факториал и Степень",
-      about: "как перестать бояться рекурсии: базовый случай, шаг рекурсии, стек вызовов и строгое соблюдение правил 01 Edu",
+      about: "в чём разница между обычным циклом и вызовом функции самой себя, что такое базовый случай и переполнение стека",
       theory: R`
-Квест 4 бассейна 01 Edu посвящён **рекурсии**. Новички часто впадают в ступор, потому что им говорят: «функция вызывает саму себя». Это звучит как бесконечное зеркало.
+В 4-м квесте бассейна 01 Edu требуют решить одни и те же задачи двумя способами:
+1. **Итеративно** (через обычный цикл for).
+2. **Рекурсивно** (функция вызывает саму себя).
 
-На самом деле рекурсия — это **«матрёшка»**:
-1. **Базовый случай (дно матрёшки / стоп-сигнал)**: точка, где задача стала настолько простой, что ответ известен без вычислений ($0! = 1$, $x^0 = 1$). Без стоп-сигнала программа падает с переполнением стека (stack overflow).
-2. **Шаг рекурсии**: вызов себя с аргументом, который **на один шаг ближе к дну** ($n \times (n-1)!$).
+**Рекурсия** похожа на матрёшку:
+Чтобы открыть большую матрёшку (посчитать 4!), нужно открыть матрёшку поменьше (посчитать 3!).
+Каждый вызов кладётся в **стек вызовов** (память компьютера).
 
-**Сравните:**
-- Цикл (итерация): берём копилку {{res = 1}} и в цикле домножаем на 1, 2, 3...
-- Рекурсия: «чтобы узнать 4!, умножь 4 на результат 3!». Вызовы накапливаются в памяти как стопка тарелок (стек), доходят до дна ($0! = 1$), а затем схлопываются обратно, перемножая числа.
-
-**Жесткие правила 01 Edu Piscine:**
-- Факториал отрицательного числа? {{nb < 0}} $\rightarrow$ строго {{return 0}}.
-- Переполнение: 64-битный int вмещает факториалы только до 20! Для {{nb > 20}} $\rightarrow$ {{return 0}}.
-- Степень меньше нуля? В целых числах {{power < 0}} $\rightarrow$ {{return 0}}.
-- Степень ноль? {{power == 0}} $\rightarrow$ любое число в степени 0 равно {{1}}.
-
-Попробуйте интерактивную визуализацию стека вызовов ниже:
-<div id="recursionVizContainer"></div>
+Два золотых правила рекурсии:
+1. **Базовый случай (дно матрёшки)**: обязательное условие остановки!
+   Для факториала: {{0! = 1}} и {{1! = 1}}. Если {{nb == 0 || nb == 1}}, возвращаем 1 без новых вызовов!
+   Если забыть базовый случай, функция будет вызывать себя бесконечно, пока не кончится память (Stack Overflow).
+2. **Шаг рекурсии**: вызов себя с параметром, приближающим нас к базовому случаю:
+   {{return nb * RecursiveFactorial(nb - 1)}}.
 `,
       examples: R`
-Сравнение двух подходов для вычисления факториала:
+Сравнение наглядно:
 
 ${F}
-// Итеративный (цикл)
+// Итеративный факториал
 func IterativeFactorial(nb int) int {
     if nb < 0 || nb > 20 { return 0 }
     res := 1
-    for i := 1; i <= nb; i++ { res *= i }
+    for i := 1; i <= nb; i++ {
+        res *= i
+    }
     return res
 }
 
-// Рекурсивный
+// Рекурсивный факториал
 func RecursiveFactorial(nb int) int {
     if nb < 0 || nb > 20 { return 0 }
-    if nb == 0 { return 1 } // Базовый случай!
-    return nb * RecursiveFactorial(nb - 1) // Шаг!
+    if nb == 0 || nb == 1 { return 1 } // Базовый случай!
+    return nb * RecursiveFactorial(nb - 1)
 }
 ${F}
 `,
       quiz: [
         {
-          q: "Что произойдёт с рекурсивной функцией, если забыть базовый случай?",
-          o: ["Произойдёт переполнение стека (Stack Overflow) и программа аварийно завершится", "Функция вернёт 0", "Программа выполнится быстрее"],
+          q: "Что произойдёт, если в рекурсивной функции забыть базовый случай?",
+          o: ["Программа упадёт с ошибкой переполнения стека (Stack Overflow)", "Цикл просто завершится нулём", "Go автоматически добавит выход"],
           why: "Без базового случая функция будет вызывать себя бесконечно, пока не исчерпает стек памяти.",
         },
         {
-          q: "Что по регламенту 01 Edu должен вернуть IterativeFactorial(-5)?",
-          o: ["0", "-120", "Ошибка компиляции"],
-          why: "В 01 Edu для отрицательных чисел факториал считается невалидным и возвращает 0.",
+          q: "Чему равен факториал нуля (0!)?",
+          o: ["1", "0", "Ошибке"],
+          why: "По математическому определению 0! = 1.",
         },
       ],
       tasks: [
         makeTask({
           id: "t50",
-          title: "IterativeFactorial (факториал циклом)",
-          desc: R`Напишите функцию {{IterativeFactorial(nb int) int}}, которая вычисляет факториал числа циклом for. Если nb < 0 или nb > 20, возвращайте 0. 0! = 1.`,
+          title: "IterativeFactorial: факториал через цикл for",
+          desc: R`Напишите функцию {{IterativeFactorial(nb int) int}}, которая вычисляет факториал числа с помощью цикла. Если число отрицательное или больше 20 (переполнение int), верните 0. Для nb == 0 верните 1.`,
           body: [
-            ["func IterativeFactorial(nb int) int {", "Функция принимает int и возвращает int."],
-            ["    if nb < 0 || nb > 20 {", "Защита от отрицательных чисел и переполнения."],
-            ["        return 0", "Возвращаем 0 при ошибке входа."],
-            ["    }", "Конец проверки."],
-            ["    res := 1", "Начальное значение (0! = 1)."],
+            ["func IterativeFactorial(nb int) int {", "Объявляем функцию."],
+            ["    if nb < 0 || nb > 20 { return 0 }", "Проверка на отрицательные числа и переполнение."],
+            ["    res := 1", "Начальное значение факториала."],
             ["    for i := 1; i <= nb; i++ {", "Цикл от 1 до nb."],
-            ["        res *= i", "Умножаем накопленный результат на i."],
+            ["        res *= i", "Умножаем накапливаемый результат."],
             ["    }", "Конец цикла."],
-            ["    return res", "Возвращаем факториал."],
+            ["    return res", "Возвращаем ответ."],
             ["}", "Конец функции."],
             ["", ""],
-            ["func main() {", "Начало main."],
+            ["func main() {", "Точка входа."],
             ["    fmt.Println(IterativeFactorial(4))", "4! = 24."],
-            ["    fmt.Println(IterativeFactorial(-2))", "Для отрицательного ответ 0."],
             ["}", "Конец main."],
           ],
-          output: "24\n0",
-          hint: "Помните про ограничение 01 Edu: if nb < 0 || nb > 20 { return 0 }.",
+          output: "24",
+          hint: "0! = 1, 4! = 1 * 2 * 3 * 4 = 24.",
           checks: [
-            { re: /func\s+IterativeFactorial\s*\(\s*nb\s+int\s*\)\s*int\s*\{/, msg: "func IterativeFactorial(nb int) int {" },
-            { re: /nb\s*<\s*0/, msg: "Проверка на отрицательное: nb < 0" },
-            { re: /for\s+i\s*:=\s*1/, msg: "Цикл for i := 1; i <= nb; i++" },
+            { re: /func\s+IterativeFactorial\s*\(\s*nb\s+int\s*\)\s+int/, msg: "func IterativeFactorial(nb int) int" },
+            { re: /for\s+/, msg: "Использование цикла for" },
             { re: /IterativeFactorial\s*\(\s*4\s*\)/, msg: "Вызов IterativeFactorial(4)" },
           ],
         }),
         makeTask({
           id: "t51",
           hard: true,
-          title: "RecursiveFactorial (рекурсивный факториал)",
-          desc: R`Решите задачу 01 Edu {{RecursiveFactorial(nb int) int}} рекурсивно, **без использования циклов for**!
-Правила:
-- Если nb < 0 или nb > 20 $\rightarrow$ возвращаем 0.
-- Базовый случай: если nb == 0 $\rightarrow$ возвращаем 1.
-- Шаг: возвращаем nb * RecursiveFactorial(nb - 1).`,
+          title: "RecursiveFactorial: факториал через рекурсию",
+          desc: R`Напишите функцию {{RecursiveFactorial(nb int) int}}, которая считает факториал рекурсивно, БЕЗ использования циклов! Не забудьте про базовый случай {{nb == 0}} и защиту от отрицательных чисел.`,
           plan: [
-            "Объявите func RecursiveFactorial(nb int) int",
-            "Добавьте защиту: if nb < 0 || nb > 20 { return 0 }",
-            "Добавьте базовый случай: if nb == 0 { return 1 }",
-            "Сделайте рекурсивный вызов: return nb * RecursiveFactorial(nb - 1)",
-            "В main вызовите с 4 (ответ 24) и с 0 (ответ 1)",
+            "Проверьте некорректный ввод: if nb < 0 || nb > 20 { return 0 }",
+            "Базовый случай: if nb == 0 { return 1 }",
+            "Рекурсивный вызов: return nb * RecursiveFactorial(nb - 1)",
           ],
-          output: "24\n1",
-          hint: "В этой задаче нельзя использовать for. Функция должна вызывать саму себя.",
+          output: "24",
+          hint: "Никаких for! Только вызов RecursiveFactorial(nb - 1).",
           checks: [
-            { re: /func\s+RecursiveFactorial\s*\(\s*nb\s+int\s*\)\s*int\s*\{/, msg: "func RecursiveFactorial(nb int) int {" },
-            { re: /nb\s*<\s*0/, msg: "Проверка на nb < 0" },
-            { re: /nb\s*==\s*0/, msg: "Базовый случай: if nb == 0 { return 1 }" },
-            { re: /RecursiveFactorial\s*\(\s*nb\s*-\s*1\s*\)/, msg: "Рекурсивный вызов: RecursiveFactorial(nb - 1)" },
+            { re: /func\s+RecursiveFactorial\s*\(\s*nb\s+int\s*\)\s+int/, msg: "func RecursiveFactorial(nb int) int" },
+            { re: /RecursiveFactorial\s*\(\s*nb\s*-\s*1\s*\)/, msg: "Рекурсивный вызов RecursiveFactorial(nb - 1)" },
           ],
-          starter: "package main\n\nimport \"fmt\"\n\n// Напишите RecursiveFactorial здесь\n\nfunc main() {\n    fmt.Println(RecursiveFactorial(4))\n    fmt.Println(RecursiveFactorial(0))\n}\n",
+          starter: "package main\n\nimport \"fmt\"\n\n// func RecursiveFactorial(nb int) int\n\nfunc main() {\n    fmt.Println(RecursiveFactorial(4))\n}\n",
           solution: `package main
 
 import "fmt"
@@ -495,66 +719,52 @@ func RecursiveFactorial(nb int) int {
 
 func main() {
     fmt.Println(RecursiveFactorial(4))
-    fmt.Println(RecursiveFactorial(0))
 }
 `,
         }),
         makeTask({
           id: "t52",
-          title: "IterativePower (возведение в степень циклом)",
-          desc: R`Напишите функцию {{IterativePower(nb int, power int) int}}, которая возводит число nb в степень power циклом for.
-Правила 01 Edu:
-- Если power < 0 $\rightarrow$ возвращаем 0.
-- Если power == 0 $\rightarrow$ возвращаем 1.`,
+          title: "IterativePower: возведение в степень циклом",
+          desc: R`Напишите функцию {{IterativePower(nb int, power int) int}}, которая возводит число nb в степень power с помощью цикла for. Если степень отрицательная, верните 0. Любое число в степени 0 равно 1.`,
           body: [
             ["func IterativePower(nb int, power int) int {", "Функция принимает число и степень."],
-            ["    if power < 0 { return 0 }", "Отрицательная степень возвращает 0."],
-            ["    res := 1", "Любое число в степени 0 равно 1."],
-            ["    for i := 0; i < power; i++ {", "Цикл повторяется power раз."],
-            ["        res *= nb", "Умножаем результат на nb."],
+            ["    if power < 0 { return 0 }", "Отрицательная степень в int не представляется."],
+            ["    res := 1", "Любое число в степени 0 - это 1."],
+            ["    for i := 0; i < power; i++ {", "Цикл по числу умножений."],
+            ["        res *= nb", "Умножаем."],
             ["    }", "Конец цикла."],
             ["    return res", "Возвращаем результат."],
             ["}", "Конец функции."],
             ["", ""],
             ["func main() {", "Точка входа."],
-            ["    fmt.Println(IterativePower(2, 3))", "2^3 = 8."],
-            ["    fmt.Println(IterativePower(5, -1))", "Для отрицательной степени ответ 0."],
+            ["    fmt.Println(IterativePower(2, 4))", "2^4 = 16."],
             ["}", "Конец main."],
           ],
-          output: "8\n0",
-          hint: "Не забудьте: при power == 0 цикл ни разу не выполнится и функция вернёт res = 1, что математически верно.",
+          output: "16",
+          hint: "2 в степени 4 = 2 * 2 * 2 * 2 = 16.",
           checks: [
-            { re: /func\s+IterativePower\s*\(\s*nb\s+int\s*,\s*power\s+int\s*\)\s*int\s*\{/, msg: "func IterativePower(nb int, power int) int {" },
-            { re: /power\s*<\s*0/, msg: "if power < 0 { return 0 }" },
-            { re: /res\s*\*=\s*nb/, msg: "res *= nb" },
-            { re: /IterativePower\s*\(\s*2\s*,\s*3\s*\)/, msg: "Вызов IterativePower(2, 3)" },
+            { re: /func\s+IterativePower\s*\(\s*nb\s+int\s*,\s*power\s+int\s*\)\s+int/, msg: "func IterativePower(nb int, power int) int" },
+            { re: /for\s+/, msg: "Цикл for" },
+            { re: /IterativePower\s*\(\s*2\s*,\s*4\s*\)/, msg: "Вызов IterativePower(2, 4)" },
           ],
         }),
         makeTask({
           id: "t53",
           hard: true,
-          title: "RecursivePower (рекурсивная степень)",
-          desc: R`Решите задачу 01 Edu {{RecursivePower(nb int, power int) int}} рекурсивно без циклов for!
-Правила:
-- Если power < 0 $\rightarrow$ return 0.
-- Базовый случай: if power == 0 $\rightarrow$ return 1.
-- Шаг: return nb * RecursivePower(nb, power - 1).`,
+          title: "RecursivePower: возведение в степень рекурсией",
+          desc: R`Напишите функцию {{RecursivePower(nb int, power int) int}}, которая возводит число в степень рекурсивно БЕЗ циклов. Формула: {{nb^power = nb * nb^(power - 1)}}. Базовый случай: при {{power == 0}} возвращаем 1.`,
           plan: [
-            "Объявите func RecursivePower(nb int, power int) int",
-            "Добавьте защиту: if power < 0 { return 0 }",
-            "Добавьте базовый случай: if power == 0 { return 1 }",
-            "Сделайте рекурсивный вызов: return nb * RecursivePower(nb, power - 1)",
-            "В main проверьте на 2^3 (8) и 4^0 (1)",
+            "Если power < 0, верните 0",
+            "Базовый случай: if power == 0 { return 1 }",
+            "Рекурсивный вызов: return nb * RecursivePower(nb, power - 1)",
           ],
-          output: "8\n1",
-          hint: "Степень уменьшается на 1 с каждым вызовом: power - 1.",
+          output: "16",
+          hint: "Базовый случай: power == 0 вернёт 1.",
           checks: [
-            { re: /func\s+RecursivePower\s*\(\s*nb\s+int\s*,\s*power\s+int\s*\)\s*int\s*\{/, msg: "func RecursivePower(nb int, power int) int {" },
-            { re: /power\s*<\s*0/, msg: "if power < 0 { return 0 }" },
-            { re: /power\s*==\s*0/, msg: "Базовый случай: if power == 0 { return 1 }" },
-            { re: /RecursivePower\s*\(\s*nb\s*,\s*power\s*-\s*1\s*\)/, msg: "RecursivePower(nb, power - 1)" },
+            { re: /func\s+RecursivePower\s*\(\s*nb\s+int\s*,\s*power\s+int\s*\)\s+int/, msg: "func RecursivePower(nb int, power int) int" },
+            { re: /RecursivePower\s*\(\s*nb\s*,\s*power\s*-\s*1\s*\)/, msg: "Вызов RecursivePower(nb, power - 1)" },
           ],
-          starter: "package main\n\nimport \"fmt\"\n\n// Напишите RecursivePower здесь\n\nfunc main() {\n    fmt.Println(RecursivePower(2, 3))\n    fmt.Println(RecursivePower(4, 0))\n}\n",
+          starter: "package main\n\nimport \"fmt\"\n\n// func RecursivePower(nb int, power int) int\n\nfunc main() {\n    fmt.Println(RecursivePower(2, 4))\n}\n",
           solution: `package main
 
 import "fmt"
@@ -570,8 +780,7 @@ func RecursivePower(nb int, power int) int {
 }
 
 func main() {
-    fmt.Println(RecursivePower(2, 3))
-    fmt.Println(RecursivePower(4, 0))
+    fmt.Println(RecursivePower(2, 4))
 }
 `,
         }),
@@ -579,165 +788,133 @@ func main() {
     },
 
     // ==========================================
-    // ТЕМА 22: Алгоритмы: Фибоначчи, Корень и Простые числа
+    // ТЕМА 18: Алгоритмы: Фибоначчи, Корень и Простые числа
     // ==========================================
     {
-      id: 22,
+      id: 18,
       track: "piscine",
+      widgetTitle: "Интерактивный тренажёр: Решето простых чисел и Поиск корня",
       title: "Алгоритмы: Фибоначчи, Корень и Простые числа",
-      about: "алгоритмы 4-го квеста Piscine: ветвящаяся рекурсия Фибоначчи, целочисленный квадратный корень и оптимизация простых чисел до корня из N",
+      about: "алгоритмические задачи бассейна 01 Edu: ряд Фибоначчи, целочисленный квадратный корень и проверка простых чисел",
       theory: R`
-Здесь собраны классические задачи 01 Edu Piscine на математические алгоритмы.
+В этих задачах студенты бассейна учатся писать эффективные алгоритмы:
 
-### 1. Числа Фибоначчи
-Ряд Фибоначчи: {{0, 1, 1, 2, 3, 5, 8, 13, 21...}}
-Каждое число — сумма двух предыдущих:
-{{Fibonacci(n) = Fibonacci(n-1) + Fibonacci(n-2)}}
-- Базовые случаи: {{index == 0 -> 0}}, {{index == 1 -> 1}}.
-- Краевое условие 01 Edu: если индекс отрицательный ({{index < 0}}), функция должна вернуть {{-1}}!
+1. **Числа Фибоначчи**:
+   - Последовательность, где каждое число — сумма двух предыдущих:
+     {{0, 1, 1, 2, 3, 5, 8, 13, 21...}}
+   - Базовый случай: {{Fibonacci(0) = 0}}, {{Fibonacci(1) = 1}}.
+   - Для отрицательных индексов возвращают -1.
+   - Рекуррентная формула: {{Fibonacci(n) = Fibonacci(n-1) + Fibonacci(n-2)}}.
 
-### 2. Целочисленный квадратный корень (Sqrt)
-Задача: найти целое число $i$, такое что $i \times i = nb$.
-Если число не является точным квадратом (например, для 5 или 15), корень не целый — возвращаем {{0}}.
-Перебор: идём от $i = 1$ пока $i \times i \le nb$.
+2. **Квадратный корень (Sqrt)**:
+   - Ищет такое целое число {{x}}, что {{x * x == nb}}.
+   - Если точного корня нет (например, для 5 или 10), функция возвращает 0.
 
-### 3. Простые числа (IsPrime и FindNextPrime)
-Простое число делится без остатка только на 1 и на само себя.
-- Числа $\le 1$ — НЕ простые.
-- **Оптимизация**: проверять делители от 2 до $n$ — очень медленно. Достаточно проверять только до $\sqrt{n}$ (то есть {{i * i <= nb}})! Если до корня делителей нет, то и дальше их быть не может.
-- Чтобы найти следующее простое (FindNextPrime): просто запускаем цикл {{for !IsPrime(nb) { nb++ }}}!
+3. **Простые числа (IsPrime / FindNextPrime)**:
+   - Число больше 1 называется **простым**, если оно делится только на 1 и на само себя.
+   - Лайфхак оптимизации: делители не нужно проверять до самого {{nb}}! Достаточно проверять до {{i * i <= nb}} (то есть до корня из nb). Если до корня делителей нет, дальше их тоже не будет!
 `,
       examples: R`
-Проверка простоты с оптимизацией до корня из n:
+Быстрая проверка простоты числа:
 
 ${F}
+package main
+
+import "fmt"
+
 func IsPrime(nb int) bool {
-    if nb <= 1 {
-        return false
-    }
+    if nb <= 1 { return false }
     for i := 2; i*i <= nb; i++ {
-        if nb%i == 0 {
-            return false
+        if nb % i == 0 {
+            return false // нашёлся делитель, число составное!
         }
     }
-    return true
+    return true // делителей нет, число простое!
+}
+
+func main() {
+    fmt.Println(IsPrime(5)) // true
+    fmt.Println(IsPrime(4)) // false
 }
 ${F}
 `,
       quiz: [
         {
-          q: "Почему при проверке простоты достаточно идти до i*i <= nb?",
-          o: ["Если у числа есть делитель больше корня, то парный ему делитель обязательно меньше корня", "Потому что корень - самое большое число", "Это просто эмпирическое правило"],
-          why: "Делители всегда ходят парами (например для 36: 2*18, 3*12, 4*9, 6*6). Если до корня пары нет, её нет и после.",
-        },
-        {
-          q: "Что по регламенту 01 Edu должен вернуть Fibonacci(-3)?",
-          o: ["-1", "0", "1"],
-          why: "Для отрицательных индексов спецификация 01 Edu требует возвращать -1.",
+          q: "Почему при проверке простоты числа достаточно проверять делители до корня из N (i * i <= N)?",
+          o: ["Потому что все парные делители больше корня зеркальны делителям меньше корня", "Это просто ограничение языка Go", "Потому что корень всегда простое число"],
+          why: "Если N = a * b, то один из сомножителей обязательно меньше или равен корню из N.",
         },
       ],
       tasks: [
         makeTask({
           id: "t54",
-          title: "Fibonacci (числа Фибоначчи)",
-          desc: R`Напишите функцию {{Fibonacci(index int) int}}, которая возвращает n-е число Фибоначчи. Если index < 0, возвращайте -1.`,
+          title: "Fibonacci: рекурсивное вычисление числа Фибоначчи",
+          desc: R`Напишите функцию {{Fibonacci(index int) int}}, которая возвращает число Фибоначчи по его номеру. Если индекс отрицательный, верните -1. Нулевое число равно 0, первое — 1.`,
           body: [
-            ["func Fibonacci(index int) int {", "Функция принимает индекс."],
-            ["    if index < 0 { return -1 }", "Отрицательный индекс возвращает -1."],
-            ["    if index == 0 { return 0 }", "Базовый случай 0."],
-            ["    if index == 1 { return 1 }", "Базовый случай 1."],
-            ["    return Fibonacci(index-1) + Fibonacci(index-2)", "Сумма двух предыдущих."],
+            ["func Fibonacci(index int) int {", "Объявляем функцию Fibonacci."],
+            ["    if index < 0 { return -1 }", "Отрицательный индекс - возвращаем -1."],
+            ["    if index == 0 { return 0 }", "0-е число Фибоначчи."],
+            ["    if index == 1 { return 1 }", "1-е число Фибоначчи."],
+            ["    return Fibonacci(index-1) + Fibonacci(index-2)", "Сумма двух предыдущих чисел."],
             ["}", "Конец функции."],
             ["", ""],
-            ["func main() {", "Начало main."],
+            ["func main() {", "Точка входа."],
             ["    fmt.Println(Fibonacci(4))", "Fibonacci(4) = 3."],
-            ["    fmt.Println(Fibonacci(-1))", "Для -1 ответ -1."],
             ["}", "Конец main."],
           ],
-          output: "3\n-1",
-          hint: "Обратите внимание на два базовых случая: для 0 возвращается 0, для 1 возвращается 1.",
+          output: "3",
+          hint: "F(0)=0, F(1)=1, F(2)=1, F(3)=2, F(4)=3.",
           checks: [
-            { re: /func\s+Fibonacci\s*\(\s*index\s+int\s*\)\s*int\s*\{/, msg: "func Fibonacci(index int) int {" },
-            { re: /index\s*<\s*0/, msg: "if index < 0 { return -1 }" },
-            { re: /Fibonacci\s*\(\s*index\s*-\s*1\s*\)\s*\+\s*Fibonacci\s*\(\s*index\s*-\s*2\s*\)/, msg: "Fibonacci(index-1) + Fibonacci(index-2)" },
+            { re: /func\s+Fibonacci\s*\(\s*index\s+int\s*\)\s+int/, msg: "func Fibonacci(index int) int" },
+            { re: /Fibonacci\s*\(\s*index\s*-\s*1\s*\)/, msg: "Рекурсивный вызов Fibonacci(index - 1)" },
           ],
         }),
         makeTask({
           id: "t55",
-          hard: true,
-          title: "Sqrt (целочисленный квадратный корень)",
-          desc: R`Решите задачу 01 Edu {{Sqrt(nb int) int}}!
-Функция возвращает квадратный корень из nb, если он является целым числом. Если nb <= 0 или число не является точным квадратом, возвращайте 0.`,
-          plan: [
-            "Объявите func Sqrt(nb int) int",
-            "Проверьте if nb <= 0 { return 0 }",
-            "Запустите цикл for i := 1; i*i <= nb; i++",
-            "Если i*i == nb, верните i",
-            "Если цикл завершился и точного совпадения нет, верните 0",
+          title: "Sqrt: целочисленный квадратный корень",
+          desc: R`Напишите функцию {{Sqrt(nb int) int}}, которая возвращает квадратный корень целого числа. Если у числа нет точного целого квадратного корня (например, для 5 или 10), верните 0.`,
+          body: [
+            ["func Sqrt(nb int) int {", "Объявляем функцию Sqrt."],
+            ["    if nb <= 0 { return 0 }", "У отрицательных чисел и нуля в задаче корня нет."],
+            ["    for i := 1; i*i <= nb; i++ {", "Ищем число i, квадрат которого равен nb."],
+            ["        if i*i == nb { return i }", "Если нашли точный корень, возвращаем i."],
+            ["    }", "Конец цикла."],
+            ["    return 0", "Если точного корня нет, возвращаем 0."],
+            ["}", "Конец функции."],
+            ["", ""],
+            ["func main() {", "Точка входа."],
+            ["    fmt.Println(Sqrt(4))", "Корень из 4 - это 2."],
+            ["    fmt.Println(Sqrt(3))", "У 3 нет точного корня - 0."],
+            ["}", "Конец main."],
           ],
-          output: "4\n0",
-          hint: "Для проверки квадрата используйте i*i == nb.",
+          output: "2\n0",
+          hint: "Проверяйте i*i == nb. Если вышли из цикла и не нашли, верните 0.",
           checks: [
-            { re: /func\s+Sqrt\s*\(\s*nb\s+int\s*\)\s*int\s*\{/, msg: "func Sqrt(nb int) int {" },
-            { re: /nb\s*<=\s*0/, msg: "if nb <= 0 { return 0 }" },
-            { re: /i\s*\*\s*i\s*==\s*nb/, msg: "if i*i == nb { return i }" },
+            { re: /func\s+Sqrt\s*\(\s*nb\s+int\s*\)\s+int/, msg: "func Sqrt(nb int) int" },
+            { re: /i\s*\*\s*i/, msg: "Проверка i*i" },
+            { re: /Sqrt\s*\(\s*4\s*\)/, msg: "Вызов Sqrt(4)" },
           ],
-          starter: "package main\n\nimport \"fmt\"\n\n// Напишите Sqrt здесь\n\nfunc main() {\n    fmt.Println(Sqrt(16))\n    fmt.Println(Sqrt(5))\n}\n",
-          solution: `package main
-
-import "fmt"
-
-func Sqrt(nb int) int {
-    if nb <= 0 {
-        return 0
-    }
-    for i := 1; i*i <= nb; i++ {
-        if i*i == nb {
-            return i
-        }
-    }
-    return 0
-}
-
-func main() {
-    fmt.Println(Sqrt(16))
-    fmt.Println(Sqrt(5))
-}
-`,
         }),
         makeTask({
           id: "t56",
           hard: true,
-          title: "IsPrime & FindNextPrime (простые числа)",
+          title: "IsPrime & FindNextPrime: простые числа",
           desc: R`Напишите две функции:
-1. {{IsPrime(nb int) bool}}: возвращает true, если число простое. Числа <= 1 не простые.
-2. {{FindNextPrime(nb int) int}}: возвращает следующее простое число, большее или равное nb.`,
+1. {{IsPrime(nb int) bool}} — возвращает true, если nb простое, и false в противном случае.
+2. {{FindNextPrime(nb int) int}} — возвращает само число nb (если оно простое) или ближайшее следующее простое число больше nb.`,
           plan: [
-            "Напишите IsPrime(nb int) bool: проверка nb <= 1 -> false",
-            "В цикле for i := 2; i*i <= nb; i++ проверяйте nb%i == 0",
-            "Напишите FindNextPrime(nb int) int: если nb <= 2 return 2",
+            "Напишите func IsPrime(nb int) bool: числа <= 1 не простые. Цикл от 2 до i*i <= nb проверяет nb % i == 0",
+            "Напишите func FindNextPrime(nb int) int: если nb <= 2, верните 2",
             "Запустите цикл for !IsPrime(nb) { nb++ } и верните nb",
-            "В main протестируйте IsPrime(5), IsPrime(4) и FindNextPrime(5), FindNextPrime(14)",
           ],
-          output: "true false\n5 17",
-          hint: "Функция FindNextPrime может просто вызывать IsPrime внутри цикла!",
+          output: "true\n5\n7",
+          hint: "В FindNextPrime просто проверяйте IsPrime(nb) в цикле, увеличивая nb++.",
           checks: [
-            { re: /func\s+IsPrime\s*\(\s*nb\s+int\s*\)\s*bool\s*\{/, msg: "func IsPrime(nb int) bool {" },
-            { re: /func\s+FindNextPrime\s*\(\s*nb\s+int\s*\)\s*int\s*\{/, msg: "func FindNextPrime(nb int) int {" },
-            { re: /i\s*\*\s*i\s*<=\s*nb/, msg: "Оптимизация до корня: i*i <= nb" },
-            { re: /!IsPrime\s*\(\s*nb\s*\)/, msg: "Вызов IsPrime в FindNextPrime" },
+            { re: /func\s+IsPrime\s*\(\s*nb\s+int\s*\)\s+bool/, msg: "func IsPrime(nb int) bool" },
+            { re: /func\s+FindNextPrime\s*\(\s*nb\s+int\s*\)\s+int/, msg: "func FindNextPrime(nb int) int" },
+            { re: /IsPrime\s*\(\s*5\s*\)/, msg: "Вызов IsPrime(5)" },
           ],
-          starter: `package main
-
-import "fmt"
-
-// Напишите IsPrime и FindNextPrime здесь
-
-func main() {
-    fmt.Println(IsPrime(5), IsPrime(4))
-    fmt.Println(FindNextPrime(5), FindNextPrime(14))
-}
-`,
+          starter: "package main\n\nimport \"fmt\"\n\n// func IsPrime(nb int) bool\n// func FindNextPrime(nb int) int\n\nfunc main() {\n    fmt.Println(IsPrime(5))\n    fmt.Println(FindNextPrime(5))\n    fmt.Println(FindNextPrime(6))\n}\n",
           solution: `package main
 
 import "fmt"
@@ -765,8 +942,9 @@ func FindNextPrime(nb int) int {
 }
 
 func main() {
-    fmt.Println(IsPrime(5), IsPrime(4))
-    fmt.Println(FindNextPrime(5), FindNextPrime(14))
+    fmt.Println(IsPrime(5))
+    fmt.Println(FindNextPrime(5))
+    fmt.Println(FindNextPrime(6))
 }
 `,
         }),
@@ -774,62 +952,58 @@ func main() {
     },
 
     // ==========================================
-    // ТЕМА 23: Вершина Piscine: Задача о 8 ферзях (EightQueens)
+    // ТЕМА 19: Вершина Piscine: Задача о 8 ферзях (EightQueens)
     // ==========================================
     {
-      id: 23,
+      id: 19,
       track: "piscine",
+      widgetTitle: "Интерактивная шахматная доска 8x8 и Backtracking",
       title: "Вершина Piscine: Задача о 8 ферзях (EightQueens)",
-      about: "самая известная сложная задача бассейна: расставить 8 ферзей на доске без взаимных атак методом поиска с возвратом (бэктрекинг)",
+      about: "самая знаменитая задача бассейна 01 Edu: рекурсивный алгоритм с возвратом (backtracking) для расстановки 8 ферзей",
       theory: R`
-Задача о восьми ферзях — легенда 01 Edu Piscine.
+**EightQueens** — культовая задача в 01 Edu Piscine.
 
-**Формулировка:**
-Расставьте 8 ферзей на шахматной доске 8×8 так, чтобы ни один ферзь не бил другого (ни по горизонтали, ни по вертикали, ни по диагоналям).
-Всего существует **ровно 92 решения**. Функция должна напечатать каждое решение отдельной строкой в лексикографическом порядке:
+**Условие задачи**:
+Расставить 8 шахматных ферзей на доске 8х8 так, чтобы ни один ферзь не бил другого (то есть ни два ферзя не стояли на одной горизонтали, вертикали или диагонали).
+
+Формат вывода в 01 Edu:
+Каждое решение выводится на отдельной строке в виде 8 цифр, например:
 {{15863724}}
-{{16837425}}
-...
-Каждая цифра — это позиция ферзя в соответствующей колонке (от 1 до 8).
+Каждая цифра — это номер строки (от 1 до 8), где стоит ферзь в соответствующем столбце (слева направо). Решения должны быть отсортированы по возрастанию! Всего существует ровно 92 решения.
 
-### Как решить эту задачу не-программисту?
-Если пытаться перебрать все возможные клетки в лоб ($64^8 \approx 280$ триллионов вариантов), компьютер зависнет навсегда.
-
-Поэтому мы используем **Поиск с возвратом (Backtracking)**:
-1. **Компактная доска**: массив {{var board [8]int}}.
-   Индекс массива — это колонка (от 0 до 7). Значение — строка (от 0 до 7), где стоит ферзь.
-   Так ферзи автоматически никогда не окажутся в одной колонке!
-2. **Проверка безопасности (isSafe)**:
-   Когда мы хотим поставить ферзя в колонку {{col}} на строку {{row}}, мы проверяем только уже стоящих ферзей левее (в колонках от 0 до col-1):
-   - Одинаковая строка: {{prevRow == row}} $\rightarrow$ бьют!
-   - Одинаковая диагональ: если разница строк равна разнице колонок ({{|prevRow - row| == |prevCol - col|}}) $\rightarrow$ бьют!
-3. **Рекурсивный обход {{solve(col)}}**:
-   - Если {{col == 8}}: все 8 ферзей успешно расставлены! Печатаем позиции (+1 к каждой) и переводим строку.
-   - Иначе: для каждой строки от 0 до 7 проверяем, безопасна ли клетка. Если да — записываем {{board[col] = row}} и вызываем {{solve(col + 1)}}.
-   - Если зашли в тупик — рекурсия сама откатывается назад (бэктрекинг) и пробует следующую строку!
+**Как работает алгоритм с возвратом (Backtracking)**:
+1. Ставим первого ферзя в 1-й столбец на 1-ю строку.
+2. Переходим во 2-й столбец и ищем свободную строку, не атакованную предыдущими ферзями.
+3. Если нашли — ставим и рекурсивно переходим в 3-й столбец.
+4. **Если зашли в тупик** (в текущем столбце все клетки бьются):
+   Делаем шаг назад (**backtrack**), сдвигаем ферзя в предыдущем столбце на строку ниже и пробуем снова!
+5. Когда все 8 столбцов успешно заполнены — печатаем найденное 8-значное число.
 `,
       examples: R`
-Первое решение {{15863724}} означает:
-- 1-я колонка: ферзь на 1-й строке
-- 2-я колонка: ферзь на 5-й строке
-- 3-я колонка: ферзь на 8-й строке
-- 4-я колонка: ферзь на 6-й строке
-- 5-я колонка: ферзь на 3-й строке
-- 6-я колонка: ферзь на 7-й строке
-- 7-я колонка: ферзь на 2-й строке
-- 8-я колонка: ферзь на 4-й строке
-Ни один ферзь не атакует другого!
+Как проверить, бьют ли два ферзя друг друга:
+
+${F}
+// Ферзь 1 стоит в (c1, r1), ферзь 2 стоит в (c2, r2)
+// Одна строка: r1 == r2
+// Одна диагональ: |r1 - r2| == |c1 - c2|
+func isSafe(board [8]int, col, row int) bool {
+    for prevCol := 0; prevCol < col; prevCol++ {
+        prevRow := board[prevCol]
+        if prevRow == row { return false } // одна строка
+        diffRow := row - prevRow
+        if diffRow < 0 { diffRow = -diffRow }
+        diffCol := col - prevCol
+        if diffRow == diffCol { return false } // одна диагональ
+    }
+    return true
+}
+${F}
 `,
       quiz: [
         {
-          q: "Почему достаточно массива из 8 чисел для представления доски 8х8?",
-          o: ["Потому что в каждой колонке может стоять ровно один ферзь", "Потому что ферзи стоят только по диагонали", "Это ограничение языка Go"],
-          why: "Если в одной колонке будет два ферзя, они сразу бьют друг друга. Поэтому индекс - это колонка, а число - строка.",
-        },
-        {
-          q: "Сколько всего существует правильных решений задачи о 8 ферзях?",
-          o: ["92", "64", "8"],
-          why: "Существует ровно 92 уникальных расстановки 8 ферзей на доске 8х8.",
+          q: "Сколько всего существует правильных решений расстановки 8 ферзей на доске 8х8?",
+          o: ["92 решения", "8 решений", "64 решения"],
+          why: "На стандартной шахматной доске 8х8 существует ровно 92 неповторяющихся расстановки.",
         },
       ],
       tasks: [
@@ -837,72 +1011,64 @@ func main() {
           id: "t57",
           hard: true,
           exam: true,
-          title: "EightQueens (92 решения задачи о ферзях)",
-          desc: R`Напишите функцию {{EightQueens()}}, которая рекурсивно находит и печатает все 92 решения задачи о 8 ферзях в порядке возрастания. Каждое решение — отдельная строка из 8 цифр от 1 до 8. Первое решение: {{15863724}}.`,
+          title: "EightQueens: вывод всех 92 решений рекурсией",
+          desc: R`Напишите функцию {{EightQueens()}}, которая находит и печатает все решения задачи о восьми ферзях в порядке возрастания. Каждое решение выводится на отдельной строке: первая цифра — позиция ферзя в 1-м столбце, вторая — во 2-м, и так далее. Обязательно используйте рекурсию!`,
           plan: [
-            "Создайте массив var board [8]int для хранения позиций ферзей",
-            "Опишите рекурсивную функцию solve(col int)",
-            "Базовый случай: if col == 8 { напечатайте все цифры board[i] + 1 и fmt.Println(); return }",
-            "В цикле for row := 0; row < 8; row++ проверяйте безопасность клетки относительно предыдущих колонок",
-            "Клетка безопасна, если prevRow != row && |prevRow - row| != col - prevCol",
-            "Если безопасна: board[col] = row и solve(col + 1)",
-            "В конце функции EightQueens запустите solve(0)",
+            "Создайте массив позиций: var board [8]int, где индекс - столбец, а значение - строка (1..8)",
+            "Напишите вспомогательную функцию isSafe(col, row int) bool для проверки строк и диагоналей",
+            "Напишите рекурсивную функцию solve(col int): если col == 8, напечатайте все цифры и fmt.Println()",
+            "В цикле for row := 1; row <= 8; row++: если isSafe, ставьте board[col] = row и вызывайте solve(col + 1)",
+            "В функции EightQueens() запустите solve(0)",
           ],
-          output: "15863724\n16837425\n17468253\n...\n84136275",
-          hint: "Для вычисления модуля разницы без math.Abs используйте условие: if diff < 0 { diff = -diff }.",
+          output: "15863724\n16837425\n17468253\n...",
+          hint: "Проверка диагонали: абсолютная разница строк равна разнице столбцов: abs(row - prevRow) == col - prevCol.",
           checks: [
             { re: /func\s+EightQueens\s*\(\s*\)/, msg: "func EightQueens()" },
-            { re: /board/i, msg: "Массив board [8]int" },
-            { re: /solve\s*\(\s*(col\s*\+\s*1|\w+)\s*\)/, msg: "Рекурсивный вызов solve(col + 1)" },
-            { re: /fmt\.Print/, msg: "Печать решения" },
+            { re: /15863724/, msg: "Первое решение 15863724" },
           ],
-          starter: `package main
-
-import "fmt"
-
-func EightQueens() {
-    // Реализуйте поиск с возвратом здесь
-}
-
-func main() {
-    EightQueens()
-}
-`,
+          starter: "package main\n\nimport \"fmt\"\n\n// func EightQueens()\n\nfunc main() {\n    EightQueens()\n}\n",
           solution: `package main
 
 import "fmt"
 
 func EightQueens() {
     var board [8]int
+
+    var isSafe func(col, row int) bool
+    isSafe = func(col, row int) bool {
+        for c := 0; c < col; c++ {
+            r := board[c]
+            if r == row {
+                return false
+            }
+            diffR := row - r
+            if diffR < 0 {
+                diffR = -diffR
+            }
+            if diffR == col-c {
+                return false
+            }
+        }
+        return true
+    }
+
     var solve func(col int)
     solve = func(col int) {
         if col == 8 {
-            for _, row := range board {
-                fmt.Print(row + 1)
+            for _, r := range board {
+                fmt.Print(r)
             }
             fmt.Println()
             return
         }
-        for row := 0; row < 8; row++ {
-            safe := true
-            for prevCol := 0; prevCol < col; prevCol++ {
-                prevRow := board[prevCol]
-                diffRow := prevRow - row
-                if diffRow < 0 {
-                    diffRow = -diffRow
-                }
-                diffCol := col - prevCol
-                if prevRow == row || diffRow == diffCol {
-                    safe = false
-                    break
-                }
-            }
-            if safe {
+        for row := 1; row <= 8; row++ {
+            if isSafe(col, row) {
                 board[col] = row
                 solve(col + 1)
             }
         }
     }
+
     solve(0)
 }
 
@@ -915,21 +1081,30 @@ func main() {
     },
   ];
 
-  // Добавляем новые темы в общий список TOPICS
-  TOPICS.push(...PISCINE_TOPICS);
+  // Добавляем темы бассейна в общий список
+  if (window.TOPICS) {
+    PISCINE_TOPICS.forEach(t => {
+      const idx = TOPICS.findIndex(existing => existing.id === t.id);
+      if (idx !== -1) TOPICS[idx] = t;
+      else TOPICS.push(t);
+    });
+  }
 
   // ==========================================
   // Интерактивные визуализаторы (Interactive Widgets)
   // ==========================================
   window.initPiscineWidgets = function (topicId) {
-    if (topicId === 19) initQuadViz();
-    if (topicId === 20) initPointerViz();
-    if (topicId === 21) initRecursionViz();
+    if (topicId === 14) initQuadViz();
+    if (topicId === 15) initPointerViz();
+    if (topicId === 16) initRuneViz();
+    if (topicId === 17) initRecursionViz();
+    if (topicId === 18) initMathViz();
+    if (topicId === 19) initChessViz();
   };
 
   // --- 1. Quad Visualizer ---
   function initQuadViz() {
-    const el = document.getElementById("quadVizContainer");
+    const el = document.getElementById("piscineWidgetArea") || document.getElementById("quadVizContainer");
     if (!el) return;
 
     el.innerHTML = `
@@ -942,6 +1117,7 @@ func main() {
             <div class="qw-btns">
               <button class="btn small on" id="qwTypeA">QuadA</button>
               <button class="btn ghost small" id="qwTypeB">QuadB</button>
+              <button class="btn ghost small" id="qwTypeC">QuadC</button>
               <button class="btn small" id="qwPlay">▶ Шаг за шагом</button>
             </div>
           </div>
@@ -971,12 +1147,16 @@ func main() {
             if ((r === 0 || r === y - 1) && (c === 0 || c === x - 1)) { ch = "o"; role = "corner"; }
             else if (r === 0 || r === y - 1) { ch = "-"; role = "horiz"; }
             else if (c === 0 || c === x - 1) { ch = "|"; role = "vert"; }
-          } else {
+          } else if (type === "B") {
             if (r === 0 && c === 0) { ch = "/"; role = "corner"; }
             else if (r === 0 && c === x - 1) { ch = "\\"; role = "corner"; }
             else if (r === y - 1 && c === 0) { ch = "\\"; role = "corner"; }
             else if (r === y - 1 && c === x - 1) { ch = "/"; role = "corner"; }
             else if (r === 0 || r === y - 1 || c === 0 || c === x - 1) { ch = "*"; role = "border"; }
+          } else {
+            if (r === 0 && (c === 0 || c === x - 1)) { ch = "A"; role = "corner"; }
+            else if (r === y - 1 && (c === 0 || c === x - 1)) { ch = "C"; role = "corner"; }
+            else if (r === 0 || r === y - 1 || c === 0 || c === x - 1) { ch = "B"; role = "border"; }
           }
           const isActive = (r === activeRow && c === activeCol);
           html += `<div class="qw-cell ${role} ${isActive ? "active" : ""}" data-r="${r}" data-c="${c}" data-ch="${ch}" data-role="${role}">
@@ -995,7 +1175,7 @@ func main() {
       if (role === "corner") text = `УГОЛ: row = ${r}, col = ${c} (крайняя строка и крайний столбец) -> символ '${ch}'`;
       else if (role === "horiz") text = `ВЕРХ/НИЗ: row = ${r} (строка 0 или y-1) -> символ '-'`;
       else if (role === "vert") text = `БОКОВАЯ СТОРОНА: col = ${c} (столбец 0 или x-1) -> символ '|'`;
-      else if (role === "border") text = `ГРАНИЦА: строка или столбец на краю -> символ '*'`;
+      else if (role === "border") text = `ГРАНИЦА: строка или столбец на краю -> символ '${ch}'`;
       else text = `ВНУТРИ: не угол и не граница -> печатаем ПРОБЕЛ ' '`;
 
       info.innerHTML = `
@@ -1007,43 +1187,52 @@ func main() {
 
     renderGrid();
 
-    document.getElementById("qwX").oninput = e => { x = +e.target.value; document.getElementById("qwXval").textContent = x; renderGrid(); };
-    document.getElementById("qwY").oninput = e => { y = +e.target.value; document.getElementById("qwYval").textContent = y; renderGrid(); };
-    document.getElementById("qwTypeA").onclick = () => {
-      type = "A";
-      document.getElementById("qwTypeA").className = "btn small on";
-      document.getElementById("qwTypeB").className = "btn ghost small";
-      renderGrid();
-    };
-    document.getElementById("qwTypeB").onclick = () => {
-      type = "B";
-      document.getElementById("qwTypeB").className = "btn small on";
-      document.getElementById("qwTypeA").className = "btn ghost small";
+    const xEl = document.getElementById("qwX");
+    const yEl = document.getElementById("qwY");
+    if (xEl) xEl.oninput = e => { x = +e.target.value; document.getElementById("qwXval").textContent = x; renderGrid(); };
+    if (yEl) yEl.oninput = e => { y = +e.target.value; document.getElementById("qwYval").textContent = y; renderGrid(); };
+
+    const setType = (t) => {
+      type = t;
+      ["A", "B", "C"].forEach(k => {
+        const btn = document.getElementById("qwType" + k);
+        if (btn) btn.className = (k === t) ? "btn small on" : "btn ghost small";
+      });
       renderGrid();
     };
 
-    document.getElementById("qwGrid").addEventListener("mouseover", e => {
-      const cell = e.target.closest(".qw-cell");
-      if (cell) updateInfo(+cell.dataset.r, +cell.dataset.c, cell.dataset.ch, cell.dataset.role);
-    });
+    const bA = document.getElementById("qwTypeA"); if (bA) bA.onclick = () => setType("A");
+    const bB = document.getElementById("qwTypeB"); if (bB) bB.onclick = () => setType("B");
+    const bC = document.getElementById("qwTypeC"); if (bC) bC.onclick = () => setType("C");
 
-    document.getElementById("qwPlay").onclick = () => {
-      clearInterval(animId);
-      let curR = 0, curC = 0;
-      animId = setInterval(() => {
-        renderGrid(curR, curC);
-        const cell = document.querySelector(`.qw-cell[data-r="${curR}"][data-c="${curC}"]`);
-        if (cell) updateInfo(curR, curC, cell.dataset.ch, cell.dataset.role);
-        curC++;
-        if (curC >= x) { curC = 0; curR++; }
-        if (curR >= y) { clearInterval(animId); setTimeout(() => renderGrid(), 1000); }
-      }, 160);
-    };
+    const gridEl = document.getElementById("qwGrid");
+    if (gridEl) {
+      gridEl.addEventListener("mouseover", e => {
+        const cell = e.target.closest(".qw-cell");
+        if (cell) updateInfo(+cell.dataset.r, +cell.dataset.c, cell.dataset.ch, cell.dataset.role);
+      });
+    }
+
+    const playBtn = document.getElementById("qwPlay");
+    if (playBtn) {
+      playBtn.onclick = () => {
+        clearInterval(animId);
+        let curR = 0, curC = 0;
+        animId = setInterval(() => {
+          renderGrid(curR, curC);
+          const cell = document.querySelector(`.qw-cell[data-r="${curR}"][data-c="${curC}"]`);
+          if (cell) updateInfo(curR, curC, cell.dataset.ch, cell.dataset.role);
+          curC++;
+          if (curC >= x) { curC = 0; curR++; }
+          if (curR >= y) { clearInterval(animId); setTimeout(() => renderGrid(), 1000); }
+        }, 150);
+      };
+    }
   }
 
   // --- 2. Pointer Visualizer ---
   function initPointerViz() {
-    const el = document.getElementById("pointerVizContainer");
+    const el = document.getElementById("piscineWidgetArea") || document.getElementById("pointerVizContainer");
     if (!el) return;
 
     el.innerHTML = `
@@ -1052,6 +1241,7 @@ func main() {
         <div class="ptr-actions">
           <button class="btn small" id="ptrVal">num = 100 (копия)</button>
           <button class="btn small on" id="ptrDeref">*ptr = 777 (разыменование!)</button>
+          <button class="btn small" id="ptrSwap">Swap(&num, &other)</button>
           <button class="btn ghost small" id="ptrReset">Сброс</button>
         </div>
         <div class="ptr-mem">
@@ -1060,11 +1250,16 @@ func main() {
             <div class="ptr-val" id="valA">42</div>
             <span class="ptr-name">переменная: num (int)</span>
           </div>
-          <div class="ptr-arrow" id="ptrArrow">⟵ указывает на адрес 0x20A0 ──</div>
+          <div class="ptr-arrow" id="ptrArrow">⟵ указывает на 0x20A0 ──</div>
           <div class="ptr-cell" id="cellP">
             <span class="ptr-addr">0x20B8 (адрес ptr)</span>
             <div class="ptr-val ok">0x20A0</div>
             <span class="ptr-name">указатель: ptr (*int)</span>
+          </div>
+          <div class="ptr-cell" id="cellB" style="margin-left:auto">
+            <span class="ptr-addr">0x20C0 (адрес other)</span>
+            <div class="ptr-val" id="valB">10</div>
+            <span class="ptr-name">переменная: other (int)</span>
           </div>
         </div>
         <div class="ptr-log" id="ptrLog">Нажмите кнопки выше, чтобы увидеть, как прямое изменение и изменение через *ptr влияют на одну и ту же ячейку памяти.</div>
@@ -1072,31 +1267,109 @@ func main() {
     `;
 
     const valA = document.getElementById("valA");
+    const valB = document.getElementById("valB");
     const log = document.getElementById("ptrLog");
 
-    document.getElementById("ptrVal").onclick = () => {
+    const btnVal = document.getElementById("ptrVal");
+    if (btnVal) btnVal.onclick = () => {
       valA.textContent = "100";
       valA.classList.add("flash");
       setTimeout(() => valA.classList.remove("flash"), 400);
       log.innerHTML = "Выполнилось: <code>num = 100</code>. Значение в ячейке <code>0x20A0</code> изменилось на 100. Указатель <code>ptr</code> продолжает указывать на неё же!";
     };
 
-    document.getElementById("ptrDeref").onclick = () => {
+    const btnDeref = document.getElementById("ptrDeref");
+    if (btnDeref) btnDeref.onclick = () => {
       valA.textContent = "777";
       valA.classList.add("flash");
       setTimeout(() => valA.classList.remove("flash"), 400);
       log.innerHTML = "Выполнилось: <code>*ptr = 777</code>. Компьютер пошёл по адресу <code>0x20A0</code> и записал туда 777. Теперь и <code>num</code>, и <code>*ptr</code> равны 777!";
     };
 
-    document.getElementById("ptrReset").onclick = () => {
-      valA.textContent = "42";
-      log.innerHTML = "Память сброшена к исходному состоянию: <code>num = 42</code>.";
+    const btnSwap = document.getElementById("ptrSwap");
+    if (btnSwap) btnSwap.onclick = () => {
+      const t = valA.textContent;
+      valA.textContent = valB.textContent;
+      valB.textContent = t;
+      valA.classList.add("flash"); valB.classList.add("flash");
+      setTimeout(() => { valA.classList.remove("flash"); valB.classList.remove("flash"); }, 400);
+      log.innerHTML = "Выполнилось: <code>Swap(&num, &other)</code>. Значения в ячейках <code>0x20A0</code> и <code>0x20C0</code> поменялись местами через их адреса!";
+    };
+
+    const btnReset = document.getElementById("ptrReset");
+    if (btnReset) btnReset.onclick = () => {
+      valA.textContent = "42"; valB.textContent = "10";
+      log.innerHTML = "Память сброшена: <code>num = 42, other = 10</code>.";
     };
   }
 
-  // --- 3. Recursion Visualizer ---
+  // --- 3. Rune & ASCII Visualizer ---
+  function initRuneViz() {
+    const el = document.getElementById("piscineWidgetArea");
+    if (!el) return;
+
+    el.innerHTML = `
+      <div class="rune-widget">
+        <div class="qw-title">🔤 Интерактивный сканер строк, байтов и рун (UTF-8 / ASCII)</div>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Введите любой текст (цифры, латиницу, кириллицу) и посмотрите, сколько байтов и рун он занимает:</p>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="rwInput" value="Go 2026! Привет" style="padding:8px 12px;font:14px var(--mono);background:#17151c;border:1px solid var(--line);border-radius:4px;color:#fff;flex:1;min-width:200px">
+          <button class="btn small on" id="rwSample">Пример: "12345"</button>
+        </div>
+        <div class="rw-sum" id="rwSum"></div>
+        <div style="overflow-x:auto;max-width:100%">
+          <table class="rw-table" id="rwTable">
+            <thead><tr><th>Символ</th><th>Тип</th><th>ASCII / Rune Code</th><th>Код (Hex)</th><th>Формула (r - '0')</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    const inp = document.getElementById("rwInput");
+    const sum = document.getElementById("rwSum");
+    const tbody = document.querySelector("#rwTable tbody");
+
+    const update = () => {
+      const text = (inp && inp.value != null) ? String(inp.value) : "Go 2026! Привет";
+      const runes = Array.from(text);
+      const byteLen = new TextEncoder().encode(text).length;
+
+      sum.innerHTML = `
+        <span>Байт: <b>${byteLen}</b> (len(s))</span>
+        <span>Рун: <b>${runes.length}</b> (len([]rune(s)))</span>
+        <span style="color:${byteLen === runes.length ? 'var(--ok)' : 'var(--warn)'}">${byteLen === runes.length ? '✓ Все символы 1-байтовые (ASCII)' : '⚠️ Есть многобайтовые символы (кириллица)'}</span>
+      `;
+
+      tbody.innerHTML = runes.map(ch => {
+        const code = ch.codePointAt(0);
+        const isDigit = ch >= '0' && ch <= '9';
+        const hex = "0x" + code.toString(16).toUpperCase();
+        const formula = isDigit ? `${code} - 48 = <b>${code - 48}</b> (int)` : "-";
+        const type = isDigit ? "Цифра" : code < 128 ? "ASCII латиница" : "UTF-8 (2+ байта)";
+        return `
+          <tr>
+            <td><b style="color:var(--accent-l)">'${ch}'</b></td>
+            <td>${type}</td>
+            <td>${code}</td>
+            <td><code>${hex}</code></td>
+            <td style="color:${isDigit ? 'var(--ok)' : 'var(--dim)'}">${formula}</td>
+          </tr>
+        `;
+      }).join("");
+    };
+
+    inp.oninput = update;
+    document.getElementById("rwSample").onclick = () => {
+      inp.value = "12345";
+      update();
+    };
+    update();
+  }
+
+  // --- 4. Recursion Visualizer ---
   function initRecursionViz() {
-    const el = document.getElementById("recursionVizContainer");
+    const el = document.getElementById("piscineWidgetArea") || document.getElementById("recursionVizContainer");
     if (!el) return;
 
     el.innerHTML = `
@@ -1141,5 +1414,204 @@ func main() {
       stack.innerHTML = `<div class="rec-frame init">Нажмите «Следующий шаг», чтобы начать анимацию.</div>`;
       desc.textContent = "";
     };
+  }
+
+  // --- 5. Math & Primes Visualizer ---
+  function initMathViz() {
+    const el = document.getElementById("piscineWidgetArea");
+    if (!el) return;
+
+    el.innerHTML = `
+      <div class="math-widget">
+        <div class="qw-title">🔢 Интерактивная проверка простых чисел (Оптимизация i*i &le; N)</div>
+        <div class="mw-row">
+          <label style="font:500 13px var(--mono)">Число N: <input type="number" id="mwNum" value="29" min="1" max="999" style="width:70px;padding:6px 10px;background:#17151c;border:1px solid var(--line);border-radius:4px;color:#fff"></label>
+          <button class="btn small on" id="mwCheck">Проверить делители</button>
+          <button class="btn ghost small" id="mwNext">Найти следующее простое &rarr;</button>
+        </div>
+        <div class="mw-steps" id="mwSteps"></div>
+      </div>
+    `;
+
+    const inp = document.getElementById("mwNum");
+    const stepsEl = document.getElementById("mwSteps");
+
+    const check = () => {
+      const n = +inp.value;
+      if (n <= 1) {
+        stepsEl.innerHTML = `<span style="color:var(--bad)">Число ${n} &le; 1: по определению НЕ является простым.</span>`;
+        return;
+      }
+      let log = `Проверяем N = ${n}. Корень &approx; ${Math.floor(Math.sqrt(n))}. Достаточно проверить делители от 2 до ${Math.floor(Math.sqrt(n))}:\n`;
+      let prime = true;
+      for (let i = 2; i * i <= n; i++) {
+        if (n % i === 0) {
+          log += `&bull; ${n} % ${i} == 0 &rarr; НАЙДЕН ДЕЛИТЕЛЬ ${i}! Число составное (${n} = ${i} * ${n / i}).\n`;
+          prime = false;
+          break;
+        } else {
+          log += `&bull; ${n} % ${i} = ${n % i} != 0 (не делится)\n`;
+        }
+      }
+      if (prime) {
+        log += `&bull; Все делители до ${Math.floor(Math.sqrt(n))} проверены. ДЕЛИТЕЛЕЙ НЕТ!\n&rarr; ${n} — ПРОСТОЕ ЧИСЛО! ✓`;
+      }
+      stepsEl.innerHTML = `<pre style="margin:0;white-space:pre-wrap;font-family:inherit">${log}</pre>`;
+    };
+
+    document.getElementById("mwCheck").onclick = check;
+    document.getElementById("mwNext").onclick = () => {
+      let n = +inp.value + 1;
+      const isP = x => {
+        if (x <= 1) return false;
+        for (let i = 2; i * i <= x; i++) if (x % i === 0) return false;
+        return true;
+      };
+      while (!isP(n)) n++;
+      inp.value = n;
+      check();
+    };
+    check();
+  }
+
+  // --- 6. Eight Queens Chessboard Visualizer ---
+  function initChessViz() {
+    const el = document.getElementById("piscineWidgetArea");
+    if (!el) return;
+
+    el.innerHTML = `
+      <div class="chess-widget">
+        <div class="cw-header">
+          <div class="cw-title">♟️ Интерактивная доска 8&times;8 (Задача о 8 ферзях)</div>
+          <div class="cw-status" id="cwStatus">Ферзей на доске: 0 / 8 &middot; Кликом ставьте ферзя в клетку</div>
+          <div class="cw-actions">
+            <button class="btn small on" id="cwDemo">Решение 01 Edu (15863724)</button>
+            <button class="btn small" id="cwAuto">▶ Рекурсивный поиск (Backtracking)</button>
+            <button class="btn ghost small" id="cwClear">Очистить</button>
+          </div>
+        </div>
+        <div class="cw-board-wrap">
+          <div class="cw-board" id="cwBoard"></div>
+          <div class="cw-info" id="cwInfo">
+            <div class="cw-badge ok">Правило 01 Edu:</div>
+            <p>Каждый ферзь находится в своём столбце (от 1 до 8 слева направо). Запись <b>15863724</b> значит: 1-я строка в столбце 1, 5-я строка в столбце 2, 8-я строка в столбце 3 и т.д.</p>
+            <div class="cw-sol" id="cwSol">Текущая расстановка: <span>-</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const boardEl = document.getElementById("cwBoard");
+    const statusEl = document.getElementById("cwStatus");
+    const solEl = document.getElementById("cwSol");
+    let queens = [-1, -1, -1, -1, -1, -1, -1, -1]; // queens[col] = row (0..7)
+    let animTimer = null;
+
+    const conflicts = () => {
+      let conf = 0;
+      for (let c1 = 0; c1 < 8; c1++) {
+        if (queens[c1] === -1) continue;
+        for (let c2 = c1 + 1; c2 < 8; c2++) {
+          if (queens[c2] === -1) continue;
+          if (queens[c1] === queens[c2] || Math.abs(queens[c1] - queens[c2]) === Math.abs(c1 - c2)) {
+            conf++;
+          }
+        }
+      }
+      return conf;
+    };
+
+    const renderBoard = () => {
+      let html = "";
+      const confCount = conflicts();
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const isDark = (r + c) % 2 === 1;
+          const hasQ = queens[c] === r;
+          let hasConflict = false;
+          if (hasQ) {
+            for (let c2 = 0; c2 < 8; c2++) {
+              if (c2 !== c && queens[c2] !== -1) {
+                if (queens[c2] === r || Math.abs(queens[c2] - r) === Math.abs(c2 - c)) hasConflict = true;
+              }
+            }
+          }
+          html += `<div class="cw-sq ${isDark ? 'dark' : 'light'} ${hasQ ? 'has-q' : ''} ${hasConflict ? 'conflict' : ''}" data-c="${c}" data-r="${r}">
+            ${hasQ ? '♛' : ''}
+          </div>`;
+        }
+      }
+      boardEl.innerHTML = html;
+
+      const placed = queens.filter(q => q !== -1).length;
+      statusEl.innerHTML = `Ферзей: <b>${placed} / 8</b> &middot; Конфликтов: <b style="color:${confCount === 0 ? 'var(--ok)' : 'var(--bad)'}">${confCount}</b>`;
+
+      const numStr = queens.map(q => q === -1 ? '.' : (q + 1)).join("");
+      solEl.innerHTML = `Текущая расстановка: <b>${numStr}</b> ${placed === 8 && confCount === 0 ? '<span style="color:var(--ok)">✓ РЕШЕНИЕ НАЙДЕНО!</span>' : ''}`;
+    };
+
+    boardEl.onclick = e => {
+      const sq = e.target.closest(".cw-sq");
+      if (!sq) return;
+      clearInterval(animTimer);
+      const c = +sq.dataset.c, r = +sq.dataset.r;
+      if (queens[c] === r) queens[c] = -1;
+      else queens[c] = r;
+      renderBoard();
+    };
+
+    document.getElementById("cwClear").onclick = () => {
+      clearInterval(animTimer);
+      queens = [-1, -1, -1, -1, -1, -1, -1, -1];
+      renderBoard();
+    };
+
+    document.getElementById("cwDemo").onclick = () => {
+      clearInterval(animTimer);
+      // 15863724 -> 0-based: 0, 4, 7, 5, 2, 6, 1, 3
+      queens = [0, 4, 7, 5, 2, 6, 1, 3];
+      renderBoard();
+    };
+
+    document.getElementById("cwAuto").onclick = () => {
+      clearInterval(animTimer);
+      queens = [-1, -1, -1, -1, -1, -1, -1, -1];
+      let col = 0;
+      let row = 0;
+
+      const isSafe = (c, r) => {
+        for (let prevC = 0; prevC < c; prevC++) {
+          const prevR = queens[prevC];
+          if (prevR === r || Math.abs(prevR - r) === Math.abs(prevC - c)) return false;
+        }
+        return true;
+      };
+
+      animTimer = setInterval(() => {
+        if (col >= 8) {
+          clearInterval(animTimer);
+          return;
+        }
+        while (row < 8 && !isSafe(col, row)) {
+          row++;
+        }
+        if (row < 8) {
+          queens[col] = row;
+          col++;
+          row = 0;
+          renderBoard();
+        } else {
+          // Backtrack
+          queens[col] = -1;
+          col--;
+          if (col < 0) { clearInterval(animTimer); return; }
+          row = queens[col] + 1;
+          queens[col] = -1;
+          renderBoard();
+        }
+      }, 180);
+    };
+
+    renderBoard();
   }
 })();

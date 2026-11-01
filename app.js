@@ -1,4 +1,5 @@
-// Go Piscine - демо-платформа. Всё хранится в localStorage, сервера нет.
+// Go Piscine - учебная платформа. Темы: Основы Go -> 01 Edu Piscine -> Backend.
+if (window.TOPICS) TOPICS.sort((a, b) => a.id - b.id);
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const app = $("#app");
@@ -399,16 +400,17 @@ function viewDashboard(u) {
   const unlocked = isUnlocked();
 
   const tracks = [
-    { id: "base", title: "💡 Основы Go (Темы 0–9)", topics: TOPICS.filter(t => t.id >= 0 && t.id <= 9) },
-    { id: "piscine", title: "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели)", topics: TOPICS.filter(t => t.track === "piscine") },
-    { id: "backend", title: "🚀 Backend, Сеть и Базы данных (Темы 10–18)", topics: TOPICS.filter(t => t.id >= 10 && t.id <= 18) },
+    { id: "base", title: "💡 Основы Go (Темы 0–13)", topics: TOPICS.filter(t => t.id >= 0 && t.id <= 13) },
+    { id: "piscine", title: "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)", topics: TOPICS.filter(t => t.track === "piscine" || (t.id >= 14 && t.id <= 19)) },
+    { id: "backend", title: "🚀 Backend, Сеть и Базы данных (Темы 20–24)", topics: TOPICS.filter(t => t.track === "backend" || (t.id >= 20 && t.id <= 24)) },
   ];
 
   const renderTopicCard = t => {
     const lock = topicLock(t, done), complete = topicComplete(t, done);
+    const vizBadge = t.track === "piscine" ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">🎮 Симулятор</span>` : "";
     return `
       <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
-        <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}</span>
+        <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}${vizBadge}</span>
         <h2>${esc(t.title)}</h2>
         <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>Мини-тест</span>` : ""}${t.tasks.map(k =>
           `<span><span class="dot ${done[k.id] ? "done" : ""}"></span>${k.exam ? "🔴 " : k.hard ? "🟡 " : "🟢 "}${esc(k.title)}</span>`).join("")}</div>
@@ -607,6 +609,7 @@ function viewTopic(u, tid) {
         <nav class="chips" id="chips">
           <button data-s="s-theory">Лекция</button>
           <button data-s="s-examples">Примеры</button>
+          ${topic.track === "piscine" ? `<button data-s="s-interactive">🎮 Симулятор</button>` : ""}
           ${hasQuiz ? `<button data-s="s-quiz">Тест</button>` : ""}
           ${topic.tasks.map((k, i) => `<button data-s="s-t${i}">Задача ${i + 1}</button>`).join("")}
         </nav>
@@ -618,6 +621,13 @@ function viewTopic(u, tid) {
           </header>
           <section class="sec-block" id="s-theory"><div class="kicker">Шаг 1 · Лекция</div><h2>Что нужно знать</h2>${render(topic.theory)}</section>
           <section class="sec-block" id="s-examples"><div class="kicker">Шаг 2 · Примеры</div><h2>Как это выглядит</h2>${render(topic.examples)}</section>
+          ${topic.track === "piscine" ? `
+            <section class="sec-block interactive-sec" id="s-interactive">
+              <div class="kicker">🎮 01 Edu · Интерактивный симулятор</div>
+              <h2>${esc(topic.widgetTitle || "Визуализатор алгоритма")}</h2>
+              <div id="piscineWidgetArea" class="piscine-widget-mount"></div>
+            </section>
+          ` : ""}
           ${quizBlock()}
           ${topic.tasks.map(taskBlock).join("")}
           <div class="endpad" id="endpad"></div>
@@ -661,7 +671,7 @@ function viewTopic(u, tid) {
   const scroll = $("#scroll");
   $$("#chips button").forEach(b => b.onclick = () => scrollToSec(b.dataset.s));
   function scrollToSec(id) { scroll.scrollTo({ top: $("#" + id).offsetTop - 8, behavior: "smooth" }); }
-  const secIds = ["s-theory", "s-examples", ...(hasQuiz ? ["s-quiz"] : []), ...topic.tasks.map((_, i) => "s-t" + i)];
+  const secIds = ["s-theory", "s-examples", ...(topic.track === "piscine" ? ["s-interactive"] : []), ...(hasQuiz ? ["s-quiz"] : []), ...topic.tasks.map((_, i) => "s-t" + i)];
   const spy = () => {
     let cur = secIds[0];
     secIds.forEach(id => { if ($("#" + id).offsetTop - 80 <= scroll.scrollTop) cur = id; });
