@@ -152,26 +152,13 @@ pre.code, .annot pre, .editor textarea, .editor .hl, .gutter, .console pre { fon
 .track-block { margin-bottom: 28px; }
 .track-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-l); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
 
-/* ---------- Промокод и разблокировка ---------- */
-.promo-card { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: rgba(153, 105, 255, .05); border: 1px dashed var(--accent-d); border-radius: 4px; padding: 14px 18px; margin-bottom: 20px; }
-.promo-card.unlocked { background: rgba(79, 209, 139, .06); border-color: var(--ok); }
-.pc-text { flex: 1; min-width: 240px; }
-.pc-text b { display: block; font-size: 14px; color: var(--text); margin-bottom: 2px; }
-.pc-text span { font-size: 13px; color: var(--muted); }
-.pc-text code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 2px; color: var(--accent-l); }
-.pc-form { display: flex; gap: 8px; align-items: center; }
-.pc-form input { background: #111; border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 2px; font: 13px var(--mono); width: 140px; }
-.pc-form input:focus { outline: none; border-color: var(--accent); }
-.btn.small { padding: 8px 14px; font-size: 12px; }
-
-/* ---------- Карточка ментора / Реклама ---------- */
-.mentor-card { background: linear-gradient(135deg, rgba(117, 56, 255, .15) 0%, rgba(39, 37, 41, .9) 100%); border: 1px solid var(--accent-d); border-radius: 4px; padding: 18px 20px; margin-bottom: 24px; position: relative; overflow: hidden; }
-.mc-tag { display: inline-block; font: 600 11px var(--mono); text-transform: uppercase; background: var(--accent-d); color: #fff; padding: 2px 8px; border-radius: 2px; margin-bottom: 8px; letter-spacing: .05em; }
-.mentor-card h3 { font-size: 18px; margin: 0 0 6px; color: #fff; }
-.mentor-card p { font-size: 14px; color: var(--muted); margin: 0 0 14px; line-height: 1.5; max-width: 780px; }
-.mc-footer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.mc-footer .btn { text-decoration: none; }
-.mc-author { font-size: 12px; color: var(--dim); font-family: var(--mono); }
+/* ---------- Шапка дашборда и разблокировка ---------- */
+.dash-head { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+.unlock-bar { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ok); }
+.promo-inline { display: inline-flex; gap: 6px; align-items: center; }
+.promo-inline input { background: #111; border: 1px solid var(--line); color: var(--text); padding: 6px 10px; border-radius: 2px; font: 13px var(--mono); width: 160px; }
+.promo-inline input:focus { outline: none; border-color: var(--accent); }
+.btn.small { padding: 6px 12px; font-size: 12px; }
 
 /* ---------- Бейджи сложности ---------- */
 .badge.diff-easy { background: rgba(79, 209, 139, .15); border: 1px solid var(--ok); color: var(--ok); font-size: 11px; }
@@ -228,3 +215,18 @@ pre.code, .annot pre, .editor textarea, .editor .hl, .gutter, .console pre { fon
 .rec-frame.done { background: var(--accent-d); color: #fff; border-color: var(--accent-l); }
 .rec-frame .wait { font-size: 11px; color: var(--dim); margin-left: 6px; }
 .rec-desc { font-size: 13px; color: var(--text); line-height: 1.5; }
+
+/* ---------- Облачная авторизация (Supabase) ---------- */
+.login-card { max-width: 440px; margin: 0 auto; }
+.auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.at-tab { background: none; border: 0; color: var(--muted); font: 500 13px var(--mono); cursor: pointer; padding: 6px 12px; border-radius: 2px; }
+.at-tab.on { background: rgba(153, 105, 255, .15); color: var(--accent-l); }
+.auth-mode { font: 500 12px var(--mono); text-transform: uppercase; margin-bottom: 14px; color: var(--dim); }
+.auth-mode span { cursor: pointer; padding: 2px 4px; }
+.auth-mode span.active { color: var(--accent-l); border-bottom: 2px solid var(--accent); }
+.auth-mode .sep { color: var(--dim); cursor: default; }
+.auth-fields label { font: 500 11px var(--mono); text-transform: uppercase; color: var(--muted); display: block; margin: 10px 0 4px; }
+.auth-fields input { width: 100%; padding: 10px 12px; font: 14px var(--mono); border: 1px solid var(--line); border-radius: 2px; background: #141318; color: var(--text); margin-bottom: 6px; }
+.auth-fields input:focus { outline: none; border-color: var(--accent); }
+.auth-err { font-size: 12px; color: var(--bad); margin: 8px 0; min-height: 16px; line-height: 1.4; }
+.auth-hint { font-size: 12px; color: var(--muted); margin-top: 14px; line-height: 1.5; }

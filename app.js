@@ -202,9 +202,18 @@ function chrome(crumbHtml) {
   const u = getUser();
   $("#crumb").innerHTML = crumbHtml || "";
   $("#user").hidden = $("#logout").hidden = $("#xp").hidden = !u;
-  if (u) { $("#user").textContent = "@" + u; $("#xp").textContent = xpOf(u) + " XP"; }
+  if (u) {
+    const isCloud = isSupabaseReady() && !!store.get("sb_session", false);
+    $("#user").textContent = "@" + u + (isCloud ? " ☁️" : "");
+    $("#xp").textContent = xpOf(u) + " XP";
+  }
 }
-$("#logout").onclick = () => { store.set("user", null); location.hash = "#/login"; };
+$("#logout").onclick = async () => {
+  await sbSignOut();
+  store.set("sb_session", false);
+  store.set("user", null);
+  location.hash = "#/login";
+};
 
 // ---------- views ----------
 function viewLogin() {
@@ -213,18 +222,134 @@ function viewLogin() {
     <div class="login">
       <div class="robot">01</div>
       <h1>Go Piscine</h1>
-      <p>Учебная платформа по основам Go. Введите логин.</p>
-      <form class="card" id="f">
-        <label for="n">Логин</label>
-        <input id="n" autocomplete="off" maxlength="20" placeholder="например, Omar" autofocus>
-        <button class="btn" type="submit">Войти</button>
-      </form>
+      <p>Учебная платформа по основам Go и бассейну 01 Edu.</p>
+      
+      <div class="card login-card">
+        <div class="auth-tabs">
+          <button class="at-tab on" id="tabCloud">Облако (Supabase)</button>
+          <button class="at-tab" id="tabGuest">Гость</button>
+        </div>
+
+        <form id="fCloud" class="auth-form">
+          <div class="auth-mode">
+            <span class="active" id="modeIn">Вход</span>
+            <span class="sep">/</span>
+            <span id="modeUp">Регистрация</span>
+          </div>
+          <div class="auth-fields">
+            <div id="fieldUser" style="display:none">
+              <label for="regUser">Ваш никнейм для лидерборда</label>
+              <input id="regUser" placeholder="например, Omar" maxlength="20" autocomplete="username">
+            </div>
+            <label for="sbEmail">Email или никнейм</label>
+            <input id="sbEmail" type="text" placeholder="student@gmail.com или omar" required autocomplete="email">
+            <label for="sbPass">Пароль (от 6 символов)</label>
+            <input id="sbPass" type="password" placeholder="••••••••" required minlength="6" autocomplete="current-password">
+          </div>
+          <div id="authErr" class="auth-err"></div>
+          <button class="btn" type="submit" id="btnCloudSubmit">Войти через Supabase</button>
+          <p class="auth-hint">☁️ Облачный аккаунт сохраняет прогресс на всех устройствах и выводит вас в живой лидерборд.</p>
+        </form>
+
+        <form id="fGuest" class="auth-form" style="display:none">
+          <label for="n">Логин (локальный)</label>
+          <input id="n" autocomplete="off" maxlength="20" placeholder="например, Omar">
+          <button class="btn" type="submit">Войти как гость</button>
+          <p class="auth-hint">Прогресс сохранится только в этом браузере без облачной синхронизации.</p>
+        </form>
+      </div>
     </div>`;
-  $("#f").onsubmit = e => {
+
+  let mode = "in";
+  const formCloud = $("#fCloud"), formGuest = $("#fGuest");
+  const tabCloud = $("#tabCloud"), tabGuest = $("#tabGuest");
+  const modeIn = $("#modeIn"), modeUp = $("#modeUp");
+  const fieldUser = $("#fieldUser"), authErr = $("#authErr");
+  const btnSubmit = $("#btnCloudSubmit");
+
+  tabCloud.onclick = () => {
+    tabCloud.classList.add("on"); tabGuest.classList.remove("on");
+    formCloud.style.display = "block"; formGuest.style.display = "none";
+  };
+  tabGuest.onclick = () => {
+    tabGuest.classList.add("on"); tabCloud.classList.remove("on");
+    formGuest.style.display = "block"; formCloud.style.display = "none";
+    $("#n").focus();
+  };
+
+  modeIn.onclick = () => {
+    mode = "in";
+    modeIn.classList.add("active"); modeUp.classList.remove("active");
+    fieldUser.style.display = "none";
+    btnSubmit.textContent = "Войти через Supabase";
+    authErr.textContent = "";
+  };
+  modeUp.onclick = () => {
+    mode = "up";
+    modeUp.classList.add("active"); modeIn.classList.remove("active");
+    fieldUser.style.display = "block";
+    btnSubmit.textContent = "Зарегистрироваться";
+    authErr.textContent = "";
+  };
+
+  formCloud.onsubmit = async e => {
+    e.preventDefault();
+    authErr.textContent = "";
+    btnSubmit.disabled = true;
+    const email = $("#sbEmail").value.trim();
+    const pass = $("#sbPass").value;
+
+    if (mode === "up") {
+      const username = ($("#regUser").value || "").trim().replace(/[^\p{L}\p{N}_. -]/gu, "");
+      if (!username) {
+        authErr.textContent = "Укажите никнейм для лидерборда.";
+        btnSubmit.disabled = false;
+        return $("#regUser").focus();
+      }
+      btnSubmit.textContent = "Регистрация...";
+      const res = await sbSignUp(email, pass, username);
+      if (res.error) {
+        authErr.textContent = res.error.message || "Ошибка регистрации";
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Зарегистрироваться";
+        return;
+      }
+      if (res.data?.session) {
+        store.set("user", username);
+        store.set("sb_session", true);
+        location.hash = "#/";
+      } else {
+        authErr.style.color = "var(--ok)";
+        authErr.innerHTML = `Аккаунт создан! ${res.data?.user?.confirmation_sent_at ? "Подтвердите email или войдите." : "Теперь нажмите «Вход»."}`;
+        modeIn.click();
+        btnSubmit.disabled = false;
+      }
+    } else {
+      btnSubmit.textContent = "Вход...";
+      const res = await sbSignIn(email, pass);
+      if (res.error) {
+        let msg = res.error.message || "Неверный логин или пароль";
+        if (msg.includes("Email not confirmed")) {
+          msg = "Email ещё не подтверждён. Подтвердите его по ссылке из письма (или отключите Confirm Email в панели Supabase Auth).";
+        }
+        authErr.textContent = msg;
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = "Войти через Supabase";
+        return;
+      }
+      const username = res.username || email.split("@")[0];
+      store.set("user", username);
+      store.set("sb_session", true);
+      location.hash = "#/";
+    }
+  };
+
+  formGuest.onsubmit = e => {
     e.preventDefault();
     const name = $("#n").value.trim().replace(/[^\p{L}\p{N}_. -]/gu, "").replace(/\s+/g, " ");
     if (!name) return $("#n").focus();
     store.set("user", name);
+    store.set("sb_session", false);
     location.hash = "#/";
   };
 }
@@ -258,34 +383,23 @@ function viewDashboard(u) {
 
   app.innerHTML = `
     <div class="wrap">
-      <h1>Добро пожаловать, ${esc(u)}!</h1>
-      <p class="sub">${TOPICS.length} тем · ${tasks.length} задач · выполнено ${nDone} (${pct}%)</p>
+      <div class="dash-head">
+        <div>
+          <h1>Добро пожаловать, ${esc(u)}!</h1>
+          <p class="sub">${TOPICS.length} тем · ${tasks.length} задач · выполнено ${nDone} (${pct}%)</p>
+        </div>
+        <div class="unlock-bar">
+          ${unlocked
+            ? `<span>🔓 Все темы открыты</span><button class="btn ghost small" id="relockBtn">Включить замки обратно</button>`
+            : `<button class="btn ghost small" id="unlockBtn">Разблокировать все темы</button>
+               <form id="promoForm" style="display:none" class="promo-inline">
+                 <input id="promoInput" placeholder="Введите промокод" autocomplete="off">
+                 <button class="btn small" type="submit">ОК</button>
+                 <button class="btn ghost small" type="button" id="cancelPromo">✕</button>
+               </form>`}
+        </div>
+      </div>
       <div class="progress"><i style="width:${pct}%"></i></div>
-
-      <div class="promo-card ${unlocked ? "unlocked" : ""}">
-        <div class="pc-text">
-          <b>${unlocked ? "🔓 Полный доступ активирован" : "🔒 Режим обучения с замками"}</b>
-          <span>${unlocked ? "Все темы и задания открыты для свободного прохождения." : "Темы открываются по порядку. Введите промокод ментора (например, <code>01EDU</code>), чтобы открыть всё:"}</span>
-        </div>
-        ${unlocked
-          ? `<button class="btn ghost small" id="relockBtn">Включить замки обратно</button>`
-          : `<form class="pc-form" id="promoForm">
-               <input id="promoInput" placeholder="Промокод (01EDU)" maxlength="15" autocomplete="off">
-               <button class="btn small" type="submit">Открыть всё</button>
-             </form>`}
-      </div>
-
-      <div class="mentor-card">
-        <div class="mc-tag">01 Edu / Alem Mentoring</div>
-        <div class="mc-content">
-          <h3>Тяжело даётся бассейн 01 Edu?</h3>
-          <p>Индивидуальные консультации, понятные интерактивные разборы (Quad, указатели, рекурсия, 8 ферзей), подготовка к экзаменам без списывания и ИИ.</p>
-          <div class="mc-footer">
-            <a class="btn small" href="https://t.me/hackeevo" target="_blank" rel="noopener">Написать в Telegram (@hackeevo) →</a>
-            <span class="mc-author">Сайт ментора: hackeevo.github.io</span>
-          </div>
-        </div>
-      </div>
 
       <div class="grid">
         <div>
@@ -317,7 +431,22 @@ function viewDashboard(u) {
       </div>
     </div>`;
 
+  const ub = $("#unlockBtn");
   const pf = $("#promoForm");
+  const cancelP = $("#cancelPromo");
+  if (ub && pf) {
+    ub.onclick = () => {
+      ub.style.display = "none";
+      pf.style.display = "inline-flex";
+      $("#promoInput").focus();
+    };
+  }
+  if (cancelP && pf && ub) {
+    cancelP.onclick = () => {
+      pf.style.display = "none";
+      ub.style.display = "inline-block";
+    };
+  }
   if (pf) {
     pf.onsubmit = e => {
       e.preventDefault();
@@ -326,7 +455,7 @@ function viewDashboard(u) {
         store.set("promoUnlocked", true);
         viewDashboard(u);
       } else {
-        alert("Неверный промокод. Попробуйте 01EDU или PISCINE");
+        alert("Неверный промокод.");
       }
     };
   }
@@ -337,6 +466,24 @@ function viewDashboard(u) {
       store.set("promoUnlocked", false);
       viewDashboard(u);
     };
+  }
+
+  // Живая синхронизация лидерборда из Supabase
+  if (isSupabaseReady()) {
+    sbFetchLeaderboard().then(liveBoard => {
+      if (liveBoard && liveBoard.length > 0) {
+        const hasMe = liveBoard.some(([n]) => n === u);
+        const fullBoard = hasMe ? liveBoard : [...liveBoard, [u, xpOf(u)]].sort((a, b) => b[1] - a[1]);
+        const lbEl = $(".lb");
+        if (lbEl) {
+          lbEl.innerHTML = fullBoard.map(([n, x], i) =>
+            `<li class="${n === u ? "me" : ""}"><span>${i + 1}. ${esc(n)}</span><span>${x} XP</span></li>`
+          ).join("");
+          const noteEl = $(".lb + .note");
+          if (noteEl) noteEl.textContent = "☁️ Живой облачный рейтинг потока (Supabase).";
+        }
+      }
+    });
   }
 }
 
@@ -663,7 +810,11 @@ function viewTopic(u, tid) {
       const assisted = !!store.get(`assist:${u}:${active.id}`, false);
       const gain = was ? 0 : xpFor(active, assisted ? "a" : true);
       html += `<div class="ok" style="margin-top:10px">Тест пройден. +${gain} XP${assisted && !was ? " (ответ был открыт)" : ""}</div><pre>${esc(active.output)}</pre>`;
-      if (!was) { done[active.id] = assisted ? "a" : true; store.set("done:" + u, done); }
+      if (!was) {
+        done[active.id] = assisted ? "a" : true;
+        store.set("done:" + u, done);
+        sbSyncTask(active.id, gain, assisted);
+      }
       setBands([]);
       const other = topic.tasks.find(k => !done[k.id]);
       if (other) html += `<button class="btn" id="go" style="margin-top:12px">Следующая задача →</button>`;
