@@ -24,30 +24,34 @@ const topicDone = (t, done) => t.tasks.every(k => done[k.id]);
 const topicComplete = (t, done) => topicDone(t, done) && (!t.quiz || !!done["q" + t.id]);
 const topicXp = (t, done) => t.tasks.reduce((s, k) => s + xpFor(k, done[k.id]), 0) + (done["q" + t.id] ? XP_QUIZ : 0);
 
-// ---------- блокировки ----------
-// режим просмотра для жюри: адрес с ?open=1 открывает всё, ?open=0 включает замки обратно
-const viewAll = () => store.get("open", false);
-// тема открыта, если предыдущая пройдена целиком
+// ---------- блокировки и промокоды ----------
+const PROMO_CODES = ["01EDU", "PISCINE", "MENTOR", "HACKEEVO", "2026", "FREE"];
+const isUnlocked = () => store.get("promoUnlocked", false);
+
+// тема открыта, если предыдущая пройдена целиком ИЛИ активирован промокод
 const topicLock = (t, done) => {
-  if (viewAll()) return null;
-  const prev = TOPICS[TOPICS.indexOf(t) - 1];
+  if (isUnlocked()) return null;
+  const idx = TOPICS.indexOf(t);
+  const prev = TOPICS[idx - 1];
   return prev && !topicComplete(prev, done) ? prev : null;
 };
+
 // причина, по которой задача закрыта (или null)
 const taskLock = (t, k, done) => {
-  if (viewAll()) return null;
+  if (isUnlocked()) return null;
   if (t.quiz && !done["q" + t.id]) return "Сначала пройдите мини-тест выше (шаг 3).";
   const prev = t.tasks[t.tasks.indexOf(k) - 1];
   if (prev && !done[prev.id]) return `Сначала решите задачу «${prev.title}».`;
   return null;
 };
+
 // следующий шаг для кнопки «Продолжить»
 function nextStep(done) {
   for (const t of TOPICS) {
     if (topicComplete(t, done)) continue;
     if (t.quiz && !done["q" + t.id]) return { topic: t, label: "Мини-тест" };
     const k = t.tasks.find(k => !done[k.id]);
-    return { topic: t, label: k.title };
+    return { topic: t, label: k ? k.title : "Завершить тему" };
   }
   return null;
 }
@@ -233,28 +237,66 @@ function viewDashboard(u) {
   const pct = Math.round(nDone / tasks.length * 100);
   const board = [...DEMO_USERS.filter(([n]) => n !== u), [u, xpOf(u)]].sort((a, b) => b[1] - a[1]);
   const next = nextStep(done);
+  const unlocked = isUnlocked();
+
+  const tracks = [
+    { id: "base", title: "💡 Основы Go (Темы 0–9)", topics: TOPICS.filter(t => t.id >= 0 && t.id <= 9) },
+    { id: "piscine", title: "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели)", topics: TOPICS.filter(t => t.track === "piscine") },
+    { id: "backend", title: "🚀 Backend, Сеть и Базы данных (Темы 10–18)", topics: TOPICS.filter(t => t.id >= 10 && t.id <= 18) },
+  ];
+
+  const renderTopicCard = t => {
+    const lock = topicLock(t, done), complete = topicComplete(t, done);
+    return `
+      <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
+        <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}</span>
+        <h2>${esc(t.title)}</h2>
+        <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>Мини-тест</span>` : ""}${t.tasks.map(k =>
+          `<span><span class="dot ${done[k.id] ? "done" : ""}"></span>${k.exam ? "🔴 " : k.hard ? "🟡 " : "🟢 "}${esc(k.title)}</span>`).join("")}</div>
+      </a>`;
+  };
 
   app.innerHTML = `
     <div class="wrap">
       <h1>Добро пожаловать, ${esc(u)}!</h1>
       <p class="sub">${TOPICS.length} тем · ${tasks.length} задач · выполнено ${nDone} (${pct}%)</p>
       <div class="progress"><i style="width:${pct}%"></i></div>
-      ${viewAll() ? `<div class="viewall">Режим просмотра: все темы открыты. <a href="#/" id="closeAll">Включить замки обратно</a></div>` : ""}
+
+      <div class="promo-card ${unlocked ? "unlocked" : ""}">
+        <div class="pc-text">
+          <b>${unlocked ? "🔓 Полный доступ активирован" : "🔒 Режим обучения с замками"}</b>
+          <span>${unlocked ? "Все темы и задания открыты для свободного прохождения." : "Темы открываются по порядку. Введите промокод ментора (например, <code>01EDU</code>), чтобы открыть всё:"}</span>
+        </div>
+        ${unlocked
+          ? `<button class="btn ghost small" id="relockBtn">Включить замки обратно</button>`
+          : `<form class="pc-form" id="promoForm">
+               <input id="promoInput" placeholder="Промокод (01EDU)" maxlength="15" autocomplete="off">
+               <button class="btn small" type="submit">Открыть всё</button>
+             </form>`}
+      </div>
+
+      <div class="mentor-card">
+        <div class="mc-tag">01 Edu / Alem Mentoring</div>
+        <div class="mc-content">
+          <h3>Тяжело даётся бассейн 01 Edu?</h3>
+          <p>Индивидуальные консультации, понятные интерактивные разборы (Quad, указатели, рекурсия, 8 ферзей), подготовка к экзаменам без списывания и ИИ.</p>
+          <div class="mc-footer">
+            <a class="btn small" href="https://t.me/hackeevo" target="_blank" rel="noopener">Написать в Telegram (@hackeevo) →</a>
+            <span class="mc-author">Сайт ментора: hackeevo.github.io</span>
+          </div>
+        </div>
+      </div>
+
       <div class="grid">
         <div>
-          <h3 class="sec">Темы</h3>
-          <div class="topics">
-            ${TOPICS.map(t => {
-    const lock = topicLock(t, done), complete = topicComplete(t, done);
-    return `
-              <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
-                <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}</span>
-                <h2>${esc(t.title)}</h2>
-                <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>Мини-тест</span>` : ""}${t.tasks.map(k =>
-      `<span><span class="dot ${done[k.id] ? "done" : ""}"></span>${k.hard ? "★ " : ""}${esc(k.title)}</span>`).join("")}</div>
-              </a>`;
-  }).join("")}
-          </div>
+          ${tracks.map(tr => `
+            <div class="track-block">
+              <h3 class="sec track-title">${tr.title}</h3>
+              <div class="topics">
+                ${tr.topics.map(renderTopicCard).join("")}
+              </div>
+            </div>
+          `).join("")}
         </div>
         <aside>
           <div class="side" style="margin-bottom:16px">
@@ -274,8 +316,28 @@ function viewDashboard(u) {
         </aside>
       </div>
     </div>`;
-  const ca = $("#closeAll");
-  if (ca) ca.onclick = e => { e.preventDefault(); store.set("open", false); viewDashboard(u); };
+
+  const pf = $("#promoForm");
+  if (pf) {
+    pf.onsubmit = e => {
+      e.preventDefault();
+      const code = ($("#promoInput").value || "").trim().toUpperCase();
+      if (PROMO_CODES.includes(code)) {
+        store.set("promoUnlocked", true);
+        viewDashboard(u);
+      } else {
+        alert("Неверный промокод. Попробуйте 01EDU или PISCINE");
+      }
+    };
+  }
+
+  const rb = $("#relockBtn");
+  if (rb) {
+    rb.onclick = () => {
+      store.set("promoUnlocked", false);
+      viewDashboard(u);
+    };
+  }
 }
 
 // страница закрытой темы
@@ -312,7 +374,7 @@ function viewTopic(u, tid) {
     <section class="sec-block quiz" id="s-quiz">
       <div class="kicker">Шаг 3 · Мини-тест</div>
       <h2>Проверьте себя</h2>
-      <p>Выберите правильный ответ. Это не экзамен, а способ закрепить материал (+${XP_QUIZ} XP).${viewAll() ? "" : " Пока тест не пройден, задачи ниже закрыты."}</p>
+      <p>Выберите правильный ответ. Это не экзамен, а способ закрепить материал (+${XP_QUIZ} XP).</p>
       ${topic.quiz.map((q, qi) => `
         <div class="qq" data-qi="${qi}">
           <div class="qtext">${qi + 1}. ${inline(q.q)}</div>
@@ -347,9 +409,12 @@ function viewTopic(u, tid) {
       <button class="btn ghost open" data-open="${k.id}">Открыть в редакторе →</button>`;
   const taskBlock = (k, i) => {
     const why = taskLock(topic, k, done);
+    const diffBadge = k.exam ? `<span class="badge diff-exam">🔴 Piscine Exam</span>`
+      : k.hard ? `<span class="badge diff-med">🟡 Практика</span>`
+      : `<span class="badge diff-easy">🟢 Обучение</span>`;
     return `
     <section class="sec-block${why ? " locked" : ""}${k.hard ? " hard" : ""}" id="s-t${i}" data-k="${k.id}">
-      <div class="kicker">Шаг ${i + stepBase} · ${k.hard ? "★ Посложнее" : "Практика"}</div>
+      <div class="kicker">Шаг ${i + stepBase} · ${k.hard ? (k.exam ? "★ Экзамен 01 Edu" : "★ Посложнее") : "Практика"} · ${diffBadge}</div>
       <h2>Задача ${i + 1}: ${esc(k.title)} <span class="badge" data-badge="${k.id}"></span></h2>
       <div class="tbody" data-state="${why ? "locked" : "open"}">${why ? lockBox(why) : taskBody(k)}</div>
     </section>`;
@@ -402,6 +467,8 @@ function viewTopic(u, tid) {
       </section>
       <nav class="mobbar"><button data-p="left" class="on">Учебник</button><button data-p="right">Код</button></nav>
     </div>`;
+
+  window.initPiscineWidgets?.(topic.id);
 
   // --- мобильная версия: переключатель «Учебник / Код»
   const learn = $(".learn");
@@ -524,7 +591,8 @@ function viewTopic(u, tid) {
       const s = $(`#seg [data-k="${k.id}"] i`); s.textContent = d[k.id] ? "✓" : lk ? "🔒" : (k.hard ? "★" : "");
     });
     const complete = topicComplete(topic, d);
-    const nt = $("#nextTopic"), blocked = !!next && !complete && !viewAll();
+    const blocked = !!next && !complete && !isUnlocked();
+    const nt = $("#nextTopic");
     nt.classList.toggle("primary", complete);
     nt.classList.toggle("disabled", blocked);
     nt.title = blocked ? "Откроется, когда тема будет пройдена" : (next ? next.title : "");
@@ -533,7 +601,7 @@ function viewTopic(u, tid) {
       ? `<div class="endcard"><b>${tLabel(topic)} пройден${topic.id === 0 ? "о" : "а"}</b>${next
         ? `<span>Дальше: ${tLabel(next).toLowerCase()} - ${esc(next.title)}. Узнаем ${esc(next.about)}.</span><a class="btn" href="#/topic/${next.id}">Перейти: ${tLabel(next).toLowerCase()} →</a>`
         : `<span>Это была последняя тема. Курс пройден!</span><a class="btn" href="#/">На дашборд</a>`}</div>`
-      : `<div class="endcard muted">${next ? "🔒 Чтобы открыть следующую тему, пройдите мини-тест и решите все задачи." : "Пройдите мини-тест и решите все задачи, чтобы завершить курс."}</div>`;
+      : `<div class="endcard muted">${next ? (blocked ? "🔒 Чтобы открыть следующую тему, пройдите мини-тест и решите все задачи." : `Тема ещё не завершена. <a href="#/topic/${next.id}">Следующая тема: ${tLabel(next).toLowerCase()} →</a>`) : "Пройдите мини-тест и решите все задачи, чтобы завершить курс."}</div>`;
     if (active) { const ok = !!d[active.id]; $("#st").className = "status " + (ok ? "done" : "todo"); $("#st").textContent = ok ? "passed" : "waiting"; }
   }
 
@@ -657,9 +725,13 @@ function celebrate(topic) {
 function route() {
   $$(".overlay").forEach(o => o.remove());
   window.gpPrefs = null;
-  const flag = (location.search + location.hash).match(/[?&]open=([01])/);   // режим просмотра: ?open=1 или #/?open=1
+  const flag = (location.search + location.hash).match(/[?&](?:open=([01])|code=([a-zA-Z0-9]+))/i);
   if (flag) {
-    store.set("open", flag[1] === "1");
+    if (flag[1] === "1" || (flag[2] && PROMO_CODES.includes(flag[2].toUpperCase()))) {
+      store.set("promoUnlocked", true);
+    } else if (flag[1] === "0") {
+      store.set("promoUnlocked", false);
+    }
     history.replaceState(null, "", location.pathname + "#/");
   }
   const u = getUser(), h = location.hash || "#/";

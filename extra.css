@@ -147,3 +147,84 @@ pre.code, .annot pre, .editor textarea, .editor .hl, .gutter, .console pre { fon
 .btn.disabled, .actions a.disabled { opacity: .45; pointer-events: none; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
 .editor textarea:read-only { cursor: not-allowed; opacity: .6; }
+
+/* ---------- Треки и разделители на дашборде ---------- */
+.track-block { margin-bottom: 28px; }
+.track-title { font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--accent-l); margin: 0 0 12px; display: flex; align-items: center; gap: 8px; }
+
+/* ---------- Промокод и разблокировка ---------- */
+.promo-card { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; background: rgba(153, 105, 255, .05); border: 1px dashed var(--accent-d); border-radius: 4px; padding: 14px 18px; margin-bottom: 20px; }
+.promo-card.unlocked { background: rgba(79, 209, 139, .06); border-color: var(--ok); }
+.pc-text { flex: 1; min-width: 240px; }
+.pc-text b { display: block; font-size: 14px; color: var(--text); margin-bottom: 2px; }
+.pc-text span { font-size: 13px; color: var(--muted); }
+.pc-text code { background: rgba(255,255,255,.08); padding: 1px 5px; border-radius: 2px; color: var(--accent-l); }
+.pc-form { display: flex; gap: 8px; align-items: center; }
+.pc-form input { background: #111; border: 1px solid var(--line); color: var(--text); padding: 8px 12px; border-radius: 2px; font: 13px var(--mono); width: 140px; }
+.pc-form input:focus { outline: none; border-color: var(--accent); }
+.btn.small { padding: 8px 14px; font-size: 12px; }
+
+/* ---------- Карточка ментора / Реклама ---------- */
+.mentor-card { background: linear-gradient(135deg, rgba(117, 56, 255, .15) 0%, rgba(39, 37, 41, .9) 100%); border: 1px solid var(--accent-d); border-radius: 4px; padding: 18px 20px; margin-bottom: 24px; position: relative; overflow: hidden; }
+.mc-tag { display: inline-block; font: 600 11px var(--mono); text-transform: uppercase; background: var(--accent-d); color: #fff; padding: 2px 8px; border-radius: 2px; margin-bottom: 8px; letter-spacing: .05em; }
+.mentor-card h3 { font-size: 18px; margin: 0 0 6px; color: #fff; }
+.mentor-card p { font-size: 14px; color: var(--muted); margin: 0 0 14px; line-height: 1.5; max-width: 780px; }
+.mc-footer { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.mc-footer .btn { text-decoration: none; }
+.mc-author { font-size: 12px; color: var(--dim); font-family: var(--mono); }
+
+/* ---------- Бейджи сложности ---------- */
+.badge.diff-easy { background: rgba(79, 209, 139, .15); border: 1px solid var(--ok); color: var(--ok); font-size: 11px; }
+.badge.diff-med { background: rgba(245, 158, 11, .15); border: 1px solid var(--warn); color: var(--warn); font-size: 11px; }
+.badge.diff-exam { background: rgba(230, 106, 125, .2); border: 1px solid var(--bad); color: var(--bad); font-size: 11px; font-weight: 600; }
+
+/* ---------- Интерактивный Quad Визуализатор ---------- */
+.quad-widget { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 18px; margin: 20px 0; }
+.qw-header { margin-bottom: 16px; }
+.qw-title { font: 600 15px var(--sans); color: var(--accent-l); margin-bottom: 10px; }
+.qw-controls { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 13px; }
+.qw-controls label { display: flex; align-items: center; gap: 6px; }
+.qw-controls input[type="range"] { accent-color: var(--accent); width: 80px; cursor: pointer; }
+.qw-btns { display: flex; gap: 6px; align-items: center; }
+.qw-btns .btn.on { background: var(--accent); }
+.qw-grid-area { display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap; margin-top: 14px; }
+.qw-grid { display: inline-grid; gap: 4px; background: rgba(0,0,0,.3); padding: 10px; border-radius: 4px; border: 1px solid var(--line); }
+.qw-cell { width: 38px; height: 38px; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1c1a20; border: 1px solid #333; border-radius: 2px; cursor: pointer; transition: transform .1s, border-color .1s; }
+.qw-cell:hover, .qw-cell.active { transform: scale(1.08); border-color: var(--accent); background: #2f2a40; z-index: 2; }
+.qw-cell.corner { border-color: var(--accent); color: var(--accent-l); }
+.qw-cell.horiz, .qw-cell.vert, .qw-cell.border { border-color: var(--warn); color: var(--warn); }
+.qw-cell.inner { color: var(--dim); }
+.qw-ch { font: 700 15px var(--mono); line-height: 1; }
+.qw-sub { font: 400 9px var(--mono); color: var(--dim); line-height: 1; margin-top: 2px; }
+.qw-info { flex: 1; min-width: 220px; background: rgba(0,0,0,.2); border: 1px solid var(--line); border-radius: 4px; padding: 14px; font-size: 13px; }
+.qw-badge { display: inline-block; font: 500 11px var(--mono); padding: 2px 6px; border-radius: 2px; background: var(--chip); color: var(--muted); margin-bottom: 6px; }
+.qw-badge.ok { background: rgba(79, 209, 139, .15); color: var(--ok); }
+.qw-desc { color: var(--text); line-height: 1.5; margin-bottom: 8px; }
+.qw-code { font: 12px var(--mono); color: var(--accent-l); background: #141318; padding: 6px 8px; border-radius: 2px; border-left: 2px solid var(--accent); }
+
+/* ---------- Интерактивный симулятор памяти (Pointers) ---------- */
+.ptr-widget { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 18px; margin: 20px 0; }
+.ptr-title { font: 600 15px var(--sans); color: var(--accent-l); margin-bottom: 12px; }
+.ptr-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.ptr-mem { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; background: rgba(0,0,0,.25); padding: 16px; border-radius: 4px; border: 1px solid var(--line); margin-bottom: 12px; }
+.ptr-cell { background: #1c1a20; border: 1px solid var(--line); border-radius: 4px; padding: 12px 16px; text-align: center; min-width: 140px; }
+.ptr-addr { display: block; font: 500 11px var(--mono); color: var(--dim); margin-bottom: 6px; }
+.ptr-val { font: 700 24px var(--mono); color: var(--text); padding: 4px 0; border-radius: 2px; transition: background .3s; }
+.ptr-val.ok { color: var(--accent-l); }
+.ptr-val.flash { background: rgba(153, 105, 255, .3); color: #fff; }
+.ptr-name { display: block; font: 500 11px var(--mono); color: var(--muted); margin-top: 6px; }
+.ptr-arrow { font: 500 12px var(--mono); color: var(--accent-l); padding: 0 8px; }
+.ptr-log { font-size: 13px; color: var(--muted); line-height: 1.5; background: #141318; padding: 10px 12px; border-radius: 2px; border-left: 3px solid var(--accent); }
+
+/* ---------- Интерактивный стек вызовов (Рекурсия) ---------- */
+.rec-widget { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 18px; margin: 20px 0; }
+.rec-title { font: 600 15px var(--sans); color: var(--accent-l); margin-bottom: 12px; }
+.rec-btns { display: flex; gap: 8px; margin-bottom: 14px; }
+.rec-stack { display: flex; flex-direction: column-reverse; gap: 6px; min-height: 140px; background: rgba(0,0,0,.25); padding: 12px; border-radius: 4px; border: 1px solid var(--line); margin-bottom: 12px; }
+.rec-frame { background: #1e1b26; border: 1px solid var(--accent-d); padding: 8px 12px; border-radius: 2px; font: 13px var(--mono); color: var(--text); }
+.rec-frame.init { border: 1px dashed var(--dim); color: var(--muted); text-align: center; padding: 24px 10px; }
+.rec-frame.base { background: rgba(79, 209, 139, .15); border-color: var(--ok); color: var(--ok); }
+.rec-frame.ok { border-color: var(--ok); color: var(--ok); }
+.rec-frame.done { background: var(--accent-d); color: #fff; border-color: var(--accent-l); }
+.rec-frame .wait { font-size: 11px; color: var(--dim); margin-left: 6px; }
+.rec-desc { font-size: 13px; color: var(--text); line-height: 1.5; }
