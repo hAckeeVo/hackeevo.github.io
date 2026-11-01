@@ -110,6 +110,15 @@ pre.code, .annot pre, .editor textarea, .editor .hl, .gutter, .console pre { fon
 :root[data-theme="light"] kbd { background: #eee; border-color: #ccc; }
 :root[data-theme="light"] .note-box { background: #efe9fb; }
 :root[data-theme="light"] .expect, :root[data-theme="light"] .login .card, :root[data-theme="light"] .modal { background: #fff; border: 1px solid #d8d0e6; }
+:root[data-theme="light"] .auth-card { background: #fff; border-color: #d8d0e6; box-shadow: 0 10px 30px rgba(100, 80, 140, 0.12); }
+:root[data-theme="light"] .auth-tabs-nav { background: #f2ecfa; border-color: #d8d0e6; }
+:root[data-theme="light"] .at-tab { color: #6e677c; }
+:root[data-theme="light"] .at-tab:hover { color: #1a1a1a; }
+:root[data-theme="light"] .at-tab.on { background: var(--accent); color: #fff; }
+:root[data-theme="light"] .auth-pane label { color: #5a5468; }
+:root[data-theme="light"] .auth-pane input { background: #faf8fd; border-color: #d2c8e3; color: #1f1b29; }
+:root[data-theme="light"] .auth-pane input:focus { border-color: var(--accent); }
+:root[data-theme="light"] .auth-pane input:-webkit-autofill { -webkit-box-shadow: 0 0 0px 1000px #faf8fd inset !important; -webkit-text-fill-color: #1f1b29 !important; }
 :root[data-theme="light"] .next { background: #f6f2fd; }
 :root[data-theme="light"] .editor .hl { color: var(--text); }
 :root[data-theme="light"] .editor textarea { caret-color: var(--text); }
@@ -216,17 +225,4 @@ pre.code, .annot pre, .editor textarea, .editor .hl, .gutter, .console pre { fon
 .rec-frame .wait { font-size: 11px; color: var(--dim); margin-left: 6px; }
 .rec-desc { font-size: 13px; color: var(--text); line-height: 1.5; }
 
-/* ---------- Облачная авторизация (Supabase) ---------- */
-.login-card { max-width: 440px; margin: 0 auto; }
-.auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
-.at-tab { background: none; border: 0; color: var(--muted); font: 500 13px var(--mono); cursor: pointer; padding: 6px 12px; border-radius: 2px; }
-.at-tab.on { background: rgba(153, 105, 255, .15); color: var(--accent-l); }
-.auth-mode { font: 500 12px var(--mono); text-transform: uppercase; margin-bottom: 14px; color: var(--dim); }
-.auth-mode span { cursor: pointer; padding: 2px 4px; }
-.auth-mode span.active { color: var(--accent-l); border-bottom: 2px solid var(--accent); }
-.auth-mode .sep { color: var(--dim); cursor: default; }
-.auth-fields label { font: 500 11px var(--mono); text-transform: uppercase; color: var(--muted); display: block; margin: 10px 0 4px; }
-.auth-fields input { width: 100%; padding: 10px 12px; font: 14px var(--mono); border: 1px solid var(--line); border-radius: 2px; background: #141318; color: var(--text); margin-bottom: 6px; }
-.auth-fields input:focus { outline: none; border-color: var(--accent); }
-.auth-err { font-size: 12px; color: var(--bad); margin: 8px 0; min-height: 16px; line-height: 1.4; }
-.auth-hint { font-size: 12px; color: var(--muted); margin-top: 14px; line-height: 1.5; }
+/* ---------- Конец дополнительных стилей ---------- */

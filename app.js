@@ -222,132 +222,166 @@ function viewLogin() {
     <div class="login">
       <div class="robot">01</div>
       <h1>Go Piscine</h1>
-      <p>Учебная платформа по основам Go и бассейну 01 Edu.</p>
+      <p class="login-sub">Учебная платформа по основам Go и бассейну 01 Edu</p>
       
-      <div class="card login-card">
-        <div class="auth-tabs">
-          <button class="at-tab on" id="tabCloud">Облако (Supabase)</button>
+      <div class="auth-card">
+        <div class="auth-tabs-nav">
+          <button class="at-tab on" id="tabIn">Вход</button>
+          <button class="at-tab" id="tabUp">Регистрация</button>
           <button class="at-tab" id="tabGuest">Гость</button>
         </div>
 
-        <form id="fCloud" class="auth-form">
-          <div class="auth-mode">
-            <span class="active" id="modeIn">Вход</span>
-            <span class="sep">/</span>
-            <span id="modeUp">Регистрация</span>
+        <!-- 1. Вход -->
+        <form id="fLogin" class="auth-pane">
+          <label for="inEmail">Email или логин</label>
+          <input id="inEmail" type="text" placeholder="например, omar@gmail.com" required autocomplete="username">
+          
+          <label for="inPass">Пароль</label>
+          <input id="inPass" type="password" placeholder="••••••••" required autocomplete="current-password">
+
+          <div class="auth-err" id="inErr"></div>
+
+          <button class="btn auth-btn" type="submit" id="btnIn">Войти</button>
+          
+          <div class="auth-footer-note">
+            <span>Нет аккаунта? <a href="#" id="toReg">Зарегистрироваться</a></span>
           </div>
-          <div class="auth-fields">
-            <div id="fieldUser" style="display:none">
-              <label for="regUser">Ваш никнейм для лидерборда</label>
-              <input id="regUser" placeholder="например, Omar" maxlength="20" autocomplete="username">
-            </div>
-            <label for="sbEmail">Email или никнейм</label>
-            <input id="sbEmail" type="text" placeholder="student@gmail.com или omar" required autocomplete="email">
-            <label for="sbPass">Пароль (от 6 символов)</label>
-            <input id="sbPass" type="password" placeholder="••••••••" required minlength="6" autocomplete="current-password">
-          </div>
-          <div id="authErr" class="auth-err"></div>
-          <button class="btn" type="submit" id="btnCloudSubmit">Войти через Supabase</button>
-          <p class="auth-hint">☁️ Облачный аккаунт сохраняет прогресс на всех устройствах и выводит вас в живой лидерборд.</p>
         </form>
 
-        <form id="fGuest" class="auth-form" style="display:none">
-          <label for="n">Логин (локальный)</label>
-          <input id="n" autocomplete="off" maxlength="20" placeholder="например, Omar">
-          <button class="btn" type="submit">Войти как гость</button>
-          <p class="auth-hint">Прогресс сохранится только в этом браузере без облачной синхронизации.</p>
+        <!-- 2. Регистрация -->
+        <form id="fReg" class="auth-pane" style="display:none">
+          <label for="regUsername">Никнейм для лидерборда</label>
+          <input id="regUsername" type="text" placeholder="например, Omar" maxlength="20" required autocomplete="nickname">
+
+          <label for="regEmail">Email</label>
+          <input id="regEmail" type="text" placeholder="student@gmail.com" required autocomplete="email">
+
+          <label for="regPass">Пароль (от 6 символов)</label>
+          <input id="regPass" type="password" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+
+          <div class="auth-err" id="regErr"></div>
+
+          <button class="btn auth-btn" type="submit" id="btnReg">Создать аккаунт</button>
+
+          <div class="auth-footer-note">
+            <span>Уже есть аккаунт? <a href="#" id="toLog">Войти</a></span>
+          </div>
+        </form>
+
+        <!-- 3. Гостевой вход -->
+        <form id="fGuest" class="auth-pane" style="display:none">
+          <label for="gName">Имя или никнейм</label>
+          <input id="gName" type="text" placeholder="например, Gopher" maxlength="20" required autocomplete="off">
+
+          <button class="btn auth-btn" type="submit">Войти локально</button>
+
+          <div class="auth-footer-note">
+            <span>Без пароля. Прогресс сохранится только в этом браузере.</span>
+          </div>
         </form>
       </div>
     </div>`;
 
-  let mode = "in";
-  const formCloud = $("#fCloud"), formGuest = $("#fGuest");
-  const tabCloud = $("#tabCloud"), tabGuest = $("#tabGuest");
-  const modeIn = $("#modeIn"), modeUp = $("#modeUp");
-  const fieldUser = $("#fieldUser"), authErr = $("#authErr");
-  const btnSubmit = $("#btnCloudSubmit");
+  const fLogin = $("#fLogin"), fReg = $("#fReg"), fGuest = $("#fGuest");
+  const tabIn = $("#tabIn"), tabUp = $("#tabUp"), tabGuest = $("#tabGuest");
+  const inErr = $("#inErr"), regErr = $("#regErr");
+  const btnIn = $("#btnIn"), btnReg = $("#btnReg");
 
-  tabCloud.onclick = () => {
-    tabCloud.classList.add("on"); tabGuest.classList.remove("on");
-    formCloud.style.display = "block"; formGuest.style.display = "none";
-  };
-  tabGuest.onclick = () => {
-    tabGuest.classList.add("on"); tabCloud.classList.remove("on");
-    formGuest.style.display = "block"; formCloud.style.display = "none";
-    $("#n").focus();
-  };
+  const setTab = tab => {
+    tabIn.classList.toggle("on", tab === "in");
+    tabUp.classList.toggle("on", tab === "up");
+    tabGuest.classList.toggle("on", tab === "guest");
 
-  modeIn.onclick = () => {
-    mode = "in";
-    modeIn.classList.add("active"); modeUp.classList.remove("active");
-    fieldUser.style.display = "none";
-    btnSubmit.textContent = "Войти через Supabase";
-    authErr.textContent = "";
-  };
-  modeUp.onclick = () => {
-    mode = "up";
-    modeUp.classList.add("active"); modeIn.classList.remove("active");
-    fieldUser.style.display = "block";
-    btnSubmit.textContent = "Зарегистрироваться";
-    authErr.textContent = "";
+    fLogin.style.display = tab === "in" ? "block" : "none";
+    fReg.style.display = tab === "up" ? "block" : "none";
+    fGuest.style.display = tab === "guest" ? "block" : "none";
+
+    inErr.textContent = "";
+    regErr.textContent = "";
+
+    if (tab === "in") $("#inEmail").focus();
+    else if (tab === "up") $("#regUsername").focus();
+    else if (tab === "guest") $("#gName").focus();
   };
 
-  formCloud.onsubmit = async e => {
+  tabIn.onclick = () => setTab("in");
+  tabUp.onclick = () => setTab("up");
+  tabGuest.onclick = () => setTab("guest");
+
+  const toReg = $("#toReg"); if (toReg) toReg.onclick = e => { e.preventDefault(); setTab("up"); };
+  const toLog = $("#toLog"); if (toLog) toLog.onclick = e => { e.preventDefault(); setTab("in"); };
+
+  // Обработка входа
+  fLogin.onsubmit = async e => {
     e.preventDefault();
-    authErr.textContent = "";
-    btnSubmit.disabled = true;
-    const email = $("#sbEmail").value.trim();
-    const pass = $("#sbPass").value;
+    inErr.textContent = "";
+    btnIn.disabled = true;
+    btnIn.textContent = "Вход...";
 
-    if (mode === "up") {
-      const username = ($("#regUser").value || "").trim().replace(/[^\p{L}\p{N}_. -]/gu, "");
-      if (!username) {
-        authErr.textContent = "Укажите никнейм для лидерборда.";
-        btnSubmit.disabled = false;
-        return $("#regUser").focus();
+    const email = $("#inEmail").value.trim();
+    const pass = $("#inPass").value;
+
+    const res = await sbSignIn(email, pass);
+    if (res.error) {
+      let msg = res.error.message || "Неверный логин или пароль";
+      if (msg.includes("Email not confirmed")) {
+        msg = "Email ещё не подтверждён. Подтвердите его по ссылке из письма (или отключите Confirm Email в панели Supabase Auth).";
       }
-      btnSubmit.textContent = "Регистрация...";
-      const res = await sbSignUp(email, pass, username);
-      if (res.error) {
-        authErr.textContent = res.error.message || "Ошибка регистрации";
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = "Зарегистрироваться";
-        return;
-      }
-      if (res.data?.session) {
-        store.set("user", username);
-        store.set("sb_session", true);
-        location.hash = "#/";
-      } else {
-        authErr.style.color = "var(--ok)";
-        authErr.innerHTML = `Аккаунт создан! ${res.data?.user?.confirmation_sent_at ? "Подтвердите email или войдите." : "Теперь нажмите «Вход»."}`;
-        modeIn.click();
-        btnSubmit.disabled = false;
-      }
-    } else {
-      btnSubmit.textContent = "Вход...";
-      const res = await sbSignIn(email, pass);
-      if (res.error) {
-        let msg = res.error.message || "Неверный логин или пароль";
-        if (msg.includes("Email not confirmed")) {
-          msg = "Email ещё не подтверждён. Подтвердите его по ссылке из письма (или отключите Confirm Email в панели Supabase Auth).";
-        }
-        authErr.textContent = msg;
-        btnSubmit.disabled = false;
-        btnSubmit.textContent = "Войти через Supabase";
-        return;
-      }
-      const username = res.username || email.split("@")[0];
+      inErr.textContent = msg;
+      btnIn.disabled = false;
+      btnIn.textContent = "Войти";
+      return;
+    }
+
+    const username = res.username || email.split("@")[0];
+    store.set("user", username);
+    store.set("sb_session", true);
+    location.hash = "#/";
+  };
+
+  // Обработка регистрации
+  fReg.onsubmit = async e => {
+    e.preventDefault();
+    regErr.textContent = "";
+    regErr.classList.remove("ok");
+    btnReg.disabled = true;
+
+    const username = ($("#regUsername").value || "").trim().replace(/[^\p{L}\p{N}_. -]/gu, "");
+    if (!username) {
+      regErr.textContent = "Укажите корректный никнейм.";
+      btnReg.disabled = false;
+      return $("#regUsername").focus();
+    }
+
+    btnReg.textContent = "Создание аккаунта...";
+    const email = $("#regEmail").value.trim();
+    const pass = $("#regPass").value;
+
+    const res = await sbSignUp(email, pass, username);
+    if (res.error) {
+      regErr.textContent = res.error.message || "Ошибка регистрации";
+      btnReg.disabled = false;
+      btnReg.textContent = "Создать аккаунт";
+      return;
+    }
+
+    if (res.data?.session) {
       store.set("user", username);
       store.set("sb_session", true);
       location.hash = "#/";
+    } else {
+      regErr.classList.add("ok");
+      regErr.innerHTML = `Аккаунт создан! ${res.data?.user?.confirmation_sent_at ? "Подтвердите email или перейдите ко входу." : "Теперь перейдите ко входу."}`;
+      btnReg.disabled = false;
+      btnReg.textContent = "Создать аккаунт";
     }
   };
 
-  formGuest.onsubmit = e => {
+  // Обработка гостя
+  fGuest.onsubmit = e => {
     e.preventDefault();
-    const name = $("#n").value.trim().replace(/[^\p{L}\p{N}_. -]/gu, "").replace(/\s+/g, " ");
-    if (!name) return $("#n").focus();
+    const name = $("#gName").value.trim().replace(/[^\p{L}\p{N}_. -]/gu, "").replace(/\s+/g, " ");
+    if (!name) return $("#gName").focus();
     store.set("user", name);
     store.set("sb_session", false);
     location.hash = "#/";
