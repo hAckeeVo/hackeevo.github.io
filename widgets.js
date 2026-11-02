@@ -13,28 +13,36 @@
   };
 
   window.hasTopicWidget = function (tid) {
-    return !!TITLES[tid];
+    return !!TITLES[tid] || (window.hasPedagogy && window.hasPedagogy(tid));
   };
 
   window.getWidgetTitle = function (tid) {
-    return TITLES[tid] || "Интерактивный тренажёр";
+    if (TITLES[tid]) return TITLES[tid];
+    if (window.hasPedagogy && window.hasPedagogy(tid)) return "Лаборатория активного обучения: Конструктор & Bug Hunter";
+    return "Интерактивный тренажёр";
   };
 
-  window.initTopicWidgets = function (tid) {
-    if (tid === 6) initIfElseViz();
-    if (tid === 8) initForViz();
-    if (tid === 10) initSliceViz();
-    if (tid === 11) initMapViz();
-    if (tid === 20) initJsonViz();
-    if (tid === 22) initApiViz();
-    if (tid === 23) initSqlViz();
+  window.getTopicWidgetRenderer = function (tid) {
+    if (tid === 6) return initIfElseViz;
+    if (tid === 8) return initForViz;
+    if (tid === 10) return initSliceViz;
+    if (tid === 11) return initMapViz;
+    if (tid === 20) return initJsonViz;
+    if (tid === 22) return initApiViz;
+    if (tid === 23) return initSqlViz;
+    return null;
+  };
+
+  window.initTopicWidgets = function (tid, container) {
+    const fn = window.getTopicWidgetRenderer(tid);
+    if (fn) fn(container);
   };
 
   // ==========================================
   // ТЕМА 6: Условия if / else
   // ==========================================
-  function initIfElseViz() {
-    const el = document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
+  function initIfElseViz(container) {
+    const el = container || document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -111,8 +119,8 @@
   // ==========================================
   // ТЕМА 8: Циклы for
   // ==========================================
-  function initForViz() {
-    const el = document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
+  function initForViz(container) {
+    const el = container || document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -222,8 +230,8 @@
   // ==========================================
   // ТЕМА 10: Срезы (Slices) Len vs Cap
   // ==========================================
-  function initSliceViz() {
-    const el = document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
+  function initSliceViz(container) {
+    const el = container || document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -309,8 +317,8 @@
   // ==========================================
   // ТЕМА 11: Мапы (Словари) Key-Value
   // ==========================================
-  function initMapViz() {
-    const el = document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
+  function initMapViz(container) {
+    const el = container || document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -387,8 +395,8 @@
   // ==========================================
   // ТЕМА 20: JSON Marshal / Unmarshal
   // ==========================================
-  function initJsonViz() {
-    const el = document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
+  function initJsonViz(container) {
+    const el = container || document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -439,8 +447,8 @@
   // ==========================================
   // ТЕМА 22: REST API Клиент (Мини-Postman)
   // ==========================================
-  function initApiViz() {
-    const el = document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
+  function initApiViz(container) {
+    const el = container || document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -538,8 +546,8 @@
   // ==========================================
   // ТЕМА 23: Базы данных и SQL
   // ==========================================
-  function initSqlViz() {
-    const el = document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
+  function initSqlViz(container) {
+    const el = container || document.getElementById("topicWidgetArea") || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `

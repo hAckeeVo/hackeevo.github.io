@@ -17,13 +17,20 @@ const getDone = (u) => store.get("done:" + u, {});
 const getCode = (u, id, starter) => store.get(`code:${u}:${id}`, null) || starter;
 // задача: 50 XP (25, если открывали ответ), мини-тест: 20 XP. Ключи тестов начинаются с "q".
 // задачи со звёздочкой (hard) стоят 75 XP, с открытым ответом - 35
+const XP_PARSONS = 15, XP_BUGHUNT = 15;
 const xpFor = (k, v) => !v ? 0 : k.hard ? (v === "a" ? XP_HARD_ASSISTED : XP_HARD) : (v === "a" ? XP_ASSISTED : XP_PER_TASK);
 const taskById = id => TOPICS.flatMap(t => t.tasks).find(k => k.id === id);
-const xpOf = (u) => Object.entries(getDone(u)).reduce((s, [k, v]) => s + (k[0] === "q" ? XP_QUIZ : xpFor(taskById(k) || {}, v)), 0);
+const xpOf = (u) => Object.entries(getDone(u)).reduce((s, [k, v]) => {
+  if (!v) return s;
+  if (k[0] === "q") return s + XP_QUIZ;
+  if (k.startsWith("parsons_")) return s + XP_PARSONS;
+  if (k.startsWith("bughunt_")) return s + XP_BUGHUNT;
+  return s + xpFor(taskById(k) || {}, v);
+}, 0);
 const topicDone = (t, done) => t.tasks.every(k => done[k.id]);
 // тема считается пройденной, когда решены все задачи и пройден мини-тест
 const topicComplete = (t, done) => topicDone(t, done) && (!t.quiz || !!done["q" + t.id]);
-const topicXp = (t, done) => t.tasks.reduce((s, k) => s + xpFor(k, done[k.id]), 0) + (done["q" + t.id] ? XP_QUIZ : 0);
+const topicXp = (t, done) => t.tasks.reduce((s, k) => s + xpFor(k, done[k.id]), 0) + (done["q" + t.id] ? XP_QUIZ : 0) + (done["parsons_" + t.id] ? XP_PARSONS : 0) + (done["bughunt_" + t.id] ? XP_BUGHUNT : 0);
 
 // ---------- блокировки и промокоды ----------
 const PROMO_CODES = ["01EDU", "PISCINE", "MENTOR", "HACKEEVO", "2026", "FREE"];
@@ -430,8 +437,8 @@ function viewDashboard(u) {
 
   const renderTopicCard = t => {
     const lock = topicLock(t, done), complete = topicComplete(t, done);
-    const hasSim = !!t.widgetTitle || t.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(t.id));
-    const vizBadge = hasSim ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">🎮 Симулятор</span>` : "";
+    const hasSim = !!t.widgetTitle || t.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(t.id)) || (window.hasPedagogy && window.hasPedagogy(t.id));
+    const vizBadge = hasSim ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">🎮 Тренажёр</span>` : "";
     return `
       <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
         <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}${vizBadge}</span>
@@ -576,8 +583,8 @@ function viewTopic(u, tid) {
   chrome(crumb);
   const hasQuiz = !!topic.quiz;
   const stepBase = hasQuiz ? 4 : 3;
-  const hasSim = !!topic.widgetTitle || topic.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(topic.id));
-  const simTitle = topic.widgetTitle || (window.getWidgetTitle && window.getWidgetTitle(topic.id)) || "Интерактивный симулятор";
+  const hasSim = !!topic.widgetTitle || topic.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(topic.id)) || (window.hasPedagogy && window.hasPedagogy(topic.id));
+  const simTitle = topic.widgetTitle || (window.getWidgetTitle && window.getWidgetTitle(topic.id)) || (window.hasPedagogy && window.hasPedagogy(topic.id) ? "Лаборатория активного обучения: Конструктор & Bug Hunter" : "Интерактивный тренажёр");
 
   const quizBlock = () => !hasQuiz ? "" : `
     <section class="sec-block quiz" id="s-quiz">
@@ -685,8 +692,19 @@ function viewTopic(u, tid) {
       <nav class="mobbar"><button data-p="left" class="on">Учебник</button><button data-p="right">Код</button></nav>
     </div>`;
 
-  if (window.initPiscineWidgets) { try { window.initPiscineWidgets(topic.id); } catch (e) { } }
-  if (window.initTopicWidgets) { try { window.initTopicWidgets(topic.id); } catch (e) { } }
+  const mountEl = $("#piscineWidgetArea");
+  if (mountEl && window.mountActiveLearningLab) {
+    let simRenderer = null;
+    if (window.getPiscineRenderer && window.getPiscineRenderer(topic.id)) {
+      simRenderer = window.getPiscineRenderer(topic.id);
+    } else if (window.getTopicWidgetRenderer && window.getTopicWidgetRenderer(topic.id)) {
+      simRenderer = window.getTopicWidgetRenderer(topic.id);
+    }
+    window.mountActiveLearningLab(mountEl, topic.id, u, simRenderer);
+  } else {
+    if (window.initPiscineWidgets) { try { window.initPiscineWidgets(topic.id); } catch (e) { } }
+    if (window.initTopicWidgets) { try { window.initTopicWidgets(topic.id); } catch (e) { } }
+  }
 
   // --- мобильная версия: переключатель «Учебник / Код»
   const learn = $(".learn");

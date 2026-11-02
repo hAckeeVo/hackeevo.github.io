@@ -1093,18 +1093,24 @@ func main() {
   // ==========================================
   // Интерактивные визуализаторы (Interactive Widgets)
   // ==========================================
-  window.initPiscineWidgets = function (topicId) {
-    if (topicId === 14) initQuadViz();
-    if (topicId === 15) initPointerViz();
-    if (topicId === 16) initRuneViz();
-    if (topicId === 17) initRecursionViz();
-    if (topicId === 18) initMathViz();
-    if (topicId === 19) initChessViz();
+  window.getPiscineRenderer = function (topicId) {
+    if (topicId === 14) return initQuadViz;
+    if (topicId === 15) return initPointerViz;
+    if (topicId === 16) return initRuneViz;
+    if (topicId === 17) return initRecursionViz;
+    if (topicId === 18) return initMathViz;
+    if (topicId === 19) return initChessViz;
+    return null;
+  };
+
+  window.initPiscineWidgets = function (topicId, container) {
+    const fn = window.getPiscineRenderer(topicId);
+    if (fn) fn(container);
   };
 
   // --- 1. Quad Visualizer ---
-  function initQuadViz() {
-    const el = document.getElementById("piscineWidgetArea") || document.getElementById("quadVizContainer");
+  function initQuadViz(container) {
+    const el = container || document.getElementById("piscineWidgetArea") || document.getElementById("quadVizContainer");
     if (!el) return;
 
     el.innerHTML = `
@@ -1231,8 +1237,8 @@ func main() {
   }
 
   // --- 2. Pointer Visualizer ---
-  function initPointerViz() {
-    const el = document.getElementById("piscineWidgetArea") || document.getElementById("pointerVizContainer");
+  function initPointerViz(container) {
+    const el = container || document.getElementById("piscineWidgetArea") || document.getElementById("pointerVizContainer");
     if (!el) return;
 
     el.innerHTML = `
@@ -1304,8 +1310,8 @@ func main() {
   }
 
   // --- 3. Rune & ASCII Visualizer ---
-  function initRuneViz() {
-    const el = document.getElementById("piscineWidgetArea");
+  function initRuneViz(container) {
+    const el = container || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -1368,8 +1374,8 @@ func main() {
   }
 
   // --- 4. Recursion Visualizer ---
-  function initRecursionViz() {
-    const el = document.getElementById("piscineWidgetArea") || document.getElementById("recursionVizContainer");
+  function initRecursionViz(container) {
+    const el = container || document.getElementById("piscineWidgetArea") || document.getElementById("recursionVizContainer");
     if (!el) return;
 
     el.innerHTML = `
@@ -1417,8 +1423,8 @@ func main() {
   }
 
   // --- 5. Math & Primes Visualizer ---
-  function initMathViz() {
-    const el = document.getElementById("piscineWidgetArea");
+  function initMathViz(container) {
+    const el = container || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
@@ -1475,8 +1481,8 @@ func main() {
   }
 
   // --- 6. Eight Queens Chessboard Visualizer ---
-  function initChessViz() {
-    const el = document.getElementById("piscineWidgetArea");
+  function initChessViz(container) {
+    const el = container || document.getElementById("piscineWidgetArea");
     if (!el) return;
 
     el.innerHTML = `
