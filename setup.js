@@ -94,7 +94,7 @@
     return `
       <div style="position:relative;background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:8px 0 14px;font:13px var(--mono)">
         <button class="cmd-copy" data-code="${esc(code)}" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.06);border:1px solid var(--line);color:var(--muted);padding:3px 8px;font:500 11px var(--mono);border-radius:3px;cursor:pointer">
-          📋 Копировать
+          📋 ${((window.getLang && window.getLang()) === "kz") ? "Көшіру" : "Копировать"}
         </button>
         <code style="color:#a78bfa;white-space:pre-wrap;display:block;padding-right:90px">${esc(code)}</code>
         ${note ? `<div style="margin-top:6px;font:12px var(--sans);color:var(--dim)">💡 ${note}</div>` : ""}

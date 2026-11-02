@@ -576,6 +576,7 @@
   // ========================================================
   window.mountActiveLearningLab = function (container, tid, u, simCallback) {
     if (!container) return;
+    const isKZ = (window.getLang && window.getLang()) === "kz";
     const pData = DATA[tid];
     const hasParsons = !!pData?.parsons;
     const hasBug = !!pData?.bugHunt;
@@ -599,9 +600,9 @@
     container.innerHTML = `
       <div class="learning-lab">
         <div class="lab-nav">
-          ${hasSim ? `<button class="lab-tab on" data-lab="sim">📊 Интерактив / Симулятор</button>` : ""}
-          ${hasParsons ? `<button class="lab-tab ${!hasSim ? "on" : ""}" data-lab="parsons">🧩 Конструктор алгоритма ${parsonsDone ? '<span class="lab-badge ok">✓ +15 XP</span>' : '<span class="lab-badge">+15 XP</span>'}</button>` : ""}
-          ${hasBug ? `<button class="lab-tab ${!hasSim && !hasParsons ? "on" : ""}" data-lab="bughunt">🐞 Охота на ошибки ${bugDone ? '<span class="lab-badge ok">✓ +15 XP</span>' : '<span class="lab-badge">+15 XP</span>'}</button>` : ""}
+          ${hasSim ? `<button class="lab-tab on" data-lab="sim">${isKZ ? "📊 Интерактив / Жаттықтырғыш" : "📊 Интерактив / Симулятор"}</button>` : ""}
+          ${hasParsons ? `<button class="lab-tab ${!hasSim ? "on" : ""}" data-lab="parsons">${isKZ ? "🧩 Алгоритм құрастырушысы" : "🧩 Конструктор алгоритма"} ${parsonsDone ? '<span class="lab-badge ok">✓ +15 XP</span>' : '<span class="lab-badge">+15 XP</span>'}</button>` : ""}
+          ${hasBug ? `<button class="lab-tab ${!hasSim && !hasParsons ? "on" : ""}" data-lab="bughunt">${isKZ ? "🐞 Қателерді іздеу" : "🐞 Охота на ошибки"} ${bugDone ? '<span class="lab-badge ok">✓ +15 XP</span>' : '<span class="lab-badge">+15 XP</span>'}</button>` : ""}
         </div>
         <div class="lab-content" id="labBody"></div>
       </div>
@@ -634,6 +635,7 @@
   // 1. PARSONS PROBLEMS ENGINE
   // ========================================================
   function renderParsons(container, cfg, tid, u) {
+    const isKZ = (window.getLang && window.getLang()) === "kz";
     const d = (window.store && window.store.get("done:" + u)) || {};
     let isSolved = !!d["parsons_" + tid];
 
@@ -642,25 +644,29 @@
       ? cfg.solution.map(id => cfg.blocks.find(b => b.id === id))
       : shuffleArray([...cfg.blocks]);
 
+    const titleStr = (isKZ && cfg.title_kz) ? cfg.title_kz : cfg.title;
+    const goalStr = (isKZ && cfg.goal_kz) ? cfg.goal_kz : cfg.goal;
+    const expStr = (isKZ && cfg.explanation_kz) ? cfg.explanation_kz : cfg.explanation;
+
     container.innerHTML = `
       <div class="parsons-box">
         <div class="parsons-header">
           <div>
-            <div class="parsons-badge">🧩 Parsons Puzzle · Когнитивный тренажёр логики</div>
-            <h3 class="parsons-title">${esc(cfg.title)}</h3>
+            <div class="parsons-badge">${isKZ ? "🧩 Parsons Puzzle · Логика когнитивті тренажері" : "🧩 Parsons Puzzle · Когнитивный тренажёр логики"}</div>
+            <h3 class="parsons-title">${esc(titleStr)}</h3>
           </div>
-          <div class="parsons-status" id="parsonsStatus">${isSolved ? '<span class="ok-pill">✓ Пройдено (+15 XP)</span>' : '<span class="todo-pill">Награда: +15 XP</span>'}</div>
+          <div class="parsons-status" id="parsonsStatus">${isSolved ? (isKZ ? '<span class="ok-pill">✓ Орындалды (+15 XP)</span>' : '<span class="ok-pill">✓ Пройдено (+15 XP)</span>') : (isKZ ? '<span class="todo-pill">Марапат: +15 XP</span>' : '<span class="todo-pill">Награда: +15 XP</span>')}</div>
         </div>
-        <p class="parsons-goal">${esc(cfg.goal)}</p>
+        <p class="parsons-goal">${esc(goalStr)}</p>
         <div class="parsons-hint-bar">
-          <span>💡 <b>Совет:</b> Перемещайте блоки стрелками <b>▲ Вверх</b> и <b>▼ Вниз</b>, чтобы восстановить верную последовательность выполнения кода.</span>
+          <span>💡 <b>${isKZ ? "Кеңес:" : "Совет:"}</b> ${isKZ ? "Кодтың орындалу ретін дұрыс жинау үшін блоктарды <b>▲ Жоғары</b> және <b>▼ Төмен</b> батырмаларымен жылжытыңыз." : "Перемещайте блоки стрелками <b>▲ Вверх</b> и <b>▼ Вниз</b>, чтобы восстановить верную последовательность выполнения кода."}</span>
         </div>
 
         <div class="parsons-list" id="parsonsList"></div>
 
         <div class="parsons-actions">
-          <button class="btn primary" id="parsonsCheckBtn">Проверить сборку ▶</button>
-          <button class="btn ghost small" id="parsonsResetBtn">Перемешать заново ↺</button>
+          <button class="btn primary" id="parsonsCheckBtn">${isKZ ? "Құрастыруды тексеру ▶" : "Проверить сборку ▶"}</button>
+          <button class="btn ghost small" id="parsonsResetBtn">${isKZ ? "Қайта араластыру ↺" : "Перемешать заново ↺"}</button>
         </div>
 
         <div id="parsonsFeedback" class="parsons-feedback" style="display:none"></div>
@@ -677,8 +683,8 @@
       listEl.innerHTML = currentBlocks.map((b, idx) => `
         <div class="parsons-card" data-id="${b.id}" data-idx="${idx}">
           <div class="pc-controls">
-            <button class="pc-btn" data-act="up" ${idx === 0 ? "disabled" : ""} title="Поднять выше">▲</button>
-            <button class="pc-btn" data-act="down" ${idx === currentBlocks.length - 1 ? "disabled" : ""} title="Опустить ниже">▼</button>
+            <button class="pc-btn" data-act="up" ${idx === 0 ? "disabled" : ""} title="${isKZ ? "Жоғары көтеру" : "Поднять выше"}">▲</button>
+            <button class="pc-btn" data-act="down" ${idx === currentBlocks.length - 1 ? "disabled" : ""} title="${isKZ ? "Төмен түсіру" : "Опустить ниже"}">▼</button>
           </div>
           <div class="pc-line-num">${idx + 1}</div>
           <div class="pc-code" style="padding-left: ${b.indent ? b.indent * 20 : 0}px">
@@ -724,16 +730,16 @@
       if (isCorrect) {
         fbEl.className = "parsons-feedback right";
         fbEl.innerHTML = `
-          <div class="fb-title">🎉 Идеально! Алгоритм собран абсолютно верно!</div>
-          <div class="fb-exp">${esc(cfg.explanation)}</div>
-          ${cfg.output ? `<div class="fb-out"><b>Вывод программы:</b><pre>${esc(cfg.output)}</pre></div>` : ""}
+          <div class="fb-title">${isKZ ? "🎉 Керемет! Алгоритм толығымен дұрыс құрастырылды!" : "🎉 Идеально! Алгоритм собран абсолютно верно!"}</div>
+          <div class="fb-exp">${esc(expStr)}</div>
+          ${cfg.output ? `<div class="fb-out"><b>${isKZ ? "Бағдарлама нәтижесі:" : "Вывод программы:"}</b><pre>${esc(cfg.output)}</pre></div>` : ""}
         `;
         if (!isSolved) {
           isSolved = true;
           const currDone = (window.store && window.store.get("done:" + u)) || {};
           currDone["parsons_" + tid] = true;
           if (window.store) window.store.set("done:" + u, currDone);
-          statusEl.innerHTML = '<span class="ok-pill">✓ Пройдено (+15 XP)</span>';
+          statusEl.innerHTML = isKZ ? '<span class="ok-pill">✓ Орындалды (+15 XP)</span>' : '<span class="ok-pill">✓ Пройдено (+15 XP)</span>';
           if (window.sbSyncTask) window.sbSyncTask("parsons_" + tid, XP_PARSONS, false);
           if (window.refreshBadges) window.refreshBadges();
           if (window.chrome) window.chrome();
@@ -743,8 +749,8 @@
         let firstWrongIdx = currentIds.findIndex((id, i) => id !== cfg.solution[i]);
         fbEl.className = "parsons-feedback wrong";
         fbEl.innerHTML = `
-          <div class="fb-title">Не совсем так. В последовательности есть логическая ошибка.</div>
-          <p>Первые строки до позиции <b>${firstWrongIdx + 1}</b> стоят правильно, но на шаге <b>${firstWrongIdx + 1}</b> ожидается другой блок кода. Подумайте, какое действие должно произойти раньше.</p>
+          <div class="fb-title">${isKZ ? "Дұрыс емес. Реттілікте логикалық қате бар." : "Не совсем так. В последовательности есть логическая ошибка."}</div>
+          <p>${isKZ ? `<b>${firstWrongIdx + 1}</b> орнына дейінгі жолдар дұрыс тұр, бірақ <b>${firstWrongIdx + 1}</b> қадамында басқа код блогы күтіледі. Қай әрекет ертерек орындалуы керек екенін ойланыңыз.` : `Первые строки до позиции <b>${firstWrongIdx + 1}</b> стоят правильно, но на шаге <b>${firstWrongIdx + 1}</b> ожидается другой блок кода. Подумайте, какое действие должно произойти раньше.`}</p>
         `;
       }
     };
@@ -754,22 +760,26 @@
   // 2. BUG HUNT (CODE REVIEW) ENGINE
   // ========================================================
   function renderBugHunt(container, cfg, tid, u) {
+    const isKZ = (window.getLang && window.getLang()) === "kz";
     const d = (window.store && window.store.get("done:" + u)) || {};
     let isSolved = !!d["bughunt_" + tid];
     let selectedLineIdx = null;
+
+    const titleStr = (isKZ && cfg.title_kz) ? cfg.title_kz : cfg.title;
+    const goalStr = (isKZ && cfg.goal_kz) ? cfg.goal_kz : cfg.goal;
 
     container.innerHTML = `
       <div class="bughunt-box">
         <div class="bughunt-header">
           <div>
-            <div class="bughunt-badge">🐞 Bug Hunter · Анализ чужого кода и отладка</div>
-            <h3 class="bughunt-title">${esc(cfg.title)}</h3>
+            <div class="bughunt-badge">${isKZ ? "🐞 Bug Hunter · Бөтен кодты талдау және түзету" : "🐞 Bug Hunter · Анализ чужого кода и отладка"}</div>
+            <h3 class="bughunt-title">${esc(titleStr)}</h3>
           </div>
-          <div class="bughunt-status" id="bugStatus">${isSolved ? '<span class="ok-pill">✓ Ошибка найдена (+15 XP)</span>' : '<span class="todo-pill">Награда: +15 XP</span>'}</div>
+          <div class="bughunt-status" id="bugStatus">${isSolved ? (isKZ ? '<span class="ok-pill">✓ Қате табылды (+15 XP)</span>' : '<span class="ok-pill">✓ Ошибка найдена (+15 XP)</span>') : (isKZ ? '<span class="todo-pill">Марапат: +15 XP</span>' : '<span class="todo-pill">Награда: +15 XP</span>')}</div>
         </div>
-        <p class="bughunt-goal">${esc(cfg.goal)}</p>
+        <p class="bughunt-goal">${esc(goalStr)}</p>
         <div class="parsons-hint-bar">
-          <span>🔍 <b>Инструкция:</b> Внимательно просмотрите код ниже. <b>Кликните по строке</b>, в которой прячется ошибка, чтобы начать разбор.</span>
+          <span>🔍 <b>${isKZ ? "Нұсқаулық:" : "Инструкция:"}</b> ${isKZ ? "Төмендегі кодты мұқият оқып шығыңыз. Қатені талдауды бастау үшін қате жасырынған <b>жолды басыңыз</b>." : "Внимательно просмотрите код ниже. <b>Кликните по строке</b>, в которой прячется ошибка, чтобы начать разбор."}</span>
         </div>
 
         <div class="code-inspector" id="codeInspector">
@@ -803,11 +813,11 @@
           el.classList.add("correct-pick");
           diagArea.innerHTML = `
             <div class="diag-card right-pick-card">
-              <div class="diag-header">🎯 В точку! Строка ${lineIdx + 1} действительно ошибочна.</div>
-              <p class="diag-sub">Теперь выберите правильное объяснение и способ исправления бага:</p>
+              <div class="diag-header">${isKZ ? `🎯 Дәл таптыңыз! ${lineIdx + 1}-жолда шынымен де қате бар.` : `🎯 В точку! Строка ${lineIdx + 1} действительно ошибочна.`}</div>
+              <p class="diag-sub">${isKZ ? "Енді қатенің дұрыс түсіндірмесін және оны түзету жолын таңдаңыз:" : "Теперь выберите правильное объяснение и способ исправления бага:"}</p>
               <div class="diag-options">
                 ${cfg.options.map((opt, oi) => `
-                  <button class="diag-opt-btn" data-oi="${oi}">${esc(opt.text)}</button>
+                  <button class="diag-opt-btn" data-oi="${oi}">${esc((isKZ && opt.text_kz) ? opt.text_kz : opt.text)}</button>
                 `).join("")}
               </div>
               <div id="diagResult" class="diag-result" style="display:none"></div>
@@ -821,21 +831,22 @@
             btn.onclick = () => {
               const oi = parseInt(btn.dataset.oi, 10);
               const opt = cfg.options[oi];
+              const whyStr = (isKZ && opt.why_kz) ? opt.why_kz : opt.why;
               resEl.style.display = "block";
               if (opt.correct) {
                 btn.classList.add("right");
                 optBtns.forEach(b => b.disabled = true);
                 resEl.className = "diag-result ok";
                 resEl.innerHTML = `
-                  <b>✓ Абсолютно верно!</b>
-                  <p>${esc(opt.why)}</p>
+                  <b>${isKZ ? "✓ Толықтай дұрыс!" : "✓ Абсолютно верно!"}</b>
+                  <p>${esc(whyStr)}</p>
                 `;
                 if (!isSolved) {
                   isSolved = true;
                   const currDone = (window.store && window.store.get("done:" + u)) || {};
                   currDone["bughunt_" + tid] = true;
                   if (window.store) window.store.set("done:" + u, currDone);
-                  statusEl.innerHTML = '<span class="ok-pill">✓ Ошибка найдена (+15 XP)</span>';
+                  statusEl.innerHTML = isKZ ? '<span class="ok-pill">✓ Қате табылды (+15 XP)</span>' : '<span class="ok-pill">✓ Ошибка найдена (+15 XP)</span>';
                   if (window.sbSyncTask) window.sbSyncTask("bughunt_" + tid, XP_BUGHUNT, false);
                   if (window.refreshBadges) window.refreshBadges();
                   if (window.chrome) window.chrome();
@@ -844,7 +855,7 @@
                 btn.classList.add("wrong");
                 btn.disabled = true;
                 resEl.className = "diag-result bad";
-                resEl.innerHTML = `<b>Не совсем:</b> ${esc(opt.why)}`;
+                resEl.innerHTML = `<b>${isKZ ? "Олай емес:" : "Не совсем:"}</b> ${esc(whyStr)}`;
               }
             };
           });
@@ -852,8 +863,8 @@
           el.classList.add("wrong-pick");
           diagArea.innerHTML = `
             <div class="diag-card wrong-pick-card">
-              <div class="diag-header">Строка ${lineIdx + 1} написана без ошибок.</div>
-              <p>В строке <code>${esc(cfg.lines[lineIdx] || "")}</code> синтаксис и логика верны. Ищите дефект в другом месте программы.</p>
+              <div class="diag-header">${isKZ ? `${lineIdx + 1}-жол қатесіз жазылған.` : `Строка ${lineIdx + 1} написана без ошибок.`}</div>
+              <p>${isKZ ? `<code>${esc(cfg.lines[lineIdx] || "")}</code> жолында синтаксис пен логика дұрыс. Қатені бағдарламаның басқа жерінен іздеңіз.` : `В строке <code>${esc(cfg.lines[lineIdx] || "")}</code> синтаксис и логика верны. Ищите дефект в другом месте программы.`}</p>
             </div>
           `;
         }

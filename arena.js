@@ -557,8 +557,8 @@ func main() {
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;padding-top:12px;border-top:1px solid var(--line)">
               ${isSolved 
-                ? '<span style="color:var(--ok);font:600 12px var(--mono)">✓ Шешілді</span>' 
-                : '<span style="color:var(--muted);font:500 12px var(--mono)">Жаңа</span>'}
+                ? `<span style="color:var(--ok);font:600 12px var(--mono)">${isKZ ? "✓ Шешілді" : "✓ Решено"}</span>` 
+                : `<span style="color:var(--muted);font:500 12px var(--mono)">${isKZ ? "Жаңа" : "Новая"}</span>`}
               <button class="btn small ${isSolved ? "ghost" : "primary"} open-task-btn" data-tid="${t.id}">
                 ${isSolved ? (isKZ ? "Қайта ашу" : "Повторить") : (isKZ ? "Есепті шығару →" : "Решать задачу →")}
               </button>

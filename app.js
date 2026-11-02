@@ -47,19 +47,22 @@ const topicLock = (t, done) => {
 // причина, по которой задача закрыта (или null)
 const taskLock = (t, k, done) => {
   if (isUnlocked()) return null;
-  if (t.quiz && !done["q" + t.id]) return "Сначала пройдите мини-тест выше (шаг 3).";
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  if (t.quiz && !done["q" + t.id]) return isKZ ? "Алдымен жоғарыдағы шағын-тестті тапсырыңыз (3-қадам)." : "Сначала пройдите мини-тест выше (шаг 3).";
   const prev = t.tasks[t.tasks.indexOf(k) - 1];
-  if (prev && !done[prev.id]) return `Сначала решите задачу «${prev.title}».`;
+  if (prev && !done[prev.id]) return isKZ ? `Алдымен «${prev.title}» тапсырмасын шешіңіз.` : `Сначала решите задачу «${prev.title}».`;
   return null;
 };
 
 // следующий шаг для кнопки «Продолжить»
 function nextStep(done) {
-  for (const t of TOPICS) {
-    if (topicComplete(t, done)) continue;
-    if (t.quiz && !done["q" + t.id]) return { topic: t, label: "Мини-тест" };
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  for (const rawT of TOPICS) {
+    if (topicComplete(rawT, done)) continue;
+    const t = window.getLocalizedTopicFull ? window.getLocalizedTopicFull(rawT) : rawT;
+    if (rawT.quiz && !done["q" + rawT.id]) return { topic: t, label: isKZ ? "Шағын-тест" : "Мини-тест" };
     const k = t.tasks.find(k => !done[k.id]);
-    return { topic: t, label: k ? k.title : "Завершить тему" };
+    return { topic: t, label: k ? k.title : (isKZ ? "Тақырыпты аяқтау" : "Завершить тему") };
   }
   return null;
 }
@@ -115,12 +118,13 @@ function inline(p, seen = new Set()) {
     i % 2 ? `<code>${esc(part.slice(2, -2))}</code>` : glossify(esc(part), seen)).join("");
 }
 function render(text) {
+  const isKZ = (window.getLang && window.getLang()) === "kz";
   const seen = new Set();
   return text.trim().split(/```/).map((chunk, i) => {
     if (i % 2) {
       const raw = chunk.replace(/^\n/, "").replace(/\s+$/, "");
       const copy = /fmt\.|func |:=|package |\bfor\b|switch|\bif\b/.test(raw)
-        ? `<button class="copy" data-copy="${encodeURIComponent(raw)}">Копировать</button>` : "";
+        ? `<button class="copy" data-copy="${encodeURIComponent(raw)}">${isKZ ? "Көшіру" : "Копировать"}</button>` : "";
       return `<div class="codewrap">${copy}<pre class="code"><code>${hl(raw)}</code></pre></div>`;
     }
     return chunk.trim().split(/\n\s*\n/).filter(Boolean).map(p => `<p>${inline(p.trim(), seen)}</p>`).join("");
@@ -146,7 +150,15 @@ document.addEventListener("click", e => {
   const c = e.target.closest?.("[data-copy]");
   if (c) {
     const text = decodeURIComponent(c.dataset.copy);
-    const done = () => { c.textContent = "Скопировано ✓"; c.classList.add("ok"); setTimeout(() => { c.textContent = "Копировать"; c.classList.remove("ok"); }, 1400); };
+    const isKZ = (window.getLang && window.getLang()) === "kz";
+    const done = () => {
+      c.textContent = isKZ ? "Көшірілді ✓" : "Скопировано ✓";
+      c.classList.add("ok");
+      setTimeout(() => {
+        c.textContent = isKZ ? "Көшіру" : "Копировать";
+        c.classList.remove("ok");
+      }, 1400);
+    };
     (navigator.clipboard?.writeText(text) ?? Promise.reject()).then(done, () => {
       const t = document.createElement("textarea"); t.value = text; document.body.appendChild(t); t.select();
       try { document.execCommand("copy"); done(); } catch { } t.remove();
@@ -160,23 +172,24 @@ const isSkeleton = (c, i, k) => /^(package main|import\b.*|func main\(\) \{|\)|\
 const isCloser = c => ["}", "})"].includes(c.trim());
 
 function diagnose(src) {
+  const isKZ = (window.getLang && window.getLang()) === "kz";
   const tips = [];
   const nc = src.replace(/\/\/.*$/gm, "");                              // без комментариев
   const c = nc.replace(/"(?:\\.|[^"\\\n])*"/g, '""');                   // ещё и без содержимого строк
   const n = re => (c.match(re) || []).length;
-  if ((nc.match(/(?<!\\)"/g) || []).length % 2) tips.push("Нечётное число кавычек <code>\"</code> - одну из них забыли закрыть.");
-  if (n(/\{/g) > n(/\}/g)) tips.push("Не хватает закрывающей скобки <code>}</code> - у каждой <code>{</code> должна быть пара.");
-  else if (n(/\{/g) < n(/\}/g)) tips.push("Лишняя закрывающая скобка <code>}</code>.");
-  if (n(/\(/g) !== n(/\)/g)) tips.push("Круглые скобки <code>( )</code> не сходятся по количеству.");
-  if (/'[^'\n]{2,}'/.test(nc)) tips.push("Текст в Go пишется в двойных кавычках <code>\"...\"</code>, а не в одинарных.");
-  if (/\bfmt\.(println|printf|print)\b/.test(c)) tips.push("Имя функции пишется с большой буквы: <code>fmt.Println</code>.");
-  if (/\bFmt\./.test(c)) tips.push("Пакет называется <code>fmt</code> - с маленькой буквы.");
-  if (/(^|[^.\w])(Println|Printf)\(/m.test(c)) tips.push("Перед <code>Println</code> нужно писать <code>fmt.</code> - получится <code>fmt.Println(...)</code>.");
-  if (/^\s*(Package|Import|Func|Var|Const|For|If|Else|Return)\b/m.test(c)) tips.push("Ключевые слова Go пишутся с маленькой буквы: <code>package</code>, <code>import</code>, <code>func</code>, <code>if</code>, <code>for</code>.");
-  if (/\bif\b[^{\n]*[^=!<>:]=[^=][^{\n]*\{/.test(c)) tips.push("В условии сравнение пишется двумя знаками: <code>==</code>. Одно <code>=</code> - это присваивание.");
-  if (/\bfor\b[^{\n;]*:=[^;{\n]*,[^;{\n]*\{/.test(c) && !/\brange\b/.test(c)) tips.push("В <code>for</code> части разделяются точкой с запятой <code>;</code>, а не запятой.");
-  if (/\}\s*\n\s*else\b/.test(c)) tips.push("<code>else</code> пишется на той же строке, что и закрывающая скобка: <code>} else {</code>.");
-  if (/\bfunction\b|\bdef\b|\bprint\s*\(|\bconsole\.log/.test(c)) tips.push("Это не Go: функции объявляются словом <code>func</code>, а вывод делается через <code>fmt.Println</code>.");
+  if ((nc.match(/(?<!\\)"/g) || []).length % 2) tips.push(isKZ ? "Тырнақшалардың саны тақ <code>\"</code> — біреуін жабуды ұмыттыңыз." : "Нечётное число кавычек <code>\"</code> - одну из них забыли закрыть.");
+  if (n(/\{/g) > n(/\}/g)) tips.push(isKZ ? "Жабылатын <code>}</code> жақша жетіспейді — әрбір <code>{</code> жақшасының жұбы болуы керек." : "Не хватает закрывающей скобки <code>}</code> - у каждой <code>{</code> должна быть пара.");
+  else if (n(/\{/g) < n(/\}/g)) tips.push(isKZ ? "Артық жабылатын <code>}</code> жақшасы бар." : "Лишняя закрывающая скобка <code>}</code>.");
+  if (n(/\(/g) !== n(/\)/g)) tips.push(isKZ ? "Дөңгелек жақшалар <code>( )</code> саны сәйкес келмейді." : "Круглые скобки <code>( )</code> не сходятся по количеству.");
+  if (/'[^'\n]{2,}'/.test(nc)) tips.push(isKZ ? "Go тілінде мәтін дара тырнақшамен емес, қос тырнақшамен <code>\"...\"</code> жазылады." : "Текст в Go пишется в двойных кавычках <code>\"...\"</code>, а не в одинарных.");
+  if (/\bfmt\.(println|printf|print)\b/.test(c)) tips.push(isKZ ? "Функция атауы бас әріппен жазылады: <code>fmt.Println</code>." : "Имя функции пишется с большой буквы: <code>fmt.Println</code>.");
+  if (/\bFmt\./.test(c)) tips.push(isKZ ? "Пакет аты кіші әріппен жазылады: <code>fmt</code>." : "Пакет называется <code>fmt</code> - с маленькой буквы.");
+  if (/(^|[^.\w])(Println|Printf)\(/m.test(c)) tips.push(isKZ ? "<code>Println</code> алдында <code>fmt.</code> деп жазу керек — <code>fmt.Println(...)</code> шығуы тиіс." : "Перед <code>Println</code> нужно писать <code>fmt.</code> - получится <code>fmt.Println(...)</code>.");
+  if (/^\s*(Package|Import|Func|Var|Const|For|If|Else|Return)\b/m.test(c)) tips.push(isKZ ? "Go кілт сөздері кіші әріппен жазылады: <code>package</code>, <code>import</code>, <code>func</code>, <code>if</code>, <code>for</code>." : "Ключевые слова Go пишутся с маленькой буквы: <code>package</code>, <code>import</code>, <code>func</code>, <code>if</code>, <code>for</code>.");
+  if (/\bif\b[^{\n]*[^=!<>:]=[^=][^{\n]*\{/.test(c)) tips.push(isKZ ? "Шартта салыстыру екі белгімен жазылады: <code>==</code>. Бір <code>=</code> белгісі — бұл мән беру." : "В условии сравнение пишется двумя знаками: <code>==</code>. Одно <code>=</code> - это присваивание.");
+  if (/\bfor\b[^{\n;]*:=[^;{\n]*,[^;{\n]*\{/.test(c) && !/\brange\b/.test(c)) tips.push(isKZ ? "<code>for</code> циклында бөліктер үтірмен емес, нүктелі үтірмен <code>;</code> бөлінеді." : "В <code>for</code> части разделяются точкой с запятой <code>;</code>, а не запятой.");
+  if (/\}\s*\n\s*else\b/.test(c)) tips.push(isKZ ? "<code>else</code> жабылатын жақшамен бір жолда жазылуы керек: <code>} else {</code>." : "<code>else</code> пишется на той же строке, что и закрывающая скобка: <code>} else {</code>.");
+  if (/\bfunction\b|\bdef\b|\bprint\s*\(|\bconsole\.log/.test(c)) tips.push(isKZ ? "Бұл Go емес: функциялар <code>func</code> сөзімен жарияланады, ал шығару <code>fmt.Println</code> арқылы орындалады." : "Это не Go: функции объявляются словом <code>func</code>, а вывод делается через <code>fmt.Println</code>.");
   // присваивание переменной, которую ещё не создали
   const declared = new Set();
   for (const m of c.matchAll(/([\w\s,]+?)\s*:=/g)) m[1].split(",").forEach(x => declared.add(x.trim().split(/\s+/).pop()));
@@ -184,7 +197,12 @@ function diagnose(src) {
   for (const m of c.matchAll(/\bfunc\s+\w*\s*\(([^)]*)\)/g)) m[1].split(",").forEach(x => declared.add(x.trim().split(/\s+/)[0]));
   const seen = new Set();
   for (const m of c.matchAll(/^[ \t]*([A-Za-z_]\w*)\s*=\s*[^=]/gm))
-    if (!declared.has(m[1]) && !seen.has(m[1])) { seen.add(m[1]); tips.push(`Переменная <code>${esc(m[1])}</code> ещё не создана. Создавайте через <code>:=</code> (например, <code>${esc(m[1])} := ...</code>), а одиночное <code>=</code> только меняет существующую.`); }
+    if (!declared.has(m[1]) && !seen.has(m[1])) {
+      seen.add(m[1]);
+      tips.push(isKZ
+        ? `<code>${esc(m[1])}</code> айнымалысы әлі жасалмаған. Оны <code>:=</code> арқылы жасаңыз (мысалы, <code>${esc(m[1])} := ...</code>), ал жалғыз <code>=</code> тек бұрыннан бар айнымалының мәнін өзгертеді.`
+        : `Переменная <code>${esc(m[1])}</code> ещё не создана. Создавайте через <code>:=</code> (например, <code>${esc(m[1])} := ...</code>), а одиночное <code>=</code> только меняет существующую.`);
+    }
   return tips;
 }
 
@@ -200,19 +218,20 @@ function analyze(src, k) {
 
 // подсказки трёх уровней: намёк -> шаги -> первая строка
 function hintLevels(k) {
+  const isKZ = (window.getLang && window.getLang()) === "kz";
   const core = (k.lines || []).map(([c, e], i) => ({ c, e, i })).filter(x => x.c.trim() && !isSkeleton(x.c, x.i, k) && !isCloser(x.c));
   const hints = [esc(k.hint || "")];
 
   if (k.plan && k.plan.length) {
-    hints.push("План решения по шагам: " + k.plan.map((p, i) => `${i + 1}) ${esc(p)}`).join(" "));
+    hints.push((isKZ ? "Шешу жоспары (қадам бойынша): " : "План решения по шагам: ") + k.plan.map((p, i) => `${i + 1}) ${esc(p)}`).join(" "));
   } else if (core.length) {
-    hints.push("Что нужно сделать по шагам: " + core.map((x, n) => `${n + 1}) ${esc(x.e)}`).join(" "));
+    hints.push((isKZ ? "Не істеу керек (қадам бойынша): " : "Что нужно сделать по шагам: ") + core.map((x, n) => `${n + 1}) ${esc(x.e)}`).join(" "));
   } else {
-    hints.push("Внимательно изучите условие задачи и план решения.");
+    hints.push(isKZ ? "Тапсырма шартын және шешу жоспарын мұқият оқып шығыңыз." : "Внимательно изучите условие задачи и план решения.");
   }
 
   if (core.length > 0) {
-    hints.push(`Почти ответ - первая нужная строка: <code>${esc(core[0].c.trim())}</code>` + (core.length > 1 ? ". Остальные строки - в таблице выше." : "."));
+    hints.push((isKZ ? `Жауапқа жақын — бірінші қажетті жол: <code>${esc(core[0].c.trim())}</code>` : `Почти ответ - первая нужная строка: <code>${esc(core[0].c.trim())}</code>`) + (core.length > 1 ? (isKZ ? ". Қалған жолдар — жоғарыдағы кестеде." : ". Остальные строки - в таблице выше.") : "."));
   } else if (k.solution) {
     const lines = k.solution.split("\n");
     const first = lines.find(l => {
@@ -220,12 +239,12 @@ function hintLevels(k) {
       return s && !s.startsWith("package ") && !s.startsWith("import") && !s.startsWith("func main") && !s.startsWith("/*") && !s.startsWith("//") && s !== "}" && s !== "})";
     });
     if (first) {
-      hints.push(`Почти ответ - строка из решения: <code>${esc(first.trim())}</code>`);
+      hints.push(isKZ ? `Жауапқа жақын — шешімдегі жол: <code>${esc(first.trim())}</code>` : `Почти ответ - строка из решения: <code>${esc(first.trim())}</code>`);
     } else {
-      hints.push("Почти ответ: сопоставьте типы данных в сигнатуре функции и верните правильный результат.");
+      hints.push(isKZ ? "Жауапқа жақын: функция қолтаңбасындағы деректер типтерін салыстырып, дұрыс нәтиже қайтарыңыз." : "Почти ответ: сопоставьте типы данных в сигнатуре функции и верните правильный результат.");
     }
   } else {
-    hints.push("Почти ответ: следуйте шагам из плана задачи.");
+    hints.push(isKZ ? "Жауапқа жақын: тапсырма жоспарындағы қадамдарды орындаңыз." : "Почти ответ: следуйте шагам из плана задачи.");
   }
 
   return hints;
@@ -238,6 +257,22 @@ function chrome(crumbHtml) {
   $("#user").hidden = $("#logout").hidden = $("#xp").hidden = !u;
 
   const lang = (window.getLang && window.getLang()) || "ru";
+  const btnRu = $("#langRu"), btnKz = $("#langKz");
+  if (btnRu && btnKz) {
+    if (lang === "ru") {
+      btnRu.style.background = "var(--accent)";
+      btnRu.style.color = "#fff";
+      btnKz.style.background = "transparent";
+      btnKz.style.color = "var(--muted)";
+    } else {
+      btnKz.style.background = "var(--accent)";
+      btnKz.style.color = "#fff";
+      btnRu.style.background = "transparent";
+      btnRu.style.color = "var(--muted)";
+    }
+    btnRu.onclick = () => { if (window.setLang) window.setLang("ru"); };
+    btnKz.onclick = () => { if (window.setLang) window.setLang("kz"); };
+  }
   const lt = $("#langToggle");
   if (lt) {
     lt.textContent = lang === "ru" ? "KZ" : "RU";
@@ -263,66 +298,67 @@ $("#logout").onclick = async () => {
 
 // ---------- views ----------
 function viewLogin() {
-  chrome("login");
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  chrome(isKZ ? "кіру" : "login");
   app.innerHTML = `
     <div class="login">
       <div class="robot">01</div>
       <h1>Go Piscine</h1>
-      <p class="login-sub">Учебная платформа по основам Go и бассейну 01 Edu</p>
+      <p class="login-sub">${isKZ ? "Go тілінің негіздері мен 01 Edu бассейніне арналған оқу платформасы" : "Учебная платформа по основам Go и бассейну 01 Edu"}</p>
       
       <div class="auth-card">
         <div class="auth-tabs-nav">
-          <button class="at-tab on" id="tabIn">Вход</button>
-          <button class="at-tab" id="tabUp">Регистрация</button>
-          <button class="at-tab" id="tabGuest">Гость</button>
+          <button class="at-tab on" id="tabIn">${isKZ ? "Кіру" : "Вход"}</button>
+          <button class="at-tab" id="tabUp">${isKZ ? "Тіркелу" : "Регистрация"}</button>
+          <button class="at-tab" id="tabGuest">${isKZ ? "Қонақ" : "Гость"}</button>
         </div>
 
         <!-- 1. Вход -->
         <form id="fLogin" class="auth-pane">
-          <label for="inEmail">Email или логин</label>
-          <input id="inEmail" type="text" placeholder="например, omar@gmail.com" required autocomplete="username">
+          <label for="inEmail">${isKZ ? "Email немесе логин" : "Email или логин"}</label>
+          <input id="inEmail" type="text" placeholder="${isKZ ? "мысалы, omar@gmail.com" : "например, omar@gmail.com"}" required autocomplete="username">
           
-          <label for="inPass">Пароль</label>
+          <label for="inPass">${isKZ ? "Құпиясөз" : "Пароль"}</label>
           <input id="inPass" type="password" placeholder="••••••••" required autocomplete="current-password">
 
           <div class="auth-err" id="inErr"></div>
 
-          <button class="btn auth-btn" type="submit" id="btnIn">Войти</button>
+          <button class="btn auth-btn" type="submit" id="btnIn">${isKZ ? "Кіру" : "Войти"}</button>
           
           <div class="auth-footer-note">
-            <span>Нет аккаунта? <a href="#" id="toReg">Зарегистрироваться</a></span>
+            <span>${isKZ ? "Аккаунтыңыз жоқ па?" : "Нет аккаунта?"} <a href="#" id="toReg">${isKZ ? "Тіркелу" : "Зарегистрироваться"}</a></span>
           </div>
         </form>
 
         <!-- 2. Регистрация -->
         <form id="fReg" class="auth-pane" style="display:none">
-          <label for="regUsername">Никнейм для лидерборда</label>
-          <input id="regUsername" type="text" placeholder="например, Omar" maxlength="20" required autocomplete="nickname">
+          <label for="regUsername">${isKZ ? "Лидербордқа арналған никнейм" : "Никнейм для лидерборда"}</label>
+          <input id="regUsername" type="text" placeholder="${isKZ ? "мысалы, Omar" : "например, Omar"}" maxlength="20" required autocomplete="nickname">
 
           <label for="regEmail">Email</label>
           <input id="regEmail" type="text" placeholder="student@gmail.com" required autocomplete="email">
 
-          <label for="regPass">Пароль (от 6 символов)</label>
+          <label for="regPass">${isKZ ? "Құпиясөз (кемінде 6 таңба)" : "Пароль (от 6 символов)"}</label>
           <input id="regPass" type="password" placeholder="••••••••" required minlength="6" autocomplete="new-password">
 
           <div class="auth-err" id="regErr"></div>
 
-          <button class="btn auth-btn" type="submit" id="btnReg">Создать аккаунт</button>
+          <button class="btn auth-btn" type="submit" id="btnReg">${isKZ ? "Аккаунт жасау" : "Создать аккаунт"}</button>
 
           <div class="auth-footer-note">
-            <span>Уже есть аккаунт? <a href="#" id="toLog">Войти</a></span>
+            <span>${isKZ ? "Аккаунтыңыз бар ма?" : "Уже есть аккаунт?"} <a href="#" id="toLog">${isKZ ? "Кіру" : "Войти"}</a></span>
           </div>
         </form>
 
         <!-- 3. Гостевой вход -->
         <form id="fGuest" class="auth-pane" style="display:none">
-          <label for="gName">Имя или никнейм</label>
-          <input id="gName" type="text" placeholder="например, Gopher" maxlength="20" required autocomplete="off">
+          <label for="gName">${isKZ ? "Есіміңіз немесе никнейм" : "Имя или никнейм"}</label>
+          <input id="gName" type="text" placeholder="${isKZ ? "мысалы, Gopher" : "например, Gopher"}" maxlength="20" required autocomplete="off">
 
-          <button class="btn auth-btn" type="submit">Войти локально</button>
+          <button class="btn auth-btn" type="submit">${isKZ ? "Жергілікті жалғастыру" : "Войти локально"}</button>
 
           <div class="auth-footer-note">
-            <span>Без пароля. Прогресс сохранится только в этом браузере.</span>
+            <span>${isKZ ? "Құпиясөзсіз. Прогресс тек осы құрылғыда сақталады." : "Без пароля. Прогресс сохранится только в этом браузере."}</span>
           </div>
         </form>
       </div>
@@ -453,7 +489,7 @@ function viewDashboard(u) {
   ];
 
   const renderTopicCard = t => {
-    const locT = window.getLocalizedTopic ? window.getLocalizedTopic(t) : t;
+    const locT = window.getLocalizedTopicFull ? window.getLocalizedTopicFull(t) : t;
     const lock = topicLock(t, done), complete = topicComplete(t, done);
     const hasSim = !!t.widgetTitle || t.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(t.id)) || (window.hasPedagogy && window.hasPedagogy(t.id));
     const vizBadge = hasSim ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">${isKZ ? "🎮 Жаттықтырғыш" : "🎮 Тренажёр"}</span>` : "";
@@ -461,7 +497,7 @@ function viewDashboard(u) {
       <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
         <span class="n">${t.id === 0 ? (isKZ ? "кіріспе" : "введение") : String(t.id).padStart(2, "0")}${complete ? (isKZ ? " · өтті" : " · пройдена") : ""}${lock ? (isKZ ? " · 🔒 жабық" : " · 🔒 закрыта") : ""}${vizBadge}</span>
         <h2>${esc(locT.title)}</h2>
-        <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>${isKZ ? "Шағын-тест" : "Мини-тест"}</span>` : ""}${t.tasks.map(k =>
+        <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>${isKZ ? "Шағын-тест" : "Мини-тест"}</span>` : ""}${locT.tasks.map(k =>
           `<span><span class="dot ${done[k.id] ? "done" : ""}"></span>${k.exam ? "🔴 " : k.hard ? "🟡 " : "🟢 "}${esc(k.title)}</span>`).join("")}</div>
       </a>`;
   };
@@ -517,18 +553,18 @@ function viewDashboard(u) {
         </div>
         <aside>
           <div class="side" style="margin-bottom:16px">
-            <h3 class="sec">Что дальше</h3>
+            <h3 class="sec">${isKZ ? "КЕЛЕСІ ҚАДАМ" : "Что дальше"}</h3>
             ${next
       ? `<p style="margin:0 0 12px">${tLabel(next.topic)}: ${esc(next.topic.title)}<br><span class="empty">${esc(next.label)}</span></p>
-                 <a class="btn" style="display:inline-block;text-decoration:none" href="#/topic/${next.topic.id}">Продолжить →</a>`
-      : `<p style="margin:0">Все темы пройдены. Отличная работа!</p>`}
+                 <a class="btn" style="display:inline-block;text-decoration:none" href="#/topic/${next.topic.id}">${isKZ ? "Жалғастыру →" : "Продолжить →"}</a>`
+      : `<p style="margin:0">${isKZ ? "Барлық тақырыптар өтілді. Тамаша жұмыс!" : "Все темы пройдены. Отличная работа!"}</p>`}
           </div>
           <div class="side">
-            <h3 class="sec">Лидерборд</h3>
+            <h3 class="sec">${isKZ ? "ЛИДЕРБОРД" : "Лидерборд"}</h3>
             <ol class="lb">
               ${board.map(([n, x], i) => `<li class="${n === u ? "me" : ""}"><span>${i + 1}. ${esc(n)}</span><span>${x} XP</span></li>`).join("")}
             </ol>
-            <p class="note">Выполняйте задания и продвигайтесь вперёд.</p>
+            <p class="note" id="lbSubNote">${isKZ ? "Тапсырмаларды орындап, алға жылжыңыз." : "Выполняйте задания и продвигайтесь вперёд."}</p>
           </div>
         </aside>
       </div>
@@ -583,7 +619,7 @@ function viewDashboard(u) {
             `<li class="${n === u ? "me" : ""}"><span>${i + 1}. ${esc(n)}</span><span>${x} XP</span></li>`
           ).join("");
           const noteEl = $(".lb + .note");
-          if (noteEl) noteEl.textContent = "☁️ Живой облачный рейтинг потока (Supabase).";
+          if (noteEl) noteEl.textContent = isKZ ? "☁️ Ағымның онлайн рейтингі (Supabase)." : "☁️ Живой облачный рейтинг потока (Supabase).";
         }
       }
     });
@@ -592,41 +628,46 @@ function viewDashboard(u) {
 
 // страница закрытой темы
 function viewLocked(u, topic, prev) {
-  chrome(`<a href="#/">dashboard</a> / <span>тема ${topic.id}</span>`);
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  const locTopic = window.getLocalizedTopicFull ? window.getLocalizedTopicFull(topic) : topic;
+  const locPrev = prev ? (window.getLocalizedTopicFull ? window.getLocalizedTopicFull(prev) : prev) : null;
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <span>${tLabel(topic).toLowerCase()}</span>`);
   const done = getDone(u);
   const left = [];
-  if (prev.quiz && !done["q" + prev.id]) left.push("пройти мини-тест");
+  if (prev.quiz && !done["q" + prev.id]) left.push(isKZ ? "шағын-тестті тапсыру" : "пройти мини-тест");
   const todo = prev.tasks.filter(k => !done[k.id]).length;
-  if (todo) left.push(`решить задач: ${todo}`);
+  if (todo) left.push(isKZ ? `тапсырмаларды шешу: ${todo}` : `решить задач: ${todo}`);
   app.innerHTML = `
     <div class="wrap lockedpage">
       <div class="lockicon">🔒</div>
-      <h1>${tLabel(topic)} пока закрыта</h1>
-      <p class="sub">${esc(topic.title)} откроется, когда будет полностью пройдена ${tLabel(prev).toLowerCase()} - ${esc(prev.title)}.</p>
-      <p>Осталось: ${left.map(esc).join(", ")}.</p>
-      <p><a class="btn" style="display:inline-block;text-decoration:none" href="#/topic/${prev.id}">Перейти: ${tLabel(prev).toLowerCase()} →</a>
-      <a class="btn ghost" style="display:inline-block;text-decoration:none" href="#/">На дашборд</a></p>
+      <h1>${tLabel(topic)} ${isKZ ? "әзірге жабық" : "пока закрыта"}</h1>
+      <p class="sub">${esc(locTopic.title)} ${isKZ ? `алдыңғы ${tLabel(prev).toLowerCase()} («${esc(locPrev ? locPrev.title : "")}») толық өтілген соң ашылады.` : `откроется, когда будет полностью пройдена ${tLabel(prev).toLowerCase()} - ${esc(locPrev ? locPrev.title : "")}.`}</p>
+      <p>${isKZ ? "Қалғаны:" : "Осталось:"} ${left.map(esc).join(", ")}.</p>
+      <p><a class="btn" style="display:inline-block;text-decoration:none" href="#/topic/${prev.id}">${isKZ ? "Өту: " + tLabel(prev).toLowerCase() + " →" : "Перейти: " + tLabel(prev).toLowerCase() + " →"}</a>
+      <a class="btn ghost" style="display:inline-block;text-decoration:none" href="#/">${isKZ ? "Басты бетке" : "На дашборд"}</a></p>
     </div>`;
 }
 
 function viewTopic(u, tid) {
-  const topic = TOPICS.find(t => t.id === tid);
-  if (!topic) return (location.hash = "#/");
+  const rawTopic = TOPICS.find(t => t.id === tid);
+  if (!rawTopic) return (location.hash = "#/");
   const done = getDone(u);
-  const idx = TOPICS.indexOf(topic), prev = TOPICS[idx - 1], next = TOPICS[idx + 1];
-  if (topicLock(topic, done)) return viewLocked(u, topic, prev);
-  const crumb = `<a href="#/">dashboard</a> / <a href="#/topic/${topic.id}">${topic.id === 0 ? "введение" : "тема " + topic.id}</a>`;
+  const idx = TOPICS.indexOf(rawTopic), prev = TOPICS[idx - 1], next = TOPICS[idx + 1];
+  if (topicLock(rawTopic, done)) return viewLocked(u, rawTopic, prev);
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  const topic = window.getLocalizedTopicFull ? window.getLocalizedTopicFull(rawTopic) : rawTopic;
+  const crumb = `<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/topic/${topic.id}">${topic.id === 0 ? (isKZ ? "кіріспе" : "введение") : (isKZ ? topic.id + "-тақырып" : "тема " + topic.id)}</a>`;
   chrome(crumb);
   const hasQuiz = !!topic.quiz;
   const stepBase = hasQuiz ? 4 : 3;
   const hasSim = !!topic.widgetTitle || topic.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(topic.id)) || (window.hasPedagogy && window.hasPedagogy(topic.id));
-  const simTitle = topic.widgetTitle || (window.getWidgetTitle && window.getWidgetTitle(topic.id)) || (window.hasPedagogy && window.hasPedagogy(topic.id) ? "Лаборатория активного обучения: Конструктор & Bug Hunter" : "Интерактивный тренажёр");
+  const simTitle = topic.widgetTitle || (window.getWidgetTitle && window.getWidgetTitle(topic.id)) || (window.hasPedagogy && window.hasPedagogy(topic.id) ? (isKZ ? "Белсенді оқыту зертханасы: Құрастырушы & Bug Hunter" : "Лаборатория активного обучения: Конструктор & Bug Hunter") : (isKZ ? "Интерактивті жаттықтырғыш" : "Интерактивный тренажёр"));
 
   const quizBlock = () => !hasQuiz ? "" : `
     <section class="sec-block quiz" id="s-quiz">
-      <div class="kicker">Шаг 3 · Мини-тест</div>
-      <h2>Проверьте себя</h2>
-      <p>Выберите правильный ответ. Это не экзамен, а способ закрепить материал (+${XP_QUIZ} XP).</p>
+      <div class="kicker">${isKZ ? "3-қадам · Шағын-тест" : "Шаг 3 · Мини-тест"}</div>
+      <h2>${isKZ ? "Өзіңізді тексеріңіз" : "Проверьте себя"}</h2>
+      <p>${isKZ ? `Дұрыс жауапты таңдаңыз. Бұл емтихан емес, білімді бекіту тәсілі (+${XP_QUIZ} XP).` : `Выберите правильный ответ. Это не экзамен, а способ закрепить материал (+${XP_QUIZ} XP).`}</p>
       ${topic.quiz.map((q, qi) => `
         <div class="qq" data-qi="${qi}">
           <div class="qtext">${qi + 1}. ${inline(q.q)}</div>
@@ -637,37 +678,39 @@ function viewTopic(u, tid) {
       <div class="quiz-done" id="qdone"></div>
     </section>`;
 
-  const lockBox = why => `<div class="lockbox"><span>🔒</span><div><b>Задача пока закрыта</b>${esc(why)}</div></div>`;
+  const lockBox = why => `<div class="lockbox"><span>🔒</span><div><b>${isKZ ? "Тапсырма әзірге жабық" : "Задача пока закрыта"}</b>${esc(why)}</div></div>`;
   const taskBody = k => k.hard ? `
       ${render(k.desc)}
-      <div class="note-box">Это задача посложнее: готовых строк здесь нет. Каркас (package, import, func main) уже введён в редактор справа. Идите по плану и открывайте подсказки, если застрянете. За решение - ${XP_HARD} XP.</div>
-      <div class="plan"><b>План</b><ol class="steps">${k.plan.map(p => `<li>${inline(p)}</li>`).join("")}</ol></div>
-      <div class="expect"><b>Ожидаемый вывод</b><pre>${esc(k.output)}</pre></div>
+      <div class="note-box">${isKZ ? `Бұл күрделірек тапсырма: мұнда дайын жолдар жоқ. Бағдарлама қаңқасы (package, import, func main) оң жақтағы редакторда дайын тұр. Жоспар бойынша орындаңыз, қиналсаңыз көмектерді ашыңыз. Шешім үшін — ${XP_HARD} XP.` : `Это задача посложнее: готовых строк здесь нет. Каркас (package, import, func main) уже введён в редактор справа. Идите по плану и открывайте подсказки, если застрянете. За решение - ${XP_HARD} XP.`}</div>
+      <div class="plan"><b>${isKZ ? "Жоспар" : "План"}</b><ol class="steps">${(k.plan || []).map(p => `<li>${inline(p)}</li>`).join("")}</ol></div>
+      <div class="expect"><b>${isKZ ? "Күтілетін нәтиже" : "Ожидаемый вывод"}</b><pre>${esc(k.output)}</pre></div>
       <div class="hintbox" data-hint="${k.id}"></div>
-      <button class="btn ghost open" data-open="${k.id}">Открыть в редакторе →</button>` : `
+      <button class="btn ghost open" data-open="${k.id}">${isKZ ? "Редакторда ашу →" : "Открыть в редакторе →"}</button>` : `
       ${render(k.desc)}
-      <div class="note-box">Часть кода уже введена в редактор справа - остаётся лишь дополнить его, чтобы программа стала полной.</div>
+      <div class="note-box">${isKZ ? "Кодтың бір бөлігі оң жақтағы редакторға енгізілген — бағдарлама толық болуы үшін оны толықтыру жеткілікті." : "Часть кода уже введена в редактор справа - остаётся лишь дополнить его, чтобы программа стала полной."}</div>
       <ol class="steps">
-        <li>Читайте код ниже сверху вниз - у каждой строки справа есть пояснение.</li>
-        <li>Печатайте недостающие строки в редакторе справа или просто кликните по строке ниже - она вставится сама. Отступ - клавиша <kbd>Tab</kbd>.</li>
-        <li>Нажмите «Проверить» (или <kbd>Ctrl</kbd>+<kbd>Enter</kbd>).</li>
+        <li>${isKZ ? "Төмендегі кодты үстінен астына қарай оқыңыз — әр жолдың оң жағында түсіндірмесі бар." : "Читайте код ниже сверху вниз - у каждой строки справа есть пояснение."}</li>
+        <li>${isKZ ? "Жетіспейтін жолдарды оң жақтағы редакторға жазыңыз немесе төмендегі жолды басыңыз — ол өзі қойылады. Шегініс — <kbd>Tab</kbd> пернесі." : "Печатайте недостающие строки в редакторе справа или просто кликните по строке ниже - она вставится сама. Отступ - клавиша <kbd>Tab</kbd>."}</li>
+        <li>${isKZ ? "«Тексеру» түймесін басыңыз (немесе <kbd>Ctrl</kbd>+<kbd>Enter</kbd>)." : "Нажмите «Проверить» (или <kbd>Ctrl</kbd>+<kbd>Enter</kbd>)."}</li>
       </ol>
       <div class="annot">
         ${k.lines.map(([c, e], i) => c === "" ? `<div class="gap"></div>` :
     `<div class="ln${isSkeleton(c, i, k) ? "" : " click"}" data-k="${k.id}" data-i="${i}"><pre><code>${hl(c)}</code></pre><span>${esc(e)}</span></div>`).join("")}
       </div>
-      <div class="expect"><b>Ожидаемый вывод</b><pre>${esc(k.output)}</pre></div>
+      <div class="expect"><b>${isKZ ? "Күтілетін нәтиже" : "Ожидаемый вывод"}</b><pre>${esc(k.output)}</pre></div>
       <div class="hintbox" data-hint="${k.id}"></div>
-      <button class="btn ghost open" data-open="${k.id}">Открыть в редакторе →</button>`;
+      <button class="btn ghost open" data-open="${k.id}">${isKZ ? "Редакторда ашу →" : "Открыть в редакторе →"}</button>`;
   const taskBlock = (k, i) => {
-    const why = taskLock(topic, k, done);
-    const diffBadge = k.exam ? `<span class="badge diff-exam">🔴 Piscine Exam</span>`
-      : k.hard ? `<span class="badge diff-med">🟡 Практика</span>`
-      : `<span class="badge diff-easy">🟢 Обучение</span>`;
+    const why = taskLock(rawTopic, k, done);
+    const diffBadge = k.exam ? `<span class="badge diff-exam">${isKZ ? "🔴 Piscine Емтиханы" : "🔴 Piscine Exam"}</span>`
+      : k.hard ? `<span class="badge diff-med">${isKZ ? "🟡 Тәжірибе" : "🟡 Практика"}</span>`
+      : `<span class="badge diff-easy">${isKZ ? "🟢 Оқыту" : "🟢 Обучение"}</span>`;
+    const kickerStep = isKZ ? `${i + stepBase}-қадам` : `Шаг ${i + stepBase}`;
+    const kickerType = k.hard ? (k.exam ? (isKZ ? "★ 01 Edu Емтиханы" : "★ Экзамен 01 Edu") : (isKZ ? "★ Күрделірек" : "★ Посложнее")) : (isKZ ? "Тәжірибе" : "Практика");
     return `
     <section class="sec-block${why ? " locked" : ""}${k.hard ? " hard" : ""}" id="s-t${i}" data-k="${k.id}">
-      <div class="kicker">Шаг ${i + stepBase} · ${k.hard ? (k.exam ? "★ Экзамен 01 Edu" : "★ Посложнее") : "Практика"} · ${diffBadge}</div>
-      <h2>Задача ${i + 1}: ${esc(k.title)} <span class="badge" data-badge="${k.id}"></span></h2>
+      <div class="kicker">${kickerStep} · ${kickerType} · ${diffBadge}</div>
+      <h2>${isKZ ? `${i + 1}-тапсырма` : `Задача ${i + 1}`}: ${esc(k.title)} <span class="badge" data-badge="${k.id}"></span></h2>
       <div class="tbody" data-state="${why ? "locked" : "open"}">${why ? lockBox(why) : taskBody(k)}</div>
     </section>`;
   };
@@ -676,23 +719,23 @@ function viewTopic(u, tid) {
     <div class="learn" data-pane="left">
       <section class="left">
         <nav class="chips" id="chips">
-          <button data-s="s-theory">Лекция</button>
-          <button data-s="s-examples">Примеры</button>
-          ${hasSim ? `<button data-s="s-interactive">🎮 Симулятор</button>` : ""}
-          ${hasQuiz ? `<button data-s="s-quiz">Тест</button>` : ""}
-          ${topic.tasks.map((k, i) => `<button data-s="s-t${i}">Задача ${i + 1}</button>`).join("")}
+          <button data-s="s-theory">${isKZ ? "Дәріс" : "Лекция"}</button>
+          <button data-s="s-examples">${isKZ ? "Мысалдар" : "Примеры"}</button>
+          ${hasSim ? `<button data-s="s-interactive">${isKZ ? "🎮 Жаттықтырғыш" : "🎮 Симулятор"}</button>` : ""}
+          ${hasQuiz ? `<button data-s="s-quiz">${isKZ ? "Тест" : "Тест"}</button>` : ""}
+          ${topic.tasks.map((k, i) => `<button data-s="s-t${i}">${isKZ ? (i + 1) + "-тапсырма" : "Задача " + (i + 1)}</button>`).join("")}
         </nav>
         <div class="scroll" id="scroll">
           <header class="hero">
-            <div class="kicker">${topic.id === 0 ? "Введение" : `Тема ${topic.id} из ${TOPICS.length - 1}`}</div>
+            <div class="kicker">${topic.id === 0 ? (isKZ ? "Кіріспе" : "Введение") : (isKZ ? `${TOPICS.length - 1} тақырыптың ${topic.id}-тақырыбы` : `Тема ${topic.id} из ${TOPICS.length - 1}`)}</div>
             <h1>${esc(topic.title)}</h1>
-            <p class="lead">В этой теме: ${esc(topic.about)}.</p>
+            <p class="lead">${isKZ ? "Бұл тақырыпта: " : "В этой теме: "}${esc(topic.about)}.</p>
           </header>
-          <section class="sec-block" id="s-theory"><div class="kicker">Шаг 1 · Лекция</div><h2>Что нужно знать</h2>${render(topic.theory)}</section>
-          <section class="sec-block" id="s-examples"><div class="kicker">Шаг 2 · Примеры</div><h2>Как это выглядит</h2>${render(topic.examples)}</section>
+          <section class="sec-block" id="s-theory"><div class="kicker">${isKZ ? "1-қадам · Дәріс" : "Шаг 1 · Лекция"}</div><h2>${isKZ ? "Білу керек жайттар" : "Что нужно знать"}</h2>${render(topic.theory)}</section>
+          <section class="sec-block" id="s-examples"><div class="kicker">${isKZ ? "2-қадам · Мысалдар" : "Шаг 2 · Примеры"}</div><h2>${isKZ ? "Код қалай көрінеді" : "Как это выглядит"}</h2>${render(topic.examples)}</section>
           ${hasSim ? `
             <section class="sec-block interactive-sec" id="s-interactive">
-              <div class="kicker">🎮 Интерактивный симулятор · Практика</div>
+              <div class="kicker">${isKZ ? "🎮 Интерактивті симулятор · Тәжірибе" : "🎮 Интерактивный симулятор · Практика"}</div>
               <h2>${esc(simTitle)}</h2>
               <div id="piscineWidgetArea" class="piscine-widget-mount"></div>
             </section>
@@ -705,10 +748,10 @@ function viewTopic(u, tid) {
       <section class="right">
         <div class="bar">
           <div class="seg" id="seg">
-            ${topic.tasks.map((k, i) => `<button data-k="${k.id}">Задача ${i + 1}<i></i></button>`).join("")}
+            ${topic.tasks.map((k, i) => `<button data-k="${k.id}">${isKZ ? (i + 1) + "-тапсырма" : "Задача " + (i + 1)}<i></i></button>`).join("")}
           </div>
           <span class="file">main.go</span>
-          <span class="status todo" id="st">waiting</span>
+          <span class="status todo" id="st">${isKZ ? "күтуде" : "waiting"}</span>
         </div>
         <div class="editor">
           <div class="gutter" id="gut"></div>
@@ -717,15 +760,15 @@ function viewTopic(u, tid) {
           <textarea id="code" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
         </div>
         <div class="actions">
-          <button class="btn" id="run">Проверить</button>
-          <button class="btn ghost" id="reset">Сбросить</button>
+          <button class="btn" id="run">${isKZ ? "Тексеру" : "Проверить"}</button>
+          <button class="btn ghost" id="reset">${isKZ ? "Қалпына келтіру" : "Сбросить"}</button>
           <span class="grow"></span>
           ${prev ? `<a class="btn ghost" href="#/topic/${prev.id}" title="${esc(prev.title)}">← ${tLabel(prev)}</a>` : ""}
-          ${next ? `<a class="btn ghost" id="nextTopic" href="#/topic/${next.id}" title="${esc(next.title)}">${tLabel(next)} →</a>` : `<a class="btn ghost" id="nextTopic" href="#/">На дашборд</a>`}
+          ${next ? `<a class="btn ghost" id="nextTopic" href="#/topic/${next.id}" title="${esc(next.title)}">${tLabel(next)} →</a>` : `<a class="btn ghost" id="nextTopic" href="#/">${isKZ ? "Басты бетке" : "На дашборд"}</a>`}
         </div>
         <div class="console" id="out"></div>
       </section>
-      <nav class="mobbar"><button data-p="left" class="on">Учебник</button><button data-p="right">Код</button></nav>
+      <nav class="mobbar"><button data-p="left" class="on">${isKZ ? "Оқулық" : "Учебник"}</button><button data-p="right">${isKZ ? "Код" : "Код"}</button></nav>
     </div>`;
 
   const mountEl = $("#piscineWidgetArea");
@@ -801,9 +844,9 @@ function viewTopic(u, tid) {
       const box = $(`[data-hint="${k.id}"]`);
       if (!box) return;                                   // задача закрыта - подсказок нет
       const lv = hintLevels(k), n = store.get(`hint:${u}:${k.id}`, 0);
-      box.innerHTML = lv.slice(0, n).map((h, i) => `<p class="hl-item"><b>Подсказка ${i + 1} из ${lv.length}</b>${h}</p>`).join("") +
-        (n < lv.length ? `<button class="more" data-more="${k.id}">${n ? "Ещё подсказка" : "Нужна подсказка?"} (${n + 1}/${lv.length})</button>`
-          : `<span class="empty">Все подсказки открыты. Если не получается - после двух неудачных проверок справа появится «Показать ответ».</span>`);
+      box.innerHTML = lv.slice(0, n).map((h, i) => `<p class="hl-item"><b>${isKZ ? `${lv.length} ішінен ${i + 1}-көмек` : `Подсказка ${i + 1} из ${lv.length}`}</b>${h}</p>`).join("") +
+        (n < lv.length ? `<button class="more" data-more="${k.id}">${n ? (isKZ ? "Тағы көмек" : "Ещё подсказка") : (isKZ ? "Көмек керек пе?" : "Нужна подсказка?")} (${n + 1}/${lv.length})</button>`
+          : `<span class="empty">${isKZ ? "Барлық көмектер ашылды. Егер шықпаса — екі сәтсіз тексеруден кейін оң жақта «Жауапты көрсету» пайда болады." : "Все подсказки открыты. Если не получается - после двух неудачных проверок справа появится «Показать ответ»."}</span>`);
     } catch (e) {
       console.error("renderHints error for task", k && k.id, e);
     }
@@ -865,32 +908,32 @@ function viewTopic(u, tid) {
   }
   // закрытая задача: редактор только для чтения, «Проверить» выключено
   function applyEditorLock() {
-    const why = active && taskLock(topic, active, getDone(u));
+    const why = active && taskLock(rawTopic, active, getDone(u));
     ta.readOnly = !!why; $("#run").disabled = $("#reset").disabled = !!why;
-    if (why) { out.innerHTML = `<div class="h">Результат</div><div class="bad">🔒 ${esc(why)}</div>`; out.dataset.locked = "1"; }
-    else if (out.dataset.locked) { out.innerHTML = `<div class="h">Результат</div><span class="empty">Нажмите «Проверить» (Ctrl+Enter)</span>`; out.dataset.locked = ""; }
+    if (why) { out.innerHTML = `<div class="h">${isKZ ? "Нәтиже" : "Результат"}</div><div class="bad">🔒 ${esc(why)}</div>`; out.dataset.locked = "1"; }
+    else if (out.dataset.locked) { out.innerHTML = `<div class="h">${isKZ ? "Нәтиже" : "Результат"}</div><span class="empty">${isKZ ? "«Тексеру» түймесін басыңыз (Ctrl+Enter)" : "Нажмите «Проверить» (Ctrl+Enter)"}</span>`; out.dataset.locked = ""; }
   }
 
   function refreshBadges() {
     const d = getDone(u);
     topic.tasks.forEach(k => {
-      const lk = taskLock(topic, k, d);
-      const b = $(`[data-badge="${k.id}"]`); b.textContent = d[k.id] ? "решено" : lk ? "закрыто" : ""; b.className = "badge" + (d[k.id] ? " ok" : lk ? " lock" : "");
+      const lk = taskLock(rawTopic, k, d);
+      const b = $(`[data-badge="${k.id}"]`); b.textContent = d[k.id] ? (isKZ ? "шешілді" : "решено") : lk ? (isKZ ? "жабық" : "закрыто") : ""; b.className = "badge" + (d[k.id] ? " ok" : lk ? " lock" : "");
       const s = $(`#seg [data-k="${k.id}"] i`); s.textContent = d[k.id] ? "✓" : lk ? "🔒" : (k.hard ? "★" : "");
     });
-    const complete = topicComplete(topic, d);
+    const complete = topicComplete(rawTopic, d);
     const blocked = !!next && !complete && !isUnlocked();
     const nt = $("#nextTopic");
     nt.classList.toggle("primary", complete);
     nt.classList.toggle("disabled", blocked);
-    nt.title = blocked ? "Откроется, когда тема будет пройдена" : (next ? next.title : "");
-    nt.textContent = next ? (blocked ? "🔒 " : "") + tLabel(next) + " →" : "На дашборд";
+    nt.title = blocked ? (isKZ ? "Тақырып толық өтілген соң ашылады" : "Откроется, когда тема будет пройдена") : (next ? next.title : "");
+    nt.textContent = next ? (blocked ? "🔒 " : "") + tLabel(next) + " →" : (isKZ ? "Басты бетке" : "На дашборд");
     $("#endpad").innerHTML = complete
-      ? `<div class="endcard"><b>${tLabel(topic)} пройден${topic.id === 0 ? "о" : "а"}</b>${next
-        ? `<span>Дальше: ${tLabel(next).toLowerCase()} - ${esc(next.title)}. Узнаем ${esc(next.about)}.</span><a class="btn" href="#/topic/${next.id}">Перейти: ${tLabel(next).toLowerCase()} →</a>`
-        : `<span>Это была последняя тема. Курс пройден!</span><a class="btn" href="#/">На дашборд</a>`}</div>`
-      : `<div class="endcard muted">${next ? (blocked ? "🔒 Чтобы открыть следующую тему, пройдите мини-тест и решите все задачи." : `Тема ещё не завершена. <a href="#/topic/${next.id}">Следующая тема: ${tLabel(next).toLowerCase()} →</a>`) : "Пройдите мини-тест и решите все задачи, чтобы завершить курс."}</div>`;
-    if (active) { const ok = !!d[active.id]; $("#st").className = "status " + (ok ? "done" : "todo"); $("#st").textContent = ok ? "passed" : "waiting"; }
+      ? `<div class="endcard"><b>${tLabel(rawTopic)} ${isKZ ? "аяқталды" : "пройден" + (rawTopic.id === 0 ? "о" : "а")}</b>${next
+        ? `<span>${isKZ ? `Келесі: ${tLabel(next).toLowerCase()} — ${esc(next.title)}. Тақырыбы: ${esc(next.about)}.` : `Дальше: ${tLabel(next).toLowerCase()} - ${esc(next.title)}. Узнаем ${esc(next.about)}.`}</span><a class="btn" href="#/topic/${next.id}">${isKZ ? `Өту: ${tLabel(next).toLowerCase()} →` : `Перейти: ${tLabel(next).toLowerCase()} →`}</a>`
+        : `<span>${isKZ ? "Бұл соңғы тақырып еді. Курс толық аяқталды!" : "Это была последняя тема. Курс пройден!"}</span><a class="btn" href="#/">${isKZ ? "Басты бетке" : "На дашборд"}</a>`}</div>`
+      : `<div class="endcard muted">${next ? (blocked ? (isKZ ? "🔒 Келесі тақырыпты ашу үшін шағын-тестті тапсырып, барлық тапсырмаларды шешіңіз." : "🔒 Чтобы открыть следующую тему, пройдите мини-тест и решите все задачи.") : (isKZ ? `Тақырып әлі аяқталмаған. <a href="#/topic/${next.id}">Келесі тақырып: ${tLabel(next).toLowerCase()} →</a>` : `Тема ещё не завершена. <a href="#/topic/${next.id}">Следующая тема: ${tLabel(next).toLowerCase()} →</a>`)) : (isKZ ? "Курсты аяқтау үшін шағын-тестті тапсырып, барлық тапсырмаларды шешіңіз." : "Пройдите мини-тест и решите все задачи, чтобы завершить курс.")}</div>`;
+    if (active) { const ok = !!d[active.id]; $("#st").className = "status " + (ok ? "done" : "todo"); $("#st").textContent = ok ? (isKZ ? "тапсырылды" : "passed") : (isKZ ? "күтуде" : "waiting"); }
   }
 
   function open(id, scrollLeft = true) {
@@ -901,7 +944,7 @@ function viewTopic(u, tid) {
     ta.value = getCode(u, active.id, active.starter || ""); paint(); setBands([]);
     const at = ta.value.indexOf("Пишите решение здесь");
     if (at >= 0) { const e = ta.value.indexOf("\n", at); ta.setSelectionRange(e, e); }
-    out.innerHTML = `<div class="h">Результат</div><span class="empty">Нажмите «Проверить» (Ctrl+Enter)</span>`; out.dataset.locked = "";
+    out.innerHTML = `<div class="h">${isKZ ? "Нәтиже" : "Результат"}</div><span class="empty">${isKZ ? "«Тексеру» түймесін басыңыз (Ctrl+Enter)" : "Нажмите «Проверить» (Ctrl+Enter)"}</span>`; out.dataset.locked = "";
     refreshBadges(); applyEditorLock();
     if (scrollLeft) scrollToSec("s-t" + topic.tasks.indexOf(active));
     if (!isMobile() && !ta.readOnly) ta.focus();
@@ -911,7 +954,7 @@ function viewTopic(u, tid) {
   $("#reset").onclick = () => {
     if (!active) return;
     ta.value = active.starter || ""; ta.oninput();
-    out.innerHTML = `<div class="h">Результат</div><span class="empty">Код сброшен к каркасу</span>`;
+    out.innerHTML = `<div class="h">${isKZ ? "Нәтиже" : "Результат"}</div><span class="empty">${isKZ ? "Код бастапқы күйге келтірілді" : "Код сброшен к каркасу"}</span>`;
     if (!isMobile()) ta.focus();
   };
 
@@ -942,23 +985,23 @@ function viewTopic(u, tid) {
   });
 
   function check() {
-    if (taskLock(topic, active, getDone(u))) return;
-    if (ta.value.trim() === active.starter.trim()) { out.innerHTML = `<div class="h">Результат</div><div class="bad">Вы ещё ничего не дописали. Напечатайте код из задачи слева внутрь func main.</div>`; setBands([]); return; }
+    if (taskLock(rawTopic, active, getDone(u))) return;
+    if (ta.value.trim() === active.starter.trim()) { out.innerHTML = `<div class="h">${isKZ ? "Нәтиже" : "Результат"}</div><div class="bad">${isKZ ? "Сіз әлі ештеңе жазбадыңыз. Сол жақтағы тапсырма кодын func main ішіне жазыңыз." : "Вы ещё ничего не дописали. Напечатайте код из задачи слева внутрь func main."}</div>`; setBands([]); return; }
     const code = ta.value.replace(/\/\/.*$/gm, "");
     const results = active.checks.map(c => ({ ok: c.re.test(code), msg: c.msg }));
     // общее правило для всех задач: скобки и кавычки должны быть парными
     const bare = code.replace(/"(?:[^"\\\n]|\\.)*"/g, '""').replace(/`[^`]*`/g, "``");
     const paired = ["{}", "()", "[]"].every(([o, c]) => bare.split(o).length === bare.split(c).length) && !/"/.test(bare.replace(/""/g, ""));
-    results.push({ ok: paired, msg: "Скобки { } ( ) [ ] и кавычки должны быть парными: каждой открывающей нужна закрывающая" });
+    results.push({ ok: paired, msg: isKZ ? "Жақшалар { } ( ) [ ] мен тырнақшалар жұп болуы керек: әр ашылғанға жабылатын қажет" : "Скобки { } ( ) [ ] и кавычки должны быть парными: каждой открывающей нужна закрывающая" });
     const pass = results.every(r => r.ok);
-    const done = getDone(u), was = !!done[active.id], wasTopic = topicComplete(topic, done);
-    let html = `<div class="h">Результат</div>` + results.map(r =>
-      `<div class="row ${r.ok ? "ok" : "bad"}"><span>${r.ok ? "✓" : "✗"}</span><span>${r.ok ? "проверка пройдена" : esc(r.msg)}</span></div>`).join("");
+    const done = getDone(u), was = !!done[active.id], wasTopic = topicComplete(rawTopic, done);
+    let html = `<div class="h">${isKZ ? "Нәтиже" : "Результат"}</div>` + results.map(r =>
+      `<div class="row ${r.ok ? "ok" : "bad"}"><span>${r.ok ? "✓" : "✗"}</span><span>${r.ok ? (isKZ ? "тексеруден сәтті өтті" : "проверка пройдена") : esc(r.msg)}</span></div>`).join("");
     let showAnswer = false;
     if (pass) {
       const assisted = !!store.get(`assist:${u}:${active.id}`, false);
       const gain = was ? 0 : xpFor(active, assisted ? "a" : true);
-      html += `<div class="ok" style="margin-top:10px">Тест пройден. +${gain} XP${assisted && !was ? " (ответ был открыт)" : ""}</div><pre>${esc(active.output)}</pre>`;
+      html += `<div class="ok" style="margin-top:10px">${isKZ ? "Тесттен сәтті өттіңіз." : "Тест пройден."} +${gain} XP${assisted && !was ? (isKZ ? " (жауап ашылған)" : " (ответ был открыт)") : ""}</div><pre>${esc(active.output)}</pre>`;
       if (!was) {
         done[active.id] = assisted ? "a" : true;
         store.set("done:" + u, done);
@@ -966,19 +1009,19 @@ function viewTopic(u, tid) {
       }
       setBands([]);
       const other = topic.tasks.find(k => !done[k.id]);
-      if (other) html += `<button class="btn" id="go" style="margin-top:12px">Следующая задача →</button>`;
+      if (other) html += `<button class="btn" id="go" style="margin-top:12px">${isKZ ? "Келесі тапсырма →" : "Следующая задача →"}</button>`;
     } else {
       const tries = store.get(`tries:${u}:${active.id}`, 0) + 1; store.set(`tries:${u}:${active.id}`, tries);
       const a = analyze(ta.value, active), hard = active.hard;
-      setBands(hard ? [] : a.bad);                       // в задачах посложнее решений может быть несколько, поэтому красных полос нет
+      setBands(hard ? [] : a.bad);
       const tips = [];
-      if (!hard && a.bad.length) tips.push(`Подсвеченные красным строки (${a.bad.map(i => i + 1).join(", ")}) отличаются от образца слева.`);
-      if (!hard && a.missing.length) tips.push("Не хватает строки: " + a.missing.slice(0, 2).map(m => `<code>${esc(m)}</code>`).join(", ") + ".");
+      if (!hard && a.bad.length) tips.push(isKZ ? `Қызыл түспен белгіленген жолдар (${a.bad.map(i => i + 1).join(", ")}) сол жақтағы үлгіден өзгеше.` : `Подсвеченные красным строки (${a.bad.map(i => i + 1).join(", ")}) отличаются от образца слева.`);
+      if (!hard && a.missing.length) tips.push((isKZ ? "Жетіспейтін жол: " : "Не хватает строки: ") + a.missing.slice(0, 2).map(m => `<code>${esc(m)}</code>`).join(", ") + ".");
       tips.push(...a.tips);
-      html += `<div class="bad" style="margin-top:10px">${hard ? "Пока не всё совпало. Сверьтесь с планом слева и откройте подсказку." : "Что-то не совпало. Сравните свой код с кодом слева и попробуйте ещё раз."}</div>`;
-      if (tips.length) html += `<div class="tips"><b>Возможные причины</b><ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul></div>`;
+      html += `<div class="bad" style="margin-top:10px">${hard ? (isKZ ? "Әзірге барлығы сәйкес емес. Сол жақтағы жоспармен салыстырып, көмекті ашыңыз." : "Пока не всё совпало. Сверьтесь с планом слева и откройте подсказку.") : (isKZ ? "Бір жері сәйкес келмеді. Өз кодыңызды сол жақтағы кодпен салыстырып, қайталап көріңіз." : "Что-то не совпало. Сравните свой код с кодом слева и попробуйте ещё раз.")}</div>`;
+      if (tips.length) html += `<div class="tips"><b>${isKZ ? "Ықтимал себептер" : "Возможные причины"}</b><ul>${tips.map(t => `<li>${t}</li>`).join("")}</ul></div>`;
       showAnswer = tries >= (hard ? 3 : 2) && !was;
-      if (showAnswer) html += `<div class="assist"><button class="btn ghost small" id="showAns">Показать ответ</button><small>Ответ вставится в редактор, а XP за задачу будет ${xpFor(active, "a")} вместо ${xpFor(active, true)}.</small></div>`;
+      if (showAnswer) html += `<div class="assist"><button class="btn ghost small" id="showAns">${isKZ ? "Жауапты көрсету" : "Показать ответ"}</button><small>${isKZ ? `Жауап редакторға қойылады, ал берілетін XP ${xpFor(active, "a")} болады.` : `Ответ вставится в редактор, а XP за задачу будет ${xpFor(active, "a")} вместо ${xpFor(active, true)}.`}</small></div>`;
     }
     out.innerHTML = html;
     chrome(crumb); refreshLocks(); refreshBadges();
@@ -987,9 +1030,9 @@ function viewTopic(u, tid) {
     if (ans) ans.onclick = () => {
       store.set(`assist:${u}:${active.id}`, true);
       ta.value = active.solution; ta.oninput();
-      out.innerHTML = `<div class="h">Результат</div><span class="empty">Ответ вставлен в редактор. Нажмите «Проверить», чтобы засчитать задачу.</span>`;
+      out.innerHTML = `<div class="h">${isKZ ? "Нәтиже" : "Результат"}</div><span class="empty">${isKZ ? "Жауап редакторға қойылды. Тапсырманы есептеу үшін «Тексеру» түймесін басыңыз." : "Ответ вставлен в редактор. Нажмите «Проверить», чтобы засчитать задачу."}</span>`;
     };
-    if (pass && !wasTopic && topicComplete(topic, done)) setTimeout(() => celebrate(topic), 450);
+    if (pass && !wasTopic && topicComplete(rawTopic, done)) setTimeout(() => celebrate(rawTopic), 450);
   }
   $("#run").onclick = check;
 
@@ -997,23 +1040,26 @@ function viewTopic(u, tid) {
   ta.blur();
 }
 
-function celebrate(topic) {
-  const idx = TOPICS.indexOf(topic), next = TOPICS[idx + 1];
-  const xp = topicXp(topic, getDone(getUser()));
+function celebrate(rawTopic) {
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  const topic = window.getLocalizedTopicFull ? window.getLocalizedTopicFull(rawTopic) : rawTopic;
+  const idx = TOPICS.indexOf(rawTopic), nextRaw = TOPICS[idx + 1];
+  const next = nextRaw ? (window.getLocalizedTopicFull ? window.getLocalizedTopicFull(nextRaw) : nextRaw) : null;
+  const xp = topicXp(rawTopic, getDone(getUser()));
   const el = document.createElement("div");
   el.className = "overlay";
   el.innerHTML = `
     <div class="modal">
       <div class="trophy">★</div>
       ${next ? `
-        <h2>Поздравляем! ${tLabel(topic)} пройден${topic.id === 0 ? "о" : "а"}</h2>
-        <p class="m-sub">${esc(topic.title)} - готово. Вы заработали ${xp} XP.</p>
-        <div class="next"><span>Следующая: ${tLabel(next).toLowerCase()}</span><b>${esc(next.title)}</b><em>Узнаем ${esc(next.about)}.</em></div>
-        <div class="m-actions"><a class="btn" href="#/topic/${next.id}">Перейти: ${tLabel(next).toLowerCase()} →</a><a class="btn ghost" href="#/">На дашборд</a></div>`
+        <h2>${isKZ ? `Құттықтаймыз! ${tLabel(rawTopic)} аяқталды` : `Поздравляем! ${tLabel(rawTopic)} пройден${rawTopic.id === 0 ? "о" : "а"}`}</h2>
+        <p class="m-sub">${esc(topic.title)} — ${isKZ ? "дайын. Сіз" : "готово. Вы заработали"} ${xp} XP ${isKZ ? "жинадыңыз." : "."}</p>
+        <div class="next"><span>${isKZ ? "Келесі: " + tLabel(nextRaw).toLowerCase() : "Следующая: " + tLabel(nextRaw).toLowerCase()}</span><b>${esc(next.title)}</b><em>${isKZ ? "Тақырып: " : "Узнаем "}${esc(next.about)}.</em></div>
+        <div class="m-actions"><a class="btn" href="#/topic/${next.id}">${isKZ ? "Өту: " + tLabel(nextRaw).toLowerCase() + " →" : "Перейти: " + tLabel(nextRaw).toLowerCase() + " →"}</a><a class="btn ghost" href="#/">${isKZ ? "Басты бетке" : "На дашборд"}</a></div>`
       : `
-        <h2>Курс пройден!</h2>
-        <p class="m-sub">Вы прошли путь от первой программы до маленького веб-сервиса с JSON и базами данных. Отличная работа!</p>
-        <div class="m-actions"><a class="btn" href="#/">На дашборд</a></div>`}
+        <h2>${isKZ ? "Курс толық аяқталды!" : "Курс пройден!"}</h2>
+        <p class="m-sub">${isKZ ? "Сіз алғашқы қарапайым бағдарламадан бастап JSON мен деректер қоры бар веб-сервиске дейінгі жолдан өттіңіз. Тамаша жұмыс!" : "Вы прошли путь от первой программы до маленького веб-сервиса с JSON и базами данных. Отличная работа!"}</p>
+        <div class="m-actions"><a class="btn" href="#/">${isKZ ? "Басты бетке" : "На дашборд"}</a></div>`}
     </div>`;
   document.body.appendChild(el);
   const close = () => el.remove();
@@ -1022,14 +1068,14 @@ function celebrate(topic) {
 }
 
 function viewSetup(u) {
-  const lang = (window.getLang && window.getLang()) || "ru";
-  chrome(`<a href="#/">${lang === "kz" ? "басты бет" : "dashboard"}</a> / setup`);
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/setup">${isKZ ? "ортаны баптау" : "настройка окружения"}</a>`);
   if (window.renderSetupPage) window.renderSetupPage(app, u);
 }
 
 function viewArena(u) {
-  const lang = (window.getLang && window.getLang()) || "ru";
-  chrome(`<a href="#/">${lang === "kz" ? "басты бет" : "dashboard"}</a> / arena`);
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/arena">${isKZ ? "тапсырмалар аренасы" : "арена задач"}</a>`);
   if (window.renderArenaPage) window.renderArenaPage(app, u);
 }
 

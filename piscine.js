@@ -1240,53 +1240,52 @@ func main() {
   function initPointerViz(container) {
     const el = container || document.getElementById("piscineWidgetArea") || document.getElementById("pointerVizContainer");
     if (!el) return;
+    const isKZ = (window.getLang && window.getLang()) === "kz";
 
     el.innerHTML = `
       <div class="ptr-widget">
-        <div class="ptr-title">📦 Указатели на пальцах: метафора «Коробка и Записка с адресом»</div>
+        <div class="ptr-title">${isKZ ? "📦 Нұсқағыштар қарапайым тілде: «Қорап және адресі бар қағаз»" : "📦 Указатели на пальцах: метафора «Коробка и Записка с адресом»"}</div>
         
         <div class="ptr-explainer" style="background:rgba(153,105,255,0.08);border-left:3px solid var(--accent);padding:10px 14px;border-radius:4px;margin-bottom:14px;font-size:13.5px;line-height:1.5">
-          <b>Как понимать указатели без сложной терминологии:</b><br>
-          • <b>Переменная (num)</b> — это <i>коробка</i>, в которой лежит число.<br>
-          • <b>Символ &num</b> — это <i>адрес (номер)</i> этой коробки на складе памяти.<br>
-          • <b>Указатель (ptr)</b> — это <i>записка</i>, в которой записан номер коробки.<br>
-          • <b>Символ *ptr</b> — команда <i>«пойди по адресу из записки и загляни внутрь коробки»</i>.
+          ${isKZ
+            ? "<b>Нұсқағыштарды қиын терминдерсіз түсіну:</b><br>• <b>Айнымалы (num)</b> — бұл ішінде сан жатқан <i>қорап</i>.<br>• <b>&num таңбасы</b> — бұл жад қоймасындағы сол қораптың <i>адресі (нөмірі)</i>.<br>• <b>Нұсқағыш (ptr)</b> — бұл қораптың нөмірі жазылған <i>қағаз (жазба)</i>.<br>• <b>*ptr таңбасы</b> — <i>«жазбадағы адрес бойынша барып, қораптың ішіне қара және өзгерт»</i> командасы."
+            : "<b>Как понимать указатели без сложной терминологии:</b><br>• <b>Переменная (num)</b> — это <i>коробка</i>, в которой лежит число.<br>• <b>Символ &num</b> — это <i>адрес (номер)</i> этой коробки на складе памяти.<br>• <b>Указатель (ptr)</b> — это <i>записка</i>, в которой записан номер коробки.<br>• <b>Символ *ptr</b> — команда <i>«пойди по адресу из записки и загляни внутрь коробки»</i>."}
         </div>
 
         <div class="ptr-actions">
-          <button class="btn small" id="ptrVal">1. Обычное: num = 100</button>
-          <button class="btn small on" id="ptrDeref">2. Через указатель: *ptr = 777</button>
-          <button class="btn small" id="ptrSwap">3. Обмен: Swap(&num, &other)</button>
-          <button class="btn ghost small" id="ptrReset">Сброс ↺</button>
+          <button class="btn small" id="ptrVal">${isKZ ? "1. Қарапайым: num = 100" : "1. Обычное: num = 100"}</button>
+          <button class="btn small on" id="ptrDeref">${isKZ ? "2. Нұсқағышпен: *ptr = 777" : "2. Через указатель: *ptr = 777"}</button>
+          <button class="btn small" id="ptrSwap">${isKZ ? "3. Алмасу: Swap(&num, &other)" : "3. Обмен: Swap(&num, &other)"}</button>
+          <button class="btn ghost small" id="ptrReset">${isKZ ? "Қалпына келтіру ↺" : "Сброс ↺"}</button>
         </div>
 
         <div class="ptr-mem" style="margin-top:16px">
           <!-- Коробка 1: num -->
           <div class="ptr-cell" id="cellA" style="border:2px solid var(--accent);background:#171520;position:relative">
-            <span class="ptr-addr" style="color:var(--accent-l)">📦 Ячейка памяти №101 (адрес)</span>
+            <span class="ptr-addr" style="color:var(--accent-l)">${isKZ ? "📦 Жад ұяшығы №101 (адрес)" : "📦 Ячейка памяти №101 (адрес)"}</span>
             <div class="ptr-val" id="valA" style="font-size:32px;font-weight:700;color:#fff">42</div>
-            <span class="ptr-name" style="color:var(--text);font-weight:600">Коробка: num (число)</span>
+            <span class="ptr-name" style="color:var(--text);font-weight:600">${isKZ ? "Қорап: num (сан)" : "Коробка: num (число)"}</span>
           </div>
 
           <!-- Записка: ptr -->
-          <div class="ptr-arrow" id="ptrArrow" style="font-size:13px;font-weight:600;color:var(--accent-l)">⟵ указывает на №101 ──</div>
+          <div class="ptr-arrow" id="ptrArrow" style="font-size:13px;font-weight:600;color:var(--accent-l)">${isKZ ? "⟵ №101-ге нұсқайды ──" : "⟵ указывает на №101 ──"}</div>
 
           <div class="ptr-cell" id="cellP" style="border:2px dashed #f59e0b;background:#1a1712">
-            <span class="ptr-addr" style="color:#f59e0b">🏷️ Ячейка памяти №102</span>
+            <span class="ptr-addr" style="color:#f59e0b">${isKZ ? "🏷️ Жад ұяшығы №102" : "🏷️ Ячейка памяти №102"}</span>
             <div class="ptr-val ok" style="color:#f59e0b;font-size:24px;font-weight:700">№101</div>
-            <span class="ptr-name" style="color:#f59e0b;font-weight:600">Записка с адресом: ptr</span>
+            <span class="ptr-name" style="color:#f59e0b;font-weight:600">${isKZ ? "Адресі бар қағаз: ptr" : "Записка с адресом: ptr"}</span>
           </div>
 
           <!-- Коробка 2: other -->
           <div class="ptr-cell" id="cellB" style="margin-left:auto;border:2px solid var(--line);background:#141318">
-            <span class="ptr-addr" style="color:var(--muted)">📦 Ячейка памяти №103 (адрес)</span>
+            <span class="ptr-addr" style="color:var(--muted)">${isKZ ? "📦 Жад ұяшығы №103 (адрес)" : "📦 Ячейка памяти №103 (адрес)"}</span>
             <div class="ptr-val" id="valB" style="font-size:32px;font-weight:700;color:#fff">10</div>
-            <span class="ptr-name" style="color:var(--text);font-weight:600">Коробка: other (число)</span>
+            <span class="ptr-name" style="color:var(--text);font-weight:600">${isKZ ? "Қорап: other (сан)" : "Коробка: other (число)"}</span>
           </div>
         </div>
 
         <div class="ptr-log" id="ptrLog" style="margin-top:14px;padding:12px 14px;background:#0d0c10;border:1px solid var(--line);border-radius:4px;font-size:13.5px;line-height:1.55">
-          Нажмите кнопки выше 👆, чтобы в реальном времени увидеть, как меняются коробки и почему указатели позволяют менять данные в памяти из любого места программы.
+          ${isKZ ? "Жоғарыдағы түймелерді басыңыз 👆, жад қоймасындағы қораптардың қалай өзгеретінін нақты уақытта көріңіз." : "Нажмите кнопки выше 👆, чтобы в реальном времени увидеть, как меняются коробки и почему указатели позволяют менять данные в памяти из любого места программы."}
         </div>
       </div>
     `;
@@ -1304,7 +1303,9 @@ func main() {
       valA.classList.add("flash");
       cellA.style.borderColor = "var(--ok)";
       setTimeout(() => { valA.classList.remove("flash"); cellA.style.borderColor = "var(--accent)"; }, 500);
-      log.innerHTML = "<b>Действие: <code>num = 100</code></b><br>Мы напрямую подошли к коробке <code>num</code> (ячейка №101) и положили туда число 100. Записка <code>ptr</code> не изменилась — она по-прежнему указывает на ячейку №101, но теперь видит там число 100!";
+      log.innerHTML = isKZ
+        ? "<b>Әрекет: <code>num = 100</code></b><br>Біз тікелей <code>num</code> қорабына (№101 ұяшық) барып, оған 100 санын салдық. <code>ptr</code> қағазы өзгерген жоқ — ол әлі де №101 ұяшыққа нұсқап тұр, бірақ енді онда 100 саны тұрғанын көреді!"
+        : "<b>Действие: <code>num = 100</code></b><br>Мы напрямую подошли к коробке <code>num</code> (ячейка №101) и положили туда число 100. Записка <code>ptr</code> не изменилась — она по-прежнему указывает на ячейку №101, но теперь видит там число 100!";
     };
 
     const btnDeref = document.getElementById("ptrDeref");
@@ -1314,7 +1315,9 @@ func main() {
       cellP.classList.add("flash");
       cellA.style.borderColor = "#f59e0b";
       setTimeout(() => { valA.classList.remove("flash"); cellP.classList.remove("flash"); cellA.style.borderColor = "var(--accent)"; }, 500);
-      log.innerHTML = "<b>Действие: <code>*ptr = 777</code> (Разыменование)</b><br>Магия указателей в действии! Мы НЕ трогали переменную <code>num</code> напрямую. Мы взяли записку <code>ptr</code>, прочитали адрес «№101», открыли эту ячейку и положили туда 777. Теперь значение переменной <code>num</code> изменилось на 777 чужими руками!";
+      log.innerHTML = isKZ
+        ? "<b>Әрекет: <code>*ptr = 777</code> (Разыменование)</b><br>Нұсқағыштардың сиқыры! Біз <code>num</code> айнымалысына тікелей тиіскен жоқпыз. Біз <code>ptr</code> қағазын алып, ондағы «№101» адресін оқып, сол ұяшықты ашып, ішіне 777 қойдық. Енді <code>num</code> қорабының мәні сырттан өзгерді!"
+        : "<b>Действие: <code>*ptr = 777</code> (Разыменование)</b><br>Магия указателей в действии! Мы НЕ трогали переменную <code>num</code> напрямую. Мы взяли записку <code>ptr</code>, прочитали адрес «№101», открыли эту ячейку и положили туда 777. Теперь значение переменной <code>num</code> изменилось на 777 чужими руками!";
     };
 
     const btnSwap = document.getElementById("ptrSwap");
@@ -1328,13 +1331,17 @@ func main() {
         valA.classList.remove("flash"); valB.classList.remove("flash");
         cellA.style.borderColor = "var(--accent)"; cellB.style.borderColor = "var(--line)";
       }, 500);
-      log.innerHTML = "<b>Действие: <code>Swap(&num, &other)</code></b><br>Функция получила адреса двух коробок (№101 и №103). Используя временную ячейку <code>temp</code>, она поменяла их содержимое местами! В результате <code>num</code> стал равен " + valA.textContent + ", а <code>other</code> — " + valB.textContent + ".";
+      log.innerHTML = isKZ
+        ? "<b>Әрекет: <code>Swap(&num, &other)</code></b><br>Функция екі қораптың мекенжайын алды (№101 және №103). Уақытша <code>temp</code> ұяшығы арқылы олардың ішіндегі сандарын орындарымен ауыстырды! Нәтижесінде <code>num</code> енді " + valA.textContent + ", ал <code>other</code> — " + valB.textContent + " болды."
+        : "<b>Действие: <code>Swap(&num, &other)</code></b><br>Функция получила адреса двух коробок (№101 и №103). Используя временную ячейку <code>temp</code>, она поменяла их содержимое местами! В результате <code>num</code> стал равен " + valA.textContent + ", а <code>other</code> — " + valB.textContent + ".";
     };
 
     const btnReset = document.getElementById("ptrReset");
     if (btnReset) btnReset.onclick = () => {
       valA.textContent = "42"; valB.textContent = "10";
-      log.innerHTML = "Память сброшена к начальному состоянию: <code>num = 42, other = 10, ptr указывает на num</code>.";
+      log.innerHTML = isKZ
+        ? "Жад бастапқы күйге келтірілді: <code>num = 42, other = 10, ptr №101-ге нұсқап тұр</code>."
+        : "Память сброшена к начальному состоянию: <code>num = 42, other = 10, ptr указывает на num</code>.";
     };
   }
 

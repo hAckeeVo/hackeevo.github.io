@@ -22,7 +22,10 @@
       <a class="nav-pill" href="#/setup" style="text-decoration:none;font:600 12px var(--mono);padding:4px 10px;border-radius:4px;background:rgba(255,255,255,0.05);border:1px solid var(--line);color:var(--text)">💻 <span id="navSetup">Setup</span></a>
     </nav>
     <span class="tools">
-      <button id="langToggle" title="Қазақша / Русский" style="font-weight:700;color:var(--accent-l);border-color:var(--accent)">KZ</button>
+      <div class="lang-switch" id="langSwitch" style="display:inline-flex;border:1px solid var(--line);border-radius:14px;background:#141318;padding:2px;gap:2px;vertical-align:middle">
+        <button id="langRu" type="button" title="Русский язык" style="padding:2px 7px;font:700 11px var(--mono);border-radius:12px;border:none;cursor:pointer;background:transparent;color:var(--muted)">RU</button>
+        <button id="langKz" type="button" title="Қазақ тілі" style="padding:2px 7px;font:700 11px var(--mono);border-radius:12px;border:none;cursor:pointer;background:transparent;color:var(--muted)">KZ</button>
+      </div>
       <button id="fsm" title="Мельче шрифт" aria-label="Мельче шрифт">A−</button>
       <button id="fsp" title="Крупнее шрифт" aria-label="Крупнее шрифт">A+</button>
       <button id="theme" title="Светлая / тёмная тема" aria-label="Сменить тему">◐</button>
@@ -38,6 +41,7 @@
   <script src="extra.js"></script>
   <script src="more.js"></script>
   <script src="piscine.js"></script>
+  <script src="lessons_kz.js"></script>
   <script src="widgets.js"></script>
   <script src="pedagogy.js"></script>
   <script src="setup.js"></script>
