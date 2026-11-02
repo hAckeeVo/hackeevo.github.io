@@ -1,5 +1,7 @@
-// setup.js: Интерактивное руководство по установке Git, Go и VS Code
-// Поддержка Windows, macOS, Linux (Ubuntu) на двух языках (RU / KZ)
+// setup.js: Точное интерактивное руководство по настройке окружения для 01 Edu Piscine Go
+// На основе официальной методички Tomorrow School / 01 Edu (tomorrow-helper)
+// Поддержка: Домашний ПК (Windows / macOS), Кампус 01 Edu (Ubuntu), и Workflow (Go, z01, Gitea)
+// Полная двуязычная локализация: Русский / Қазақша
 
 (function () {
   window.renderSetupPage = function (container, user) {
@@ -7,55 +9,64 @@
     const isKZ = lang === "kz";
 
     container.innerHTML = `
-      <div class="setup-wrap" style="max-width:960px;margin:24px auto 60px;padding:0 20px">
+      <div class="setup-wrap" style="max-width:1040px;margin:24px auto 70px;padding:0 20px">
         <div style="margin-bottom:24px">
           <a href="#/" class="btn ghost small" style="margin-bottom:14px;display:inline-flex;align-items:center;gap:6px">
             ← ${isKZ ? "Басты бетке" : "На дашборд"}
           </a>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+            <span style="font:600 12px var(--mono);text-transform:uppercase;color:var(--accent-l);background:rgba(153,105,255,0.12);padding:3px 10px;border-radius:12px;border:1px solid rgba(153,105,255,0.3)">
+              01 Edu Piscine Guide
+            </span>
+          </div>
           <h1 style="font-size:28px;margin:0 0 8px;color:#fff">
-            💻 ${isKZ ? "Жұмыс ортасын баптау (Git, Go, VS Code)" : "Настройка рабочего окружения (Git, Go, VS Code)"}
+            💻 ${isKZ ? "01 Edu Piscine жұмыс ортасын баптау" : "Настройка рабочего окружения для 01 Edu Piscine"}
           </h1>
-          <p style="color:var(--dim);font-size:15px;margin:0;line-height:1.5">
+          <p style="color:var(--dim);font-size:15px;margin:0;line-height:1.55">
             ${isKZ
-              ? "Компьютеріңізді нағыз бағдарламашы станциясына айналдырыңыз. Барлық қажетті құралдарды орнату бойынша қадамдық нұсқаулық."
-              : "Превратите свой компьютер в рабочую станцию разработчика. Пошаговые инструкции с готовыми командами для консоли."}
+              ? "01 Edu кампусында және үйде ноутбукта қатесіз жұмыс істеуге арналған толық қадамдық нұсқаулық. Git, Gitea 404 қатесін түзету, go mod init piscine, z01 кітапханасы және тапсырмаларды тапсыру тәртібі."
+              : "Точная инструкция для работы в бассейне 01 Edu дома и в кампусе. Настройка Git, фикс ошибки Gitea 404, go mod init piscine, библиотека z01.PrintRune и регламент сдачи заданий."}
           </p>
         </div>
 
-        <!-- Переключатель ОС -->
-        <div class="os-nav" style="display:flex;gap:10px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:12px">
-          <button class="os-tab on" data-os="win" style="padding:10px 18px;font:600 14px var(--sans);border-radius:4px;border:1px solid var(--accent);background:rgba(153,105,255,0.15);color:var(--accent-l);cursor:pointer">
-            🪟 Windows 10 / 11
+        <!-- Переключатель режима -->
+        <div class="setup-tabs-nav" style="display:flex;gap:10px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap">
+          <button class="s-tab on" data-sec="win" style="padding:10px 16px;font:600 13.5px var(--sans);border-radius:4px;border:1px solid var(--accent);background:rgba(153,105,255,0.15);color:var(--accent-l);cursor:pointer">
+            🪟 ${isKZ ? "Үйде: Windows" : "Дома: Windows"}
           </button>
-          <button class="os-tab" data-os="mac" style="padding:10px 18px;font:600 14px var(--sans);border-radius:4px;border:1px solid var(--line);background:#141318;color:var(--muted);cursor:pointer">
-            🍎 macOS (MacBook)
+          <button class="s-tab" data-sec="mac" style="padding:10px 16px;font:600 13.5px var(--sans);border-radius:4px;border:1px solid var(--line);background:#141318;color:var(--muted);cursor:pointer">
+            🍎 ${isKZ ? "Үйде: macOS" : "Дома: macOS"}
           </button>
-          <button class="os-tab" data-os="linux" style="padding:10px 18px;font:600 14px var(--sans);border-radius:4px;border:1px solid var(--line);background:#141318;color:var(--muted);cursor:pointer">
-            🐧 Linux (Ubuntu / Mint)
+          <button class="s-tab" data-sec="school" style="padding:10px 16px;font:600 13.5px var(--sans);border-radius:4px;border:1px solid var(--line);background:#141318;color:var(--muted);cursor:pointer">
+            🏫 ${isKZ ? "Кампустағы оқу компьютері (Ubuntu)" : "В кампусе 01 Edu (Школьный ПК)"}
+          </button>
+          <button class="s-tab" data-sec="workflow" style="padding:10px 16px;font:600 13.5px var(--sans);border-radius:4px;border:1px solid var(--line);background:#141318;color:var(--muted);cursor:pointer">
+            ⚡ ${isKZ ? "Piscine Go жұмыс тәртібі (Квест 1, 2, 3)" : "Регламент работы Piscine Go (Квесты 1, 2, 3)"}
           </button>
         </div>
 
-        <div id="osContent"></div>
+        <div id="setupBody"></div>
       </div>
     `;
 
-    const osContent = container.querySelector("#osContent");
-    const osTabs = container.querySelectorAll(".os-tab");
+    const setupBody = container.querySelector("#setupBody");
+    const tabs = container.querySelectorAll(".s-tab");
 
-    function renderOS(os) {
-      osTabs.forEach(t => {
-        const active = t.dataset.os === os;
+    function showSection(sec) {
+      tabs.forEach(t => {
+        const active = t.dataset.sec === sec;
         t.style.border = active ? "1px solid var(--accent)" : "1px solid var(--line)";
         t.style.background = active ? "rgba(153,105,255,0.15)" : "#141318";
         t.style.color = active ? "var(--accent-l)" : "var(--muted)";
       });
 
-      if (os === "win") osContent.innerHTML = getWindowsGuide(isKZ);
-      if (os === "mac") osContent.innerHTML = getMacGuide(isKZ);
-      if (os === "linux") osContent.innerHTML = getLinuxGuide(isKZ);
+      if (sec === "win") setupBody.innerHTML = getWindowsSection(isKZ);
+      if (sec === "mac") setupBody.innerHTML = getMacSection(isKZ);
+      if (sec === "school") setupBody.innerHTML = getSchoolSection(isKZ);
+      if (sec === "workflow") setupBody.innerHTML = getWorkflowSection(isKZ);
 
       // Copy buttons handler
-      osContent.querySelectorAll(".cmd-copy").forEach(btn => {
+      setupBody.querySelectorAll(".cmd-copy").forEach(btn => {
         btn.onclick = () => {
           const code = btn.dataset.code;
           navigator.clipboard.writeText(code);
@@ -72,16 +83,16 @@
       });
     }
 
-    osTabs.forEach(t => {
-      t.onclick = () => renderOS(t.dataset.os);
+    tabs.forEach(t => {
+      t.onclick = () => showSection(t.dataset.sec);
     });
 
-    renderOS("win");
+    showSection("win");
   };
 
   function cmdBox(code, note) {
     return `
-      <div style="position:relative;background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:8px 0 12px;font:13px var(--mono)">
+      <div style="position:relative;background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:12px 14px;margin:8px 0 14px;font:13px var(--mono)">
         <button class="cmd-copy" data-code="${esc(code)}" style="position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.06);border:1px solid var(--line);color:var(--muted);padding:3px 8px;font:500 11px var(--mono);border-radius:3px;cursor:pointer">
           📋 Копировать
         </button>
@@ -91,130 +102,244 @@
     `;
   }
 
-  function sectionCard(num, title, icon, content) {
+  function stepCard(stepNum, title, badge, content) {
     return `
-      <div style="background:#141318;border:1px solid var(--line);border-radius:6px;padding:22px;margin-bottom:20px">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
-          <span style="font-size:24px">${icon}</span>
-          <h2 style="font-size:19px;margin:0;color:#fff">${num}. ${title}</h2>
+      <div style="background:#141318;border:1px solid var(--line);border-radius:6px;padding:22px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;background:rgba(153,105,255,0.18);border:1px solid var(--accent);color:var(--accent-l);border-radius:50%;font:700 13px var(--mono)">${stepNum}</span>
+            <h2 style="font-size:17.5px;margin:0;color:#fff">${title}</h2>
+          </div>
+          ${badge ? `<span style="font:600 11px var(--mono);color:var(--muted);background:rgba(255,255,255,0.04);padding:2px 8px;border-radius:4px;border:1px solid var(--line)">${badge}</span>` : ""}
         </div>
         ${content}
       </div>
     `;
   }
 
-  // --- 1. WINDOWS ---
-  function getWindowsGuide(isKZ) {
+  function warnBox(title, text) {
     return `
-      ${sectionCard("1", isKZ ? "Git орнату және баптау" : "Установка и настройка Git", "📦", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
+      <div style="background:rgba(245,158,11,0.08);border-left:3px solid #f59e0b;padding:12px 16px;border-radius:3px;margin:12px 0;font-size:13.5px;line-height:1.55">
+        <b style="color:#f59e0b;display:block;margin-bottom:4px">⚠️ ${title}</b>
+        <div style="color:var(--text)">${text}</div>
+      </div>
+    `;
+  }
+
+  // ========================================================
+  // 1. WINDOWS (ДОМА)
+  // ========================================================
+  function getWindowsSection(isKZ) {
+    return `
+      ${stepCard("1", isKZ ? "Бағдарламаларды орнату (VS Code, Git Bash, curl, jq)" : "Установка программ (VS Code, Git Bash, curl, jq)", "Windows 10/11", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55;margin:0 0 10px">
           ${isKZ 
-            ? "Git — бұл код нұсқаларын басқаруға арналған басты құрал. Терминалды (PowerShell немесе Windows Terminal) ашып, келесі пәрменді орындаңыз:" 
-            : "Git — система контроля версий кода. Откройте PowerShell от имени администратора и запустите быструю установку через winget:"}
+            ? "Windows-та 01 Edu тапсырмаларын орындау үшін 4 құрал қажет: <b>VS Code</b> (редактор), <b>Git Bash</b> (Ubuntu-ға ұқсас терминал), <b>curl</b> және <b>jq</b> (JSON өңдеуші). PowerShell-ді ашып, орнатыңыз:" 
+            : "Для работы с 01 Edu на Windows необходимы 4 инструмента: <b>VS Code</b>, <b>Git</b> (вместе с ним ставится <b>Git Bash</b>), <b>curl</b> и <b>jq</b> (обработчик JSON для Quest 01). Откройте PowerShell и выполните:"}
         </p>
-        ${cmdBox("winget install --id Git.Git -e --source winget", isKZ ? "Немесе git-scm.com сайтынан ресми орнатқышты жүктеп алыңыз" : "Либо скачайте официальный инсталлятор с git-scm.com")}
-        <p style="color:var(--text);font-size:14px;margin-top:14px">
-          ${isKZ ? "Орнатқаннан кейін өз атыңыз бен поштаңызды көрсетіңіз (коммиттер үшін):" : "После установки укажите своё имя и email для GitHub-коммитов:"}
+        ${cmdBox("winget install --id Git.Git -e --source winget\nwinget install -e --id Microsoft.VisualStudioCode\nwinget install jqlang.jq", isKZ ? "PowerShell ішінде орындаңыз" : "Выполните в PowerShell от имени администратора")}
+        
+        <p style="color:var(--text);font-size:14px;margin-top:12px">
+          ${isKZ ? "Орнатқаннан кейін PowerShell-ді қайта ашып, тексеріңіз:" : "Перезапустите терминал и проверьте версии:"}
         </p>
-        ${cmdBox('git config --global user.name "Ваше Имя"\ngit config --global user.email "ваш@email.com"', isKZ ? "Тырнақшалар ішіне өз деректеріңізді жазыңыз" : "В кавычках укажите ваши реальные данные")}
-        <p style="color:var(--text);font-size:14px;margin-top:14px">
-          ${isKZ ? "GitHub үшін қауіпсіз SSH кілтін жасау:" : "Генерация безопасного SSH-ключа для работы с GitHub без ввода пароля:"}
-        </p>
-        ${cmdBox('ssh-keygen -t ed25519 -C "ваш@email.com"', isKZ ? "Барлық сұрақтарда жай ғана Enter басыңыз" : "На все вопросы консоли просто нажимайте Enter")}
+        ${cmdBox("git --version\ncurl.exe --version\njq --version", isKZ ? "Әр бағдарлама өз нұсқасын көрсетуі керек" : "Каждая команда должна вывести версию утилиты")}
+
+        ${warnBox(
+          isKZ ? "МАҢЫЗДЫ: Windows-та барлық тапсырмаларды Git Bash ішінде орындаңыз!" : "ВАЖНО: На Windows команды выполняются в Git Bash!",
+          isKZ
+            ? "PowerShell-ді біз тек орнату үшін қолдандық. Негізгі 01 Edu тапсырмаларын (bash скрипттері, sh, Go) <b>Git Bash</b> терминалында орындаңыз, өйткені PowerShell-де синтаксис басқаша."
+            : "PowerShell использовался только для инсталляции. Все задания 01 Edu (скрипты Quest 01, sh, Linux-команды и Go) выполняйте строго в терминале <b>Git Bash</b>!"
+        )}
       `)}
 
-      ${sectionCard("2", isKZ ? "Go (Golang) орнату және тексеру" : "Установка и проверка Go (Golang)", "🐹", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
+      ${stepCard("2", isKZ ? "Жұмыс папкасын жасау және VS Code-та ашу" : "Создание рабочей папки piscinego", "Рабочий стол", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
-            ? "Go 1.23+ нұсқасын PowerShell арқылы бір пәрменмен орнатыңыз:" 
-            : "Установите последнюю версию Go 1.23+ в PowerShell:"}
+            ? "1. Жұмыс үстелінде (Desktop) тінтуірдің оң жағын басып, <b>Создать → Папку</b> таңдаңыз.<br>2. Атын дәл <b>piscinego</b> деп қойыңыз.<br>3. VS Code-ты ашып, <b>File → Open Folder…</b> арқылы осы <code>piscinego</code> папкасын таңдаңыз.<br>4. Сұрақ шықса, <b>Yes, I trust the authors</b> басыңыз."
+            : "1. На Рабочем столе нажмите правой кнопкой → <b>Создать → Папку</b>.<br>2. Назовите её строго <b>piscinego</b>.<br>3. В VS Code выберите <b>File → Open Folder…</b> и откройте папку <code>piscinego</code>.<br>4. При запросе доверия выберите <b>Yes, I trust the authors</b>."}
         </p>
-        ${cmdBox("winget install --id GoLang.Go -e", isKZ ? "Немесе go.dev/dl/ сайтынан MSI файлын жүктеңіз" : "Или скачайте .msi установщик с go.dev/dl")}
-        <p style="color:var(--text);font-size:14px;margin-top:14px">
-          ${isKZ ? "Терминалды қайта ашып, орнатуды тексеріңіз:" : "Перезапустите терминал и проверьте корректность установки:"}
-        </p>
-        ${cmdBox("go version", isKZ ? "Нәтиже go version go1.23... түрінде шығуы керек" : "Должна отобразиться версия, например go version go1.23.2 windows/amd64")}
-        <p style="color:var(--text);font-size:14px;margin-top:14px">
-          ${isKZ ? "Алғашқы бағдарламаны жасау және іске қосу:" : "Создайте первую рабочую программу на компьютере:"}
-        </p>
-        ${cmdBox("mkdir myproject\ncd myproject\ngo mod init myproject\ngo run main.go", isKZ ? "Жоба папкасын жасап, оны Go модулі ретінде инициализациялайды" : "Инициализирует Go-модуль и запускает код")}
       `)}
 
-      ${sectionCard("3", isKZ ? "VS Code орнату және кеңейтімдер" : "Установка VS Code и плагинов", "💻", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
+      ${stepCard("3", isKZ ? "VS Code ішінде Git Bash терминалын ашу" : "Настройка терминала Git Bash в VS Code", "VS Code Terminal", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
-            ? "Visual Studio Code — Go тілінде жазуға арналған ең танымал тегін редактор:" 
-            : "Visual Studio Code — самый популярный редактор для Go разработки:"}
+            ? "1. VS Code ішінде жоғарғы мәзірден <b>Terminal → New Terminal</b> ашыңыз.<br>2. Терминал панеліндегі <b>+</b> батырмасының жанындағы <b>⌄</b> көрсеткісін басып, <b>Git Bash</b> таңдаңыз!<br>3. Барлық келесі пәрмендерді осы Git Bash терминалына жазамыз."
+            : "1. В верхнем меню VS Code откройте <b>Terminal → New Terminal</b>.<br>2. Рядом с кнопкой <b>+</b> на панели терминала нажмите стрелочку <b>⌄</b> и выберите <b>Git Bash</b>!<br>3. Все последующие команды вводятся именно в этот терминал Git Bash."}
         </p>
-        ${cmdBox("winget install -e --id Microsoft.VisualStudioCode", isKZ ? "Немесе code.visualstudio.com сайтынан орнатыңыз" : "Либо скачайте с code.visualstudio.com")}
-        <div style="margin-top:14px;background:rgba(255,255,255,0.03);padding:14px;border-radius:4px;border:1px solid var(--line)">
-          <b style="color:var(--accent-l)">${isKZ ? "Міндетті түрде орнату керек кеңейтімдер (Extensions):" : "Обязательные расширения (вкладка Extensions в VS Code):"}</b>
-          <ul style="margin:8px 0 0 18px;padding:0;font-size:13.5px;color:var(--text);line-height:1.6">
-            <li><b>Go</b> (Go Team at Google) — автотолықтыру, құжаттама және сақтау кезінде кодты автоматты түрде реттеу (gofmt).</li>
-            <li><b>Error Lens</b> — қателерді біздің сайттағыдай тікелей код жолында көрсетеді.</li>
-            <li><b>GitLens</b> — код тарихы мен коммиттерін көруге көмектеседі.</li>
-          </ul>
+      `)}
+
+      ${stepCard("4", isKZ ? "Gitea 404 қатесін түзету (Кіруді сақтау)" : "Фикс ошибки Gitea 404 (Настройка сохранения входа)", "Критический шаг!", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ 
+            ? "Windows-та әдепкі Git көмекшісі браузерді ашып, 404 қатесін береді. Оны өшіріп, логин/құпиясөзді терминалда бір рет сақтайтын <b>store</b> режимін қосу керек:" 
+            : "По умолчанию в Windows помощник входа открывает браузер со страницей 404 на платформе 01 Edu. <b>Обязательно</b> отключите его и включите хранилище <b>store</b> двумя командами по очереди:"}
+        </p>
+        ${cmdBox('git config --global --replace-all credential.helper ""\ngit config --global --add credential.helper store', isKZ ? "Бос тырнақшаларды \"\" міндетті түрде қалдырыңыз!" : "Обязательно выполните обе команды, пустые кавычки \"\" важны!")}
+
+        <p style="color:var(--text);font-size:14px;margin-top:10px">
+          ${isKZ ? "Автор деректерін тіркеңіз (login орнына Gitea логиніңізді жазыңыз):" : "Укажите имя автора (вместо choumi укажите свой логин на платформе 01 Edu):"}
+        </p>
+        ${cmdBox('git config --global user.name "ВАШ_ЛОГИН_GITEA"\ngit config --global user.email "your-email@example.com"', isKZ ? "Gitea-дағы нақты логиніңізді жазыңыз" : "Имя должно строго совпадать с логином Gitea")}
+      `)}
+
+      ${stepCard("5", isKZ ? "Жобаны бос орын және нүктемен клондау (git clone .)" : "Скачивание проекта из Gitea (git clone .)", "01.tomorrow-school.ai", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ 
+            ? "1. Платформада оң жақ жоғарыдағы <b>профиль → GITEA</b> басыңыз.<br>2. Өз <b>piscinego</b> репозиторийіңізді ашып, жасыл <b>Code → HTTPS</b> сілтемесін көшіріңіз.<br>3. VS Code ішіндегі Git Bash терминалына келіп, сілтеменің соңына <b>БОС ОРЫН ЖӘНЕ НҮКТЕ</b> қойып орындаңыз:"
+            : "1. На платформе 01 нажмите <b>профиль справа сверху → GITEA</b>.<br>2. Откройте свой репозиторий <b>piscinego</b>, нажмите зелёную кнопку <b>Code → HTTPS</b> и скопируйте ссылку.<br>3. В терминале VS Code вставьте ссылку, обязательно добавив <b>ПРОБЕЛ И ТОЧКУ</b> в конце:"}
+        </p>
+        ${cmdBox("git clone https://01.tomorrow-school.ai/git/ВАШ_ЛОГИН/piscinego.git .", isKZ ? "Соңындағы бос орын мен нүкте .git . міндетті! Бұл ішкі папка жасамай, осы папкаға көшіреді" : "Пробел и точка в конце обязательны: .git . скачивает файлы прямо в эту папку, без лишней вложенности")}
+
+        <p style="color:var(--text);font-size:14px;margin-top:10px">
+          ${isKZ 
+            ? "Терминал <b>Username</b> мен <b>Password</b> сұрағанда, Gitea логиніңіз бен құпиясөзіңізді енгізіңіз (құпиясөз жазғанда таңбалар көрінбейді — бұл қалыпты жағдай)." 
+            : "Когда Git запросит <b>Username</b> и <b>Password</b> — введите логин и пароль от платформы 01 (при вводе пароля символы не отображаются — это нормально)."}
+        </p>
+      `)}
+    `;
+  }
+
+  // ========================================================
+  // 2. MACOS (ДОМА)
+  // ========================================================
+  function getMacSection(isKZ) {
+    return `
+      ${stepCard("1", isKZ ? "Homebrew, Git және jq орнату" : "Установка Homebrew, Git и jq", "macOS Terminal", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ ? "Terminal ашып (⌘ + Space → Terminal), Homebrew пакеттік менеджерін орнатыңыз:" : "Откройте Terminal (⌘ + Space → Terminal) и установите Homebrew:"}
+        </p>
+        ${cmdBox('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', isKZ ? "Установщик көрсеткен Next steps пәрмендерін міндетті түрде орындаңыз" : "После установки обязательно выполните команды из блока Next steps")}
+        
+        <p style="color:var(--text);font-size:14px;margin-top:12px">
+          ${isKZ ? "Құралдарды орнату және тексеру:" : "Установите Git и jq:"}
+        </p>
+        ${cmdBox("brew install git jq\ngit --version\njq --version", isKZ ? "Орнатып, нұсқаларын тексереді" : "Проверяет корректность установки")}
+      `)}
+
+      ${stepCard("2", isKZ ? "Gitea 404 қатесін болдырмау (credential.helper store)" : "Настройка сохранения входа Git на macOS", "Store helper", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ ? "macOS-та да мектептік Gitea-ға кіру үшін store режимін қосамыз:" : "На macOS также отключаем диалоговые окна и включаем store:"}
+        </p>
+        ${cmdBox('git config --global --replace-all credential.helper ""\ngit config --global --add credential.helper store\ngit config --global user.name "ВАШ_ЛОГИН_GITEA"\ngit config --global user.email "your-email@example.com"', isKZ ? "Логин мен поштаңызды көрсетіңіз" : "Укажите свои данные Gitea")}
+      `)}
+
+      ${stepCard("3", isKZ ? "Жоба папкасын жасау және клондау" : "Создание папки piscinego и скачивание", "Рабочий стол", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ 
+            ? "Жұмыс үстелінде <b>piscinego</b> папкасын жасап, оны VS Code-та ашыңыз (File → Open Folder). Терминалда соңындағы <b>бос орын мен нүктені</b> ұмытпай клондаңыз:" 
+            : "Создайте папку <b>piscinego</b> на Рабочем столе, откройте её в VS Code и выполните клонирование с пробелом и точкой в конце:"}
+        </p>
+        ${cmdBox("git clone https://01.tomorrow-school.ai/git/ВАШ_ЛОГИН/piscinego.git .", isKZ ? "Точка . обязательно отдельно через пробел" : "Пробел и точка в конце обязательны")}
+      `)}
+    `;
+  }
+
+  // ========================================================
+  // 3. ШКОЛЬНЫЙ ПК В КАМПУСЕ (UBUNTU)
+  // ========================================================
+  function getSchoolSection(isKZ) {
+    return `
+      <div style="background:rgba(79,209,139,0.08);border:1px solid var(--ok);border-radius:6px;padding:16px;margin-bottom:20px">
+        <b style="color:var(--ok);font-size:15px">🏫 ${isKZ ? "Кампустағы оқу компьютерлері туралы:" : "О школьных компьютерах 01 Edu:"}</b>
+        <p style="margin:6px 0 0;font-size:13.5px;color:var(--text);line-height:1.55">
+          ${isKZ 
+            ? "Кампустағы барлық компьютерлерде Go, VS Code, Git, curl, jq <b>әлдеқашан орнатылған</b>. Ештеңе орнатудың қажеті жоқ! Сізге тек папка жасап, логиніңізді енгізіп, жұмысыңызды жүктеп алу керек." 
+            : "На компьютерах кампуса все программы (Go, VS Code, Git, curl, jq) <b>уже установлены</b>. Устанавливать ничего не нужно! Требуется лишь создать папку на рабочем столе, настроить логин и скачать проект."}
+        </p>
+      </div>
+
+      ${stepCard("1", isKZ ? "1. Жұмыс үстелінде piscinego папкасын жасау" : "1. Создание папки на Рабочем столе", "Ubuntu Desktop", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ 
+            ? "1. Рабочий столда бос жерге тінтуірдің оң жағын басып → <b>New Folder</b> таңдаңыз.<br>2. Папканы <b>piscinego</b> деп атаңыз.<br>3. Папканың ішіне кіріп, бос жерге оң жақпен басып → <b>Open in Terminal</b> таңдаңыз." 
+            : "1. На Рабочем столе нажмите правой кнопкой → <b>New Folder / Создать папку</b>.<br>2. Назовите папку <b>piscinego</b>.<br>3. Откройте её двойным щелчком, нажмите правой кнопкой по пустому месту внутри → <b>Open in Terminal</b>."}
+        </p>
+      `)}
+
+      ${stepCard("2", isKZ ? "2. Терминалда логин мен store баптау" : "2. Настройка Git в терминале папки", "Ввести в открытом терминале", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ ? "Терминалға осы пәрмендерді енгізіңіз (Ubuntu терминалына мәтін қою: <b>Ctrl + Shift + V</b>):" : "Вставьте команды в терминал (вставка в терминал Ubuntu: <b>Ctrl + Shift + V</b>):"}
+        </p>
+        ${cmdBox('git config --global credential.helper store\ngit config --global user.name "ВАШ_ЛОГИН"\ngit config --global user.email "your-email@example.com"', isKZ ? "Логиніңізді жазыңыз" : "Укажите свой логин Gitea")}
+      `)}
+
+      ${stepCard("3", isKZ ? "3. Проектіні скачивать ету (git clone .)" : "3. Клонирование репозитория в текущую папку", "git clone .", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ 
+            ? "Gitea сайтынан piscinego сілтемесін көшіріп, соңына <b>бос орын және нүкте</b> қойып орындаңыз:" 
+            : "Скопируйте HTTPS-ссылку из своего Gitea и выполните с пробелом и точкой на конце:"}
+        </p>
+        ${cmdBox("git clone https://01.tomorrow-school.ai/git/ВАШ_ЛОГИН/piscinego.git .", isKZ ? "Пробел және нүкте . міндетті!" : "Обязательно с пробелом и точкой в конце!")}
+        <p style="color:var(--text);font-size:14px;margin-top:10px">
+          ${isKZ 
+            ? "Сұрағанда Gitea логині мен құпиясөзін жазыңыз. Жүктелген соң осы терминалда <code>code .</code> деп жазсаңыз, VS Code бірден ашылады!" 
+            : "Введите логин и пароль от Gitea. После загрузки выполните команду <code>code .</code> — VS Code откроется прямо в этой папке!"}
+        </p>
+        ${cmdBox("code .", isKZ ? "Папканы VS Code-та ашады" : "Открывает рабочую папку в редакторе")}
+      `)}
+    `;
+  }
+
+  // ========================================================
+  // 4. РЕГЛАМЕНТ РАБОТЫ В PISCINE GO (КВЕСТЫ 1, 2, 3)
+  // ========================================================
+  function getWorkflowSection(isKZ) {
+    return `
+      ${stepCard("1", isKZ ? "1 рет орындау: Модуль және z01 кітапханасын қосу" : "Однократно: Инициализация модуля и библиотеки z01", "Квест 02 басы", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ 
+            ? "Квест 02-ге өткен кезде <code>piscinego</code> папкасында <b>бір рет</b> модуль құрып, 01 Edu ресми z01 кітапханасын орнату керек:" 
+            : "При переходе к Go (Квест 02) в корне папки <code>piscinego</code> нужно <b>один раз</b> инициализировать модуль и подтянуть библиотеку символов 01 Edu:"}
+        </p>
+        ${cmdBox("go mod init piscine\ngo get github.com/01-edu/z01", isKZ ? "Модуль аты қатаң түрде piscine болуы тиіс!" : "Название модуля должно быть строго piscine!")}
+        <p style="color:var(--dim);font-size:13px;margin-top:6px">
+          ${isKZ ? "Папкада <code>go.mod</code> және <code>go.sum</code> файлдары пайда болады. Оларды өшірмеңіз!" : "В папке появятся файлы go.mod и go.sum. Не удаляйте их, они нужны для проверки платформой!"}
+        </p>
+      `)}
+
+      ${stepCard("2", isKZ ? "Файлдар құрылымы: Қайда package piscine, қайда main?" : "Структура файлов: где package piscine, а где main?", "01 Edu стандарттары", `
+        <div style="background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:14px;font:13px var(--mono);color:#e2e6ec;line-height:1.6">
+          piscinego/<br>
+          ├── go.mod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← модуль параметрлері<br>
+          ├── go.sum<br>
+          ├── <b>printdigits/</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Толық программа (папка)<br>
+          │&nbsp;&nbsp;&nbsp;└── main.go&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package main</b> (мұнда func main)<br>
+          ├── <b>isnegative.go</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Функция тапсырмасы (түбірде)<br>
+          ├── <b>pointone.go</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package piscine</b> (мұнда main ЖОҚ!)<br>
+          ├── <b>swap.go</b><br>
+          └── <b>tryquest2/</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Тексеру папкасы (өзіңіз үшін)<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;└── main.go&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package main</b> + import "piscine"
         </div>
-      `)}
-    `;
-  }
 
-  // --- 2. MACOS ---
-  function getMacGuide(isKZ) {
-    return `
-      ${sectionCard("1", isKZ ? "Homebrew және Git орнату" : "Установка Homebrew и Git", "🍎", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
+        <p style="color:var(--text);font-size:14px;margin-top:12px;line-height:1.55">
           ${isKZ 
-            ? "macOS-та барлық бағдарламаларды Homebrew пакеттік менеджері арқылы орнату ең ыңғайлы:" 
-            : "На Mac всё устанавливается за пару секунд через пакетный менеджер Homebrew:"}
-        </p>
-        ${cmdBox('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', isKZ ? "Homebrew орнату пәрмені" : "Установка Homebrew в Terminal")}
-        <p style="color:var(--text);font-size:14px;margin-top:14px">
-          ${isKZ ? "Git орнату және баптау:" : "Установка Git:"}
-        </p>
-        ${cmdBox('brew install git\ngit config --global user.name "Имя"\ngit config --global user.email "email@example.com"', isKZ ? "Git-ті орнатып, деректеріңізді тіркейді" : "Устанавливает Git и настраивает профиль")}
-        ${cmdBox('ssh-keygen -t ed25519 -C "email@example.com"', isKZ ? "GitHub үшін SSH кілтін жасау" : "Генерация SSH-ключа")}
-      `)}
-
-      ${sectionCard("2", isKZ ? "Go (Golang) орнату" : "Установка Go на macOS", "🐹", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
-          ${isKZ ? "Homebrew арқылы Go орнату (Apple Silicon M1/M2/M3 және Intel қолдайды):" : "Установка Go через Homebrew (автоматически поддерживает Apple Silicon M1-M4 и Intel):"}
-        </p>
-        ${cmdBox("brew install go\ngo version", isKZ ? "Орнатып, нұсқасын тексереді" : "Установка и мгновенная проверка версии")}
-      `)}
-
-      ${sectionCard("3", isKZ ? "VS Code орнату" : "Установка VS Code на macOS", "💻", `
-        ${cmdBox("brew install --cask visual-studio-code", isKZ ? "VS Code-ты Mac-қа орнатады" : "Устанавливает VS Code в папку Программы")}
-        <p style="color:var(--text);font-size:14px;margin-top:14px">
-          ${isKZ ? "VS Code-та Command Palette ашыңыз (Cmd + Shift + P) және 'Shell Command: Install code command in PATH' деп жазыңыз. Осыдан кейін терминалдан жай ғана 'code .' деп жобаны аша аласыз." : "В VS Code нажмите Cmd+Shift+P и выполните: 'Shell Command: Install code command in PATH'. Теперь можно открывать любой проект командой 'code .' из терминала!"}
+            ? "• <b>Егер тапсырма функция болса</b> (isnegative, pointone, swap): файлды түбірге қойып, бірінші жолына <code>package piscine</code> деп жазасыз. Ішінде func main БОЛМАУЫ керек!<br>• <b>Тексеру үшін</b>: жеке <code>tryquest2</code> немесе <code>tryquest3</code> папкасын жасап, ішіне <code>main.go</code> жазып, өзіңіздің piscine функцияңызды шақырасыз." 
+            : "• <b>Если задание — функция</b> (isnegative, pointone, divmod, swap): файл создаётся в корне с <code>package piscine</code>. Внутри НЕ должно быть func main!<br>• <b>Для проверки</b> создайте папку <code>tryquest2</code> (или tryquest3), в ней <code>main.go</code> с <code>package main</code>, импортируйте <code>\"piscine\"</code> и запускайте тест."}
         </p>
       `)}
-    `;
-  }
 
-  // --- 3. LINUX UBUNTU ---
-  function getLinuxGuide(isKZ) {
-    return `
-      ${sectionCard("1", isKZ ? "Git орнату (Ubuntu / Debian)" : "Установка Git в Ubuntu / Debian", "🐧", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
-          ${isKZ ? "Пакеттерді жаңартып, ресми репозиторийден Git орнатыңыз:" : "Обновите пакеты apt и установите Git:"}
+      ${stepCard("3", isKZ ? "Кодты жергілікті тексеру: go run" : "Запуск и тестирование кода", "Терминал", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ ? "Толық программаны немесе сынақ папкасын іске қосу:" : "Запуск отдельной программы или папки проверки:"}
         </p>
-        ${cmdBox("sudo apt update && sudo apt install git curl build-essential -y", isKZ ? "Барлық қажетті базалық утилиталарды орнатады" : "Устанавливает Git, Curl и компиляторы")}
-        ${cmdBox('git config --global user.name "Ваше Имя"\ngit config --global user.email "email@example.com"\nssh-keygen -t ed25519 -C "email@example.com"', isKZ ? "Git профилін баптау және SSH жасау" : "Настройка профиля и генерация SSH-ключа")}
+        ${cmdBox("cd printdigits\ngo run .\ncd ..", isKZ ? "printdigits программасын іске қосу" : "Запуск программы printdigits")}
+        ${cmdBox("go run ./tryquest2\ngo run ./tryquest3", isKZ ? "Өз функцияларыңызды сынақ папкасы арқылы тексеру" : "Запуск проверки функций через тестовую папку")}
       `)}
 
-      ${sectionCard("2", isKZ ? "Соңғы Go 1.23+ орнату" : "Установка свежего Go 1.23+ на Linux", "🐹", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
-          ${isKZ ? "Ubuntu репозиторийіндегі Go кейде ескі болады. Соңғы нұсқаны ресми PPA арқылы орнатыңыз:" : "В стандартном репозитории Ubuntu версия Go может отставать. Рекомендуем установку через официальный PPA:"}
+      ${stepCard("4", isKZ ? "Жұмысты Git-ке жіберу және платформада тапсыру" : "Отправка в Git и сдача задания на платформе", "Финал", `
+        <p style="color:var(--text);font-size:14px;line-height:1.55">
+          ${isKZ 
+            ? "Тапсырма дайын болғанда, оны 3 қадаммен Gitea-ға жібересіз:" 
+            : "Когда задача решена и проверена, отправьте её в Gitea тремя командами:"}
         </p>
-        ${cmdBox("sudo add-apt-repository ppa:longsleep/golang-backports -y\nsudo apt update\nsudo apt install golang-go -y\ngo version", isKZ ? "Ең соңғы тұрақты Go нұсқасын орнатады" : "Устанавливает свежую версию Go и проверяет её")}
-      `)}
+        ${cmdBox('git add pointone.go go.mod go.sum\ngit commit -m "Complete pointone"\ngit push', isKZ ? "Файлды таңдау, сақтау және жіберу" : "Добавить файл, сделать коммит и отправить")}
 
-      ${sectionCard("3", isKZ ? "VS Code орнату (Snap арқылы)" : "Установка VS Code в Ubuntu", "💻", `
-        <p style="color:var(--text);font-size:14px;line-height:1.5">
-          ${isKZ ? "Snap пакеттер менеджері арқылы классикалық режимде орнату:" : "Установка через snap с флагом classic:"}
-        </p>
-        ${cmdBox("sudo snap install --classic code", isKZ ? "VS Code орнату" : "Установка VS Code")}
+        ${warnBox(
+          isKZ ? "ЕСТЕ САҚТАҢЫЗ: git push — бұл әлі тапсырманы өткізу емес!" : "ПОМНИТЕ: git push — это ещё не сдача задания!",
+          isKZ
+            ? "Кодты Git-ке жібергеннен кейін, міндетті түрде <b>01 платформасының сайтына кіріп</b>, сол тапсырманың үстінен басып, <b>Submit / Сдать</b> батырмасын басыңыз!"
+            : "После выполнения <code>git push</code> обязательно зайдите на <b>сайт платформы 01</b>, откройте карточку задания и нажмите кнопку сдачи (Submit)!"
+        )}
       `)}
     `;
   }
