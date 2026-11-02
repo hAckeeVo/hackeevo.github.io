@@ -64,7 +64,10 @@ function nextStep(done) {
   return null;
 }
 const allTasks = () => TOPICS.flatMap(t => t.tasks.map(k => ({ ...k, topic: t })));
-const tLabel = t => t.id === 0 ? "Введение" : "Тема " + t.id;
+const tLabel = t => {
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  return t.id === 0 ? (isKZ ? "Кіріспе" : "Введение") : (isKZ ? t.id + "-тақырып" : "Тема " + t.id);
+};
 const isMobile = () => matchMedia("(max-width: 860px)").matches;
 
 const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -233,6 +236,18 @@ function chrome(crumbHtml) {
   const u = getUser();
   $("#crumb").innerHTML = crumbHtml || "";
   $("#user").hidden = $("#logout").hidden = $("#xp").hidden = !u;
+
+  const lang = (window.getLang && window.getLang()) || "ru";
+  const lt = $("#langToggle");
+  if (lt) {
+    lt.textContent = lang === "ru" ? "KZ" : "RU";
+    lt.onclick = () => { if (window.toggleLang) window.toggleLang(); };
+  }
+  const nArena = $("#navArena"), nSetup = $("#navSetup");
+  if (nArena) nArena.textContent = lang === "kz" ? "Арена" : "Арена";
+  if (nSetup) nSetup.textContent = lang === "kz" ? "Баптау" : "Setup";
+  if ($("#logout")) $("#logout").textContent = lang === "kz" ? "шығу" : "выйти";
+
   if (u) {
     const isCloud = isSupabaseReady() && !!store.get("sb_session", false);
     $("#user").textContent = "@" + u + (isCloud ? " ☁️" : "");
@@ -420,7 +435,9 @@ function viewLogin() {
 }
 
 function viewDashboard(u) {
-  chrome(`<span>dashboard</span>`);
+  const lang = (window.getLang && window.getLang()) || "ru";
+  const isKZ = lang === "kz";
+  chrome(`<span>${isKZ ? "басты бет" : "dashboard"}</span>`);
   const done = getDone(u);
   const tasks = allTasks();
   const nDone = tasks.filter(t => done[t.id]).length;
@@ -430,20 +447,21 @@ function viewDashboard(u) {
   const unlocked = isUnlocked();
 
   const tracks = [
-    { id: "base", title: "💡 Основы Go (Темы 0–13)", topics: TOPICS.filter(t => t.id >= 0 && t.id <= 13) },
-    { id: "piscine", title: "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)", topics: TOPICS.filter(t => t.track === "piscine" || (t.id >= 14 && t.id <= 19)) },
-    { id: "backend", title: "🚀 Backend, Сеть и Базы данных (Темы 20–24)", topics: TOPICS.filter(t => t.track === "backend" || (t.id >= 20 && t.id <= 24)) },
+    { id: "base", title: isKZ ? "💡 Go негіздері (0–13 тақырыптар)" : "💡 Основы Go (Темы 0–13)", topics: TOPICS.filter(t => t.id >= 0 && t.id <= 13) },
+    { id: "piscine", title: isKZ ? "🏊 01 Edu Piscine (Алгоритмдер, Quad, Нұсқағыштар, Рекурсия)" : "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)", topics: TOPICS.filter(t => t.track === "piscine" || (t.id >= 14 && t.id <= 19)) },
+    { id: "backend", title: isKZ ? "🚀 Backend, Желі және Деректер қоры (20–24 тақырыптар)" : "🚀 Backend, Сеть и Базы данных (Темы 20–24)", topics: TOPICS.filter(t => t.track === "backend" || (t.id >= 20 && t.id <= 24)) },
   ];
 
   const renderTopicCard = t => {
+    const locT = window.getLocalizedTopic ? window.getLocalizedTopic(t) : t;
     const lock = topicLock(t, done), complete = topicComplete(t, done);
     const hasSim = !!t.widgetTitle || t.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(t.id)) || (window.hasPedagogy && window.hasPedagogy(t.id));
-    const vizBadge = hasSim ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">🎮 Тренажёр</span>` : "";
+    const vizBadge = hasSim ? `<span class="badge" style="background:rgba(153,105,255,.15);border:1px solid var(--accent);color:var(--accent-l);font-size:10px;margin-left:6px;vertical-align:middle">${isKZ ? "🎮 Жаттықтырғыш" : "🎮 Тренажёр"}</span>` : "";
     return `
       <a class="topic ${complete ? "complete" : ""} ${lock ? "locked" : ""}" href="#/topic/${t.id}">
-        <span class="n">${t.id === 0 ? "введение" : String(t.id).padStart(2, "0")}${complete ? " · пройдена" : ""}${lock ? " · 🔒 закрыта" : ""}${vizBadge}</span>
-        <h2>${esc(t.title)}</h2>
-        <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>Мини-тест</span>` : ""}${t.tasks.map(k =>
+        <span class="n">${t.id === 0 ? (isKZ ? "кіріспе" : "введение") : String(t.id).padStart(2, "0")}${complete ? (isKZ ? " · өтті" : " · пройдена") : ""}${lock ? (isKZ ? " · 🔒 жабық" : " · 🔒 закрыта") : ""}${vizBadge}</span>
+        <h2>${esc(locT.title)}</h2>
+        <div class="rows">${t.quiz ? `<span><span class="dot ${done["q" + t.id] ? "done" : ""}"></span>${isKZ ? "Шағын-тест" : "Мини-тест"}</span>` : ""}${t.tasks.map(k =>
           `<span><span class="dot ${done[k.id] ? "done" : ""}"></span>${k.exam ? "🔴 " : k.hard ? "🟡 " : "🟢 "}${esc(k.title)}</span>`).join("")}</div>
       </a>`;
   };
@@ -452,21 +470,39 @@ function viewDashboard(u) {
     <div class="wrap">
       <div class="dash-head">
         <div>
-          <h1>Добро пожаловать, ${esc(u)}!</h1>
-          <p class="sub">${TOPICS.length} тем · ${tasks.length} задач · выполнено ${nDone} (${pct}%)</p>
+          <h1>${isKZ ? "Қош келдіңіз" : "Добро пожаловать"}, ${esc(u)}!</h1>
+          <p class="sub">${TOPICS.length} ${isKZ ? "тақырып" : "тем"} · ${tasks.length} ${isKZ ? "тапсырма" : "задач"} · ${isKZ ? "орындалғаны" : "выполнено"} ${nDone} (${pct}%)</p>
         </div>
         <div class="unlock-bar">
           ${unlocked
-            ? `<span>🔓 Все темы открыты</span><button class="btn ghost small" id="relockBtn">Включить замки обратно</button>`
-            : `<button class="btn ghost small" id="unlockBtn">Разблокировать все темы</button>
+            ? `<span>${isKZ ? "🔓 Барлық тақырыптар ашық" : "🔓 Все темы открыты"}</span><button class="btn ghost small" id="relockBtn">${isKZ ? "Құлыптарды қосу" : "Включить замки обратно"}</button>`
+            : `<button class="btn ghost small" id="unlockBtn">${isKZ ? "Барлық тақырыптарды ашу" : "Разблокировать все темы"}</button>
                <form id="promoForm" style="display:none" class="promo-inline">
-                 <input id="promoInput" placeholder="Введите промокод" autocomplete="off">
+                 <input id="promoInput" placeholder="${isKZ ? "Промокодты енгізіңіз" : "Введите промокод"}" autocomplete="off">
                  <button class="btn small" type="submit">ОК</button>
                  <button class="btn ghost small" type="button" id="cancelPromo">✕</button>
                </form>`}
         </div>
       </div>
       <div class="progress"><i style="width:${pct}%"></i></div>
+
+      <!-- Quick Nav Banner for Setup & Arena -->
+      <div style="display:flex;gap:14px;margin:20px 0;flex-wrap:wrap">
+        <a href="#/setup" style="flex:1;min-width:260px;background:#141318;border:1px solid var(--line);border-radius:6px;padding:14px 18px;text-decoration:none;display:flex;align-items:center;gap:14px;transition:border-color .15s">
+          <span style="font-size:26px">💻</span>
+          <div>
+            <b style="color:#fff;font-size:14px;display:block">${isKZ ? "Ортаны баптау (Windows, Mac, Linux)" : "Настройка окружения (Windows, Mac, Linux)"}</b>
+            <span style="color:var(--dim);font-size:12.5px">${isKZ ? "Git, Golang және VS Code орнату нұсқаулығы" : "Инструкции по установке Git, Go 1.23+ и плагинов VS Code"}</span>
+          </div>
+        </a>
+        <a href="#/arena" style="flex:1;min-width:260px;background:#141318;border:1px solid var(--accent);border-radius:6px;padding:14px 18px;text-decoration:none;display:flex;align-items:center;gap:14px;transition:border-color .15s">
+          <span style="font-size:26px">⚡</span>
+          <div>
+            <b style="color:var(--accent-l);font-size:14px;display:block">${isKZ ? "Тапсырмалар аренасы (+XP)" : "Тренажёр задач Арена (+XP)"}</b>
+            <span style="color:var(--dim);font-size:12.5px">${isKZ ? "Piscine, LeetCode, Backend және AI тапсырмалары" : "Задачи Piscine, LeetCode, Backend и AI Engineering"}</span>
+          </div>
+        </a>
+      </div>
 
       <div class="grid">
         <div>
@@ -985,6 +1021,18 @@ function celebrate(topic) {
   addEventListener("hashchange", close, { once: true });
 }
 
+function viewSetup(u) {
+  const lang = (window.getLang && window.getLang()) || "ru";
+  chrome(`<a href="#/">${lang === "kz" ? "басты бет" : "dashboard"}</a> / setup`);
+  if (window.renderSetupPage) window.renderSetupPage(app, u);
+}
+
+function viewArena(u) {
+  const lang = (window.getLang && window.getLang()) || "ru";
+  chrome(`<a href="#/">${lang === "kz" ? "басты бет" : "dashboard"}</a> / arena`);
+  if (window.renderArenaPage) window.renderArenaPage(app, u);
+}
+
 // ---------- router ----------
 function route() {
   $$(".overlay").forEach(o => o.remove());
@@ -1001,6 +1049,8 @@ function route() {
   const u = getUser(), h = location.hash || "#/";
   if (!u) { if (h !== "#/login") { location.hash = "#/login"; return; } return viewLogin(); }
   if (h === "#/login") { location.hash = "#/"; return; }
+  if (h === "#/setup") return viewSetup(u);
+  if (h === "#/arena") return viewArena(u);
   let m = h.match(/^#\/topic\/(\d+)/);
   if (m) return viewTopic(u, +m[1]);
   m = h.match(/^#\/task\/(\w+)/); // старые ссылки

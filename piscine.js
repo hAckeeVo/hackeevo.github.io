@@ -1243,53 +1243,78 @@ func main() {
 
     el.innerHTML = `
       <div class="ptr-widget">
-        <div class="ptr-title">🧠 Интерактивный симулятор оперативной памяти (RAM)</div>
+        <div class="ptr-title">📦 Указатели на пальцах: метафора «Коробка и Записка с адресом»</div>
+        
+        <div class="ptr-explainer" style="background:rgba(153,105,255,0.08);border-left:3px solid var(--accent);padding:10px 14px;border-radius:4px;margin-bottom:14px;font-size:13.5px;line-height:1.5">
+          <b>Как понимать указатели без сложной терминологии:</b><br>
+          • <b>Переменная (num)</b> — это <i>коробка</i>, в которой лежит число.<br>
+          • <b>Символ &num</b> — это <i>адрес (номер)</i> этой коробки на складе памяти.<br>
+          • <b>Указатель (ptr)</b> — это <i>записка</i>, в которой записан номер коробки.<br>
+          • <b>Символ *ptr</b> — команда <i>«пойди по адресу из записки и загляни внутрь коробки»</i>.
+        </div>
+
         <div class="ptr-actions">
-          <button class="btn small" id="ptrVal">num = 100 (копия)</button>
-          <button class="btn small on" id="ptrDeref">*ptr = 777 (разыменование!)</button>
-          <button class="btn small" id="ptrSwap">Swap(&num, &other)</button>
-          <button class="btn ghost small" id="ptrReset">Сброс</button>
+          <button class="btn small" id="ptrVal">1. Обычное: num = 100</button>
+          <button class="btn small on" id="ptrDeref">2. Через указатель: *ptr = 777</button>
+          <button class="btn small" id="ptrSwap">3. Обмен: Swap(&num, &other)</button>
+          <button class="btn ghost small" id="ptrReset">Сброс ↺</button>
         </div>
-        <div class="ptr-mem">
-          <div class="ptr-cell" id="cellA">
-            <span class="ptr-addr">0x20A0 (адрес num)</span>
-            <div class="ptr-val" id="valA">42</div>
-            <span class="ptr-name">переменная: num (int)</span>
+
+        <div class="ptr-mem" style="margin-top:16px">
+          <!-- Коробка 1: num -->
+          <div class="ptr-cell" id="cellA" style="border:2px solid var(--accent);background:#171520;position:relative">
+            <span class="ptr-addr" style="color:var(--accent-l)">📦 Ячейка памяти №101 (адрес)</span>
+            <div class="ptr-val" id="valA" style="font-size:32px;font-weight:700;color:#fff">42</div>
+            <span class="ptr-name" style="color:var(--text);font-weight:600">Коробка: num (число)</span>
           </div>
-          <div class="ptr-arrow" id="ptrArrow">⟵ указывает на 0x20A0 ──</div>
-          <div class="ptr-cell" id="cellP">
-            <span class="ptr-addr">0x20B8 (адрес ptr)</span>
-            <div class="ptr-val ok">0x20A0</div>
-            <span class="ptr-name">указатель: ptr (*int)</span>
+
+          <!-- Записка: ptr -->
+          <div class="ptr-arrow" id="ptrArrow" style="font-size:13px;font-weight:600;color:var(--accent-l)">⟵ указывает на №101 ──</div>
+
+          <div class="ptr-cell" id="cellP" style="border:2px dashed #f59e0b;background:#1a1712">
+            <span class="ptr-addr" style="color:#f59e0b">🏷️ Ячейка памяти №102</span>
+            <div class="ptr-val ok" style="color:#f59e0b;font-size:24px;font-weight:700">№101</div>
+            <span class="ptr-name" style="color:#f59e0b;font-weight:600">Записка с адресом: ptr</span>
           </div>
-          <div class="ptr-cell" id="cellB" style="margin-left:auto">
-            <span class="ptr-addr">0x20C0 (адрес other)</span>
-            <div class="ptr-val" id="valB">10</div>
-            <span class="ptr-name">переменная: other (int)</span>
+
+          <!-- Коробка 2: other -->
+          <div class="ptr-cell" id="cellB" style="margin-left:auto;border:2px solid var(--line);background:#141318">
+            <span class="ptr-addr" style="color:var(--muted)">📦 Ячейка памяти №103 (адрес)</span>
+            <div class="ptr-val" id="valB" style="font-size:32px;font-weight:700;color:#fff">10</div>
+            <span class="ptr-name" style="color:var(--text);font-weight:600">Коробка: other (число)</span>
           </div>
         </div>
-        <div class="ptr-log" id="ptrLog">Нажмите кнопки выше, чтобы увидеть, как прямое изменение и изменение через *ptr влияют на одну и ту же ячейку памяти.</div>
+
+        <div class="ptr-log" id="ptrLog" style="margin-top:14px;padding:12px 14px;background:#0d0c10;border:1px solid var(--line);border-radius:4px;font-size:13.5px;line-height:1.55">
+          Нажмите кнопки выше 👆, чтобы в реальном времени увидеть, как меняются коробки и почему указатели позволяют менять данные в памяти из любого места программы.
+        </div>
       </div>
     `;
 
     const valA = document.getElementById("valA");
     const valB = document.getElementById("valB");
+    const cellA = document.getElementById("cellA");
+    const cellP = document.getElementById("cellP");
+    const cellB = document.getElementById("cellB");
     const log = document.getElementById("ptrLog");
 
     const btnVal = document.getElementById("ptrVal");
     if (btnVal) btnVal.onclick = () => {
       valA.textContent = "100";
       valA.classList.add("flash");
-      setTimeout(() => valA.classList.remove("flash"), 400);
-      log.innerHTML = "Выполнилось: <code>num = 100</code>. Значение в ячейке <code>0x20A0</code> изменилось на 100. Указатель <code>ptr</code> продолжает указывать на неё же!";
+      cellA.style.borderColor = "var(--ok)";
+      setTimeout(() => { valA.classList.remove("flash"); cellA.style.borderColor = "var(--accent)"; }, 500);
+      log.innerHTML = "<b>Действие: <code>num = 100</code></b><br>Мы напрямую подошли к коробке <code>num</code> (ячейка №101) и положили туда число 100. Записка <code>ptr</code> не изменилась — она по-прежнему указывает на ячейку №101, но теперь видит там число 100!";
     };
 
     const btnDeref = document.getElementById("ptrDeref");
     if (btnDeref) btnDeref.onclick = () => {
       valA.textContent = "777";
       valA.classList.add("flash");
-      setTimeout(() => valA.classList.remove("flash"), 400);
-      log.innerHTML = "Выполнилось: <code>*ptr = 777</code>. Компьютер пошёл по адресу <code>0x20A0</code> и записал туда 777. Теперь и <code>num</code>, и <code>*ptr</code> равны 777!";
+      cellP.classList.add("flash");
+      cellA.style.borderColor = "#f59e0b";
+      setTimeout(() => { valA.classList.remove("flash"); cellP.classList.remove("flash"); cellA.style.borderColor = "var(--accent)"; }, 500);
+      log.innerHTML = "<b>Действие: <code>*ptr = 777</code> (Разыменование)</b><br>Магия указателей в действии! Мы НЕ трогали переменную <code>num</code> напрямую. Мы взяли записку <code>ptr</code>, прочитали адрес «№101», открыли эту ячейку и положили туда 777. Теперь значение переменной <code>num</code> изменилось на 777 чужими руками!";
     };
 
     const btnSwap = document.getElementById("ptrSwap");
@@ -1298,14 +1323,18 @@ func main() {
       valA.textContent = valB.textContent;
       valB.textContent = t;
       valA.classList.add("flash"); valB.classList.add("flash");
-      setTimeout(() => { valA.classList.remove("flash"); valB.classList.remove("flash"); }, 400);
-      log.innerHTML = "Выполнилось: <code>Swap(&num, &other)</code>. Значения в ячейках <code>0x20A0</code> и <code>0x20C0</code> поменялись местами через их адреса!";
+      cellA.style.borderColor = "var(--ok)"; cellB.style.borderColor = "var(--ok)";
+      setTimeout(() => {
+        valA.classList.remove("flash"); valB.classList.remove("flash");
+        cellA.style.borderColor = "var(--accent)"; cellB.style.borderColor = "var(--line)";
+      }, 500);
+      log.innerHTML = "<b>Действие: <code>Swap(&num, &other)</code></b><br>Функция получила адреса двух коробок (№101 и №103). Используя временную ячейку <code>temp</code>, она поменяла их содержимое местами! В результате <code>num</code> стал равен " + valA.textContent + ", а <code>other</code> — " + valB.textContent + ".";
     };
 
     const btnReset = document.getElementById("ptrReset");
     if (btnReset) btnReset.onclick = () => {
       valA.textContent = "42"; valB.textContent = "10";
-      log.innerHTML = "Память сброшена: <code>num = 42, other = 10</code>.";
+      log.innerHTML = "Память сброшена к начальному состоянию: <code>num = 42, other = 10, ptr указывает на num</code>.";
     };
   }
 
