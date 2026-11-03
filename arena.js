@@ -30,9 +30,9 @@ func main() {
 `,
       output: "01, 02, 03, ..., 78, 79, 89",
       checks: [
-        { re: /for\s+[a-zA-Z0-9_]+\s*:=\s*['0-9]/, msg: "Используйте цикл for для первой цифры" },
-        { re: /for\s+[a-zA-Z0-9_]+\s*:=\s*[a-zA-Z0-9_]+\s*\+\s*1/, msg: "Вторая цифра должна быть строго больше первой (i + 1)" },
-        { re: /fmt\.(Print|Printf)/, msg: "Используйте fmt.Print для вывода без лишних переносов строк" }
+        { re: /for\s+[a-zA-Z0-9_]+\s*:=\s*['0-9]/, msg: "Используйте цикл for для первой цифры", msgKz: "Бірінші цифр үшін for циклін қолданыңыз" },
+        { re: /for\s+[a-zA-Z0-9_]+\s*:=\s*[a-zA-Z0-9_]+\s*\+\s*1/, msg: "Вторая цифра должна быть строго больше первой (i + 1)", msgKz: "Екінші цифр біріншіден қатаң үлкен болуы керек (i + 1)" },
+        { re: /fmt\.(Print|Printf)/, msg: "Используйте fmt.Print для вывода без лишних переносов строк", msgKz: "Жолды ауыстырмай шығару үшін fmt.Print қолданыңыз" }
       ],
       solution: `package main
 
@@ -81,8 +81,8 @@ func main() {
 `,
       output: "6\n4",
       checks: [
-        { re: /\[\]rune\(/, msg: "Преобразуйте строку в срез рун []rune(s)" },
-        { re: /return\s+len\(/, msg: "Верните длину среза рун len(r)" }
+        { re: /\[\]rune\(/, msg: "Преобразуйте строку в срез рун []rune(s)", msgKz: "Жолды руналар тіліміне []rune(s) түрлендіріңіз" },
+        { re: /return\s+len\(/, msg: "Верните длину среза рун len(r)", msgKz: "Руналар тілімінің ұзындығын len(r) қайтарыңыз" }
       ],
       solution: `package main
 
@@ -124,9 +124,9 @@ func main() {
 `,
       output: "Vszzc!",
       checks: [
-        { re: /for\s+.*range/, msg: "Используйте цикл for для обхода символов" },
-        { re: /['a']\s*<=\s*.*&&.*<=\s*['z']|['A']\s*<=\s*.*&&.*<=\s*['Z']/, msg: "Проверяйте диапазон 'a'..'z' и 'A'..'Z'" },
-        { re: /%\s*26/, msg: "Используйте остаток от деления % 26 для закольцовывания алфавита" }
+        { re: /for\s+.*range/, msg: "Используйте цикл for для обхода символов", msgKz: "Символдарды аралау үшін for циклін қолданыңыз" },
+        { re: /['a']\s*<=\s*.*&&.*<=\s*['z']|['A']\s*<=\s*.*&&.*<=\s*['Z']/, msg: "Проверяйте диапазон 'a'..'z' и 'A'..'Z'", msgKz: "'a'..'z' және 'A'..'Z' аралықтарын тексеріңіз" },
+        { re: /%\s*26/, msg: "Используйте остаток от деления % 26 для закольцовывания алфавита", msgKz: "Әліпбиді айналдыру үшін % 26 қалдықты қолданыңыз" }
       ],
       solution: `package main
 
@@ -181,9 +181,9 @@ func main() {
 `,
       output: "3\n-1",
       checks: [
-        { re: /while|for\s+left\s*<=\s*right/, msg: "Цикл поиска должен продолжаться пока left <= right" },
-        { re: /(left\s*\+\s*right)\s*\/\s*2|left\s*\+\s*\(right\s*-\s*left\)\s*\/\s*2/, msg: "Вычисляйте середину mid = (left + right) / 2" },
-        { re: /return\s+mid/, msg: "При совпадении верните mid" }
+        { re: /while|for\s+left\s*<=\s*right/, msg: "Цикл поиска должен продолжаться пока left <= right", msgKz: "Іздеу шекаралары дұрыс болғанда: for left <= right циклі" },
+        { re: /(left\s*\+\s*right)\s*\/\s*2|left\s*\+\s*\(right\s*-\s*left\)\s*\/\s*2/, msg: "Вычисляйте середину mid = (left + right) / 2", msgKz: "Ортасын есептеңіз: mid = (left + right) / 2" },
+        { re: /return\s+mid/, msg: "При совпадении верните mid", msgKz: "Табылған кезде mid қайтарыңыз" }
       ],
       solution: `package main
 
@@ -238,9 +238,9 @@ func main() {
 `,
       output: "[0 1]",
       checks: [
-        { re: /make\s*\(\s*map\[int\]int/, msg: "Используйте хеш-таблицу make(map[int]int)" },
-        { re: /target\s*-\s*num|target\s*-\s*v|target\s*-\s*nums\[/, msg: "Вычисляйте необходимое второе число: diff = target - num" },
-        { re: /return\s+\[\]int\{/, msg: "Верните срез с двумя индексами []int{idx, i}" }
+        { re: /make\s*\(\s*map\[int\]int/, msg: "Используйте хеш-таблицу make(map[int]int)", msgKz: "make(map[int]int) хэш-кестесін қолданыңыз" },
+        { re: /target\s*-\s*num|target\s*-\s*v|target\s*-\s*nums\[/, msg: "Вычисляйте необходимое второе число: diff = target - num", msgKz: "Жетіспейтін екінші санды есептеңіз: diff = target - num" },
+        { re: /return\s+\[\]int\{/, msg: "Верните срез с двумя индексами []int{idx, i}", msgKz: "Екі индексі бар []int{idx, i} тілімін қайтарыңыз" }
       ],
       solution: `package main
 
@@ -300,8 +300,8 @@ func main() {
 `,
       output: "true\nfalse",
       checks: [
-        { re: /strings\.Split|strings\.Contains/, msg: "Используйте функции пакета strings" },
-        { re: /return/, msg: "Функция должна возвращать булево значение true/false" }
+        { re: /strings\.Split|strings\.Contains/, msg: "Используйте функции пакета strings", msgKz: "strings пакетінің функцияларын қолданыңыз" },
+        { re: /return/, msg: "Функция должна возвращать булево значение true/false", msgKz: "Функция логикалық true/false мәнін қайтаруы керек" }
       ],
       solution: `package main
 
@@ -362,8 +362,8 @@ func main() {
 `,
       output: "Ты — ментор по Go. Объясни тему Указатели для новичка.",
       checks: [
-        { re: /strings\.ReplaceAll/, msg: "Используйте strings.ReplaceAll(res, placeholder, val)" },
-        { re: /\{\{.*\}\}/, msg: "Заменяйте плейсхолдеры в фигурных скобках {{key}}" }
+        { re: /strings\.ReplaceAll/, msg: "Используйте strings.ReplaceAll(res, placeholder, val)", msgKz: "strings.ReplaceAll(res, placeholder, val) қолданыңыз" },
+        { re: /\{\{.*\}\}/, msg: "Заменяйте плейсхолдеры в фигурных скобках {{key}}", msgKz: "{{key}} түріндегі плейсхолдерлерді ауыстырыңыз" }
       ],
       solution: `package main
 
@@ -420,8 +420,8 @@ func main() {
 `,
       output: `{"status": "success", "code": 200}`,
       checks: [
-        { re: /strings\.TrimPrefix/, msg: "Используйте strings.TrimPrefix для удаления ```json" },
-        { re: /strings\.TrimSuffix/, msg: "Используйте strings.TrimSuffix для удаления завершающих ```" }
+        { re: /strings\.TrimPrefix/, msg: "Используйте strings.TrimPrefix для удаления ```json", msgKz: "```json жою үшін strings.TrimPrefix қолданыңыз" },
+        { re: /strings\.TrimSuffix/, msg: "Используйте strings.TrimSuffix для удаления завершающих ```", msgKz: "Соңғы ``` таңбаларын жою үшін strings.TrimSuffix қолданыңыз" }
       ],
       solution: `package main
 
@@ -490,9 +490,9 @@ func main() {
             <select id="arenaTrackSelect" style="padding:6px 12px;background:#0d0c10;border:1px solid var(--line);border-radius:4px;color:#fff;font:500 13px var(--sans)">
               <option value="all">${isKZ ? "Барлық бағыттар" : "Все направления"}</option>
               <option value="piscine">🏊 01 Edu Piscine</option>
-              <option value="algo">⚡ Алгоритмы & LeetCode</option>
-              <option value="backend">🚀 Backend & Web</option>
-              <option value="ai">🤖 AI Engineering</option>
+              <option value="algo">⚡ ${isKZ ? "Алгоритмдер & LeetCode" : "Алгоритмы & LeetCode"}</option>
+              <option value="backend">🚀 ${isKZ ? "Backend & Веб" : "Backend & Web"}</option>
+              <option value="ai">🤖 ${isKZ ? "AI Инженерия" : "AI Engineering"}</option>
             </select>
           </div>
           <div style="display:flex;align-items:center;gap:8px">
@@ -544,7 +544,7 @@ func main() {
           <div class="arena-card" style="background:#141318;border:1px solid ${isSolved ? "var(--ok)" : "var(--line)"};border-radius:6px;padding:18px;display:flex;flex-direction:column;justify-content:space-between;transition:border-color .15s">
             <div>
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-                <span style="font:600 11px var(--mono);text-transform:uppercase;color:var(--accent-l)">${esc(t.trackTitle)}</span>
+                <span style="font:600 11px var(--mono);text-transform:uppercase;color:var(--accent-l)">${esc(isKZ ? (t.trackTitleKz || (t.track === "algo" ? "Алгоритмдер" : (t.track === "ai" ? "AI Инженерия" : (t.track === "backend" ? "Backend & Веб" : t.trackTitle)))) : t.trackTitle)}</span>
                 <div style="display:flex;gap:6px;align-items:center">
                   ${diffBadge}
                   <span style="font:600 11px var(--mono);color:var(--muted)">+${t.xp} XP</span>
@@ -597,7 +597,7 @@ func main() {
           <p style="font-size:14px;color:var(--text);line-height:1.55;white-space:pre-wrap;margin:0 0 16px">${esc(isKZ && t.descKz ? t.descKz : t.desc)}</p>
 
           <div style="margin-bottom:14px">
-            <span style="font:600 12px var(--mono);color:var(--muted)">main.go (Редактор кода):</span>
+            <span style="font:600 12px var(--mono);color:var(--muted)">main.go (${isKZ ? "Код редакторы" : "Редактор кода"}):</span>
             <textarea id="arenaCodeInput" style="width:100%;height:220px;margin-top:6px;background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:12px;color:#f1eff8;font:13.5px var(--mono);line-height:1.5;resize:vertical;outline:none">${esc(savedCode)}</textarea>
           </div>
 
@@ -640,7 +640,7 @@ func main() {
 
       checkBtn.onclick = () => {
         const src = codeInput.value.replace(/\/\/.*$/gm, "");
-        const results = t.checks.map(c => ({ ok: c.re.test(src), msg: c.msg }));
+        const results = t.checks.map(c => ({ ok: c.re.test(src), msg: (isKZ && c.msgKz) ? c.msgKz : c.msg }));
         const passed = results.every(r => r.ok);
 
         resArea.style.display = "block";

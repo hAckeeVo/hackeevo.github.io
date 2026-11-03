@@ -3101,27 +3101,28 @@ ${F}
   function initQuadViz(container) {
     const el = container || document.getElementById("piscineWidgetArea") || document.getElementById("quadVizContainer");
     if (!el) return;
+    const isKZ = (window.getLang && window.getLang()) === "kz";
 
     el.innerHTML = `
       <div class="quad-widget">
         <div class="qw-header">
-          <div class="qw-title">🎮 Интерактивный симулятор Quad и координат</div>
+          <div class="qw-title">🎮 ${isKZ ? "Quad және координаттардың интерактивті тренажеры" : "Интерактивный симулятор Quad и координат"}</div>
           <div class="qw-controls">
-            <label>Ширина X: <b id="qwXval">5</b> <input type="range" id="qwX" min="1" max="8" value="5"></label>
-            <label>Высота Y: <b id="qwYval">3</b> <input type="range" id="qwY" min="1" max="6" value="3"></label>
+            <label>${isKZ ? "Ені X:" : "Ширина X:"} <b id="qwXval">5</b> <input type="range" id="qwX" min="1" max="8" value="5"></label>
+            <label>${isKZ ? "Биіктігі Y:" : "Высота Y:"} <b id="qwYval">3</b> <input type="range" id="qwY" min="1" max="6" value="3"></label>
             <div class="qw-btns">
               <button class="btn small on" id="qwTypeA">QuadA</button>
               <button class="btn ghost small" id="qwTypeB">QuadB</button>
               <button class="btn ghost small" id="qwTypeC">QuadC</button>
-              <button class="btn small" id="qwPlay">▶ Шаг за шагом</button>
+              <button class="btn small" id="qwPlay">${isKZ ? "▶ Қадам бойынша" : "▶ Шаг за шагом"}</button>
             </div>
           </div>
         </div>
         <div class="qw-grid-area">
           <div class="qw-grid" id="qwGrid"></div>
           <div class="qw-info" id="qwInfo">
-            <div class="qw-badge">Наведите на клетку таблицы слева</div>
-            <div class="qw-desc">Сетка показывает матрицу [row, col] и условие для каждого символа.</div>
+            <div class="qw-badge">${isKZ ? "Сол жақтағы кесте ұяшығына бағыттаңыз" : "Наведите на клетку таблицы слева"}</div>
+            <div class="qw-desc">${isKZ ? "Тор [row, col] матрицасын және әр символдың шарттарын көрсетеді." : "Сетка показывает матрицу [row, col] и условие для каждого символа."}</div>
           </div>
         </div>
       </div>
@@ -3167,14 +3168,14 @@ ${F}
       const info = document.getElementById("qwInfo");
       if (!info) return;
       let text = "";
-      if (role === "corner") text = `УГОЛ: row = ${r}, col = ${c} (крайняя строка и крайний столбец) -> символ '${ch}'`;
-      else if (role === "horiz") text = `ВЕРХ/НИЗ: row = ${r} (строка 0 или y-1) -> символ '-'`;
-      else if (role === "vert") text = `БОКОВАЯ СТОРОНА: col = ${c} (столбец 0 или x-1) -> символ '|'`;
-      else if (role === "border") text = `ГРАНИЦА: строка или столбец на краю -> символ '${ch}'`;
-      else text = `ВНУТРИ: не угол и не граница -> печатаем ПРОБЕЛ ' '`;
+      if (role === "corner") text = isKZ ? `БҰРЫШ: row = ${r}, col = ${c} (шеткі жол мен шеткі баған) -> '${ch}' таңбасы` : `УГОЛ: row = ${r}, col = ${c} (крайняя строка и крайний столбец) -> символ '${ch}'`;
+      else if (role === "horiz") text = isKZ ? `ҮСТІ/АСТЫ: row = ${r} (0-жол немесе y-1) -> '-' таңбасы` : `ВЕРХ/НИЗ: row = ${r} (строка 0 или y-1) -> символ '-'`;
+      else if (role === "vert") text = isKZ ? `ЖАН-ЖАҒЫ: col = ${c} (0-баған немесе x-1) -> '|' таңбасы` : `БОКОВАЯ СТОРОНА: col = ${c} (столбец 0 или x-1) -> символ '|'`;
+      else if (role === "border") text = isKZ ? `ШЕКАРА: шеткі жол немесе баған -> '${ch}' таңбасы` : `ГРАНИЦА: строка или столбец на краю -> символ '${ch}'`;
+      else text = isKZ ? `ІШІ: бұрыш та, шекара да емес -> БОС ОРЫН ' ' шығарамыз` : `ВНУТРИ: не угол и не граница -> печатаем ПРОБЕЛ ' '`;
 
       info.innerHTML = `
-        <div class="qw-badge ok">Клетка [row: ${r}, col: ${c}]</div>
+        <div class="qw-badge ok">${isKZ ? `Ұяшық [row: ${r}, col: ${c}]` : `Клетка [row: ${r}, col: ${c}]`}</div>
         <div class="qw-desc"><b>${text}</b></div>
         <div class="qw-code">if (row == ${r} && col == ${c}) -> fmt.Print("${ch}")</div>
       `;
@@ -3338,19 +3339,20 @@ ${F}
   function initRuneViz(container) {
     const el = container || document.getElementById("piscineWidgetArea");
     if (!el) return;
+    const isKZ = (window.getLang && window.getLang()) === "kz";
 
     el.innerHTML = `
       <div class="rune-widget">
-        <div class="qw-title">🔤 Интерактивный сканер строк, байтов и рун (UTF-8 / ASCII)</div>
-        <p style="font-size:13px;color:var(--muted);margin:0 0 12px">Введите любой текст (цифры, латиницу, кириллицу) и посмотрите, сколько байтов и рун он занимает:</p>
+        <div class="qw-title">🔤 ${isKZ ? "Жолдар, байттар және руналар сканері (UTF-8 / ASCII)" : "Интерактивный сканер строк, байтов и рун (UTF-8 / ASCII)"}</div>
+        <p style="font-size:13px;color:var(--muted);margin:0 0 12px">${isKZ ? "Кез келген мәтінді жазыңыз (цифрлар, латын, кириллица) және оның қанша байт пен руна алатынын көріңіз:" : "Введите любой текст (цифры, латиницу, кириллицу) и посмотрите, сколько байтов и рун он занимает:"}</p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input type="text" id="rwInput" value="Go 2026! Привет" style="padding:8px 12px;font:14px var(--mono);background:#17151c;border:1px solid var(--line);border-radius:4px;color:#fff;flex:1;min-width:200px">
-          <button class="btn small on" id="rwSample">Пример: "12345"</button>
+          <button class="btn small on" id="rwSample">${isKZ ? "Мысал: \"12345\"" : "Пример: \"12345\""}</button>
         </div>
         <div class="rw-sum" id="rwSum"></div>
         <div style="overflow-x:auto;max-width:100%">
           <table class="rw-table" id="rwTable">
-            <thead><tr><th>Символ</th><th>Тип</th><th>ASCII / Rune Code</th><th>Код (Hex)</th><th>Формула (r - '0')</th></tr></thead>
+            <thead><tr><th>${isKZ ? "Символ" : "Символ"}</th><th>${isKZ ? "Типі" : "Тип"}</th><th>ASCII / Rune Code</th><th>${isKZ ? "Код (Hex)" : "Код (Hex)"}</th><th>${isKZ ? "Формула (r - '0')" : "Формула (r - '0')"}</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -3367,9 +3369,9 @@ ${F}
       const byteLen = new TextEncoder().encode(text).length;
 
       sum.innerHTML = `
-        <span>Байт: <b>${byteLen}</b> (len(s))</span>
-        <span>Рун: <b>${runes.length}</b> (len([]rune(s)))</span>
-        <span style="color:${byteLen === runes.length ? 'var(--ok)' : 'var(--warn)'}">${byteLen === runes.length ? '✓ Все символы 1-байтовые (ASCII)' : '⚠️ Есть многобайтовые символы (кириллица)'}</span>
+        <span>${isKZ ? "Байт:" : "Байт:"} <b>${byteLen}</b> (len(s))</span>
+        <span>${isKZ ? "Руна:" : "Рун:"} <b>${runes.length}</b> (len([]rune(s)))</span>
+        <span style="color:${byteLen === runes.length ? 'var(--ok)' : 'var(--warn)'}">${byteLen === runes.length ? (isKZ ? '✓ Барлық символдар 1 байттық (ASCII)' : '✓ Все символы 1-байтовые (ASCII)') : (isKZ ? '⚠️ Көп байтты таңбалар бар (кириллица/эмодзи)' : '⚠️ Есть многобайтовые символы (кириллица)')}</span>
       `;
 
       tbody.innerHTML = runes.map(ch => {
@@ -3377,7 +3379,7 @@ ${F}
         const isDigit = ch >= '0' && ch <= '9';
         const hex = "0x" + code.toString(16).toUpperCase();
         const formula = isDigit ? `${code} - 48 = <b>${code - 48}</b> (int)` : "-";
-        const type = isDigit ? "Цифра" : code < 128 ? "ASCII латиница" : "UTF-8 (2+ байта)";
+        const type = isDigit ? (isKZ ? "Цифр" : "Цифра") : code < 128 ? (isKZ ? "ASCII латын" : "ASCII латиница") : "UTF-8 (2+ байт)";
         return `
           <tr>
             <td><b style="color:var(--accent-l)">'${ch}'</b></td>
@@ -3402,16 +3404,17 @@ ${F}
   function initRecursionViz(container) {
     const el = container || document.getElementById("piscineWidgetArea") || document.getElementById("recursionVizContainer");
     if (!el) return;
+    const isKZ = (window.getLang && window.getLang()) === "kz";
 
     el.innerHTML = `
       <div class="rec-widget">
-        <div class="rec-title">🌲 Стек вызовов рекурсии (Факториал 4!)</div>
+        <div class="rec-title">🌲 ${isKZ ? "Рекурсия шақыруларының стегі (Факториал 4!)" : "Стек вызовов рекурсии (Факториал 4!)"}</div>
         <div class="rec-btns">
-          <button class="btn small on" id="recStep">Следующий шаг (Шаг за шагом)</button>
-          <button class="btn ghost small" id="recReset">Сброс</button>
+          <button class="btn small on" id="recStep">${isKZ ? "Келесі қадам (Қадам бойынша)" : "Следующий шаг (Шаг за шагом)"}</button>
+          <button class="btn ghost small" id="recReset">${isKZ ? "Қалпына келтіру" : "Сброс"}</button>
         </div>
         <div class="rec-stack" id="recStack">
-          <div class="rec-frame init">Нажмите «Следующий шаг», чтобы увидеть, как вызовы накапливаются в стеке до дна (0! = 1), а затем схлопываются обратно.</div>
+          <div class="rec-frame init">${isKZ ? "Шақырулар түбіне (0! = 1) жеткенше стекке қалай жиналатынын және кері қалай жабылатынын көру үшін «Келесі қадам» түймесін басыңыз." : "Нажмите «Следующий шаг», чтобы увидеть, как вызовы накапливаются в стеке до дна (0! = 1), а затем схлопываются обратно."}</div>
         </div>
         <div class="rec-desc" id="recDesc"></div>
       </div>
@@ -3422,15 +3425,15 @@ ${F}
     let step = 0;
 
     const steps = [
-      { text: "Шаг 1 (Погружение): Вызываем Fact(4). Чтобы посчитать 4!, надо знать 3! Запоминаем 4 * Fact(3).", html: `<div class="rec-frame f1"><b>Fact(4)</b> = 4 * Fact(3) <span class="wait">[ждёт результат Fact(3)]</span></div>` },
-      { text: "Шаг 2 (Погружение): Вызываем Fact(3). Чтобы посчитать 3!, надо знать 2! Запоминаем 3 * Fact(2).", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2"><b>Fact(3)</b> = 3 * Fact(2) <span class="wait">[ждёт результат Fact(2)]</span></div>` },
-      { text: "Шаг 3 (Погружение): Вызываем Fact(2). Запоминаем 2 * Fact(1).", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3"><b>Fact(2)</b> = 2 * Fact(1) <span class="wait">[ждёт результат Fact(1)]</span></div>` },
-      { text: "Шаг 4 (Погружение): Вызываем Fact(1). Запоминаем 1 * Fact(0).", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3">Fact(2) = 2 * Fact(1)</div><div class="rec-frame f4"><b>Fact(1)</b> = 1 * Fact(0) <span class="wait">[ждёт результат Fact(0)]</span></div>` },
-      { text: "Шаг 5 (ДНО МАТРЁШКИ!): Fact(0) срабатывает базовый случай if nb == 0 { return 1 }! Никаких новых вызовов!", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3">Fact(2) = 2 * Fact(1)</div><div class="rec-frame f4">Fact(1) = 1 * Fact(0)</div><div class="rec-frame f0 base"><b>Fact(0) = 1</b> (БАЗОВЫЙ СЛУЧАЙ ДОСТИГНУТ ✓)</div>` },
-      { text: "Шаг 6 (Всплытие): Fact(0) вернул 1. Fact(1) вычисляет 1 * 1 = 1 и завершается.", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3">Fact(2) = 2 * Fact(1)</div><div class="rec-frame f4 ok"><b>Fact(1) = 1</b> ✓</div>` },
-      { text: "Шаг 7 (Всплытие): Fact(1) вернул 1. Fact(2) вычисляет 2 * 1 = 2 и завершается.", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3 ok"><b>Fact(2) = 2</b> ✓</div>` },
-      { text: "Шаг 8 (Всплытие): Fact(2) вернул 2. Fact(3) вычисляет 3 * 2 = 6 и завершается.", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2 ok"><b>Fact(3) = 6</b> ✓</div>` },
-      { text: "Шаг 9 (ФИНАЛ): Fact(3) вернул 6. Fact(4) вычисляет 4 * 6 = 24! Исходный вызов вернул ответ 24.", html: `<div class="rec-frame f1 done"><b>Fact(4) = 24 (ИТОГОВЫЙ ОТВЕТ ✓)</b></div>` },
+      { text: isKZ ? "1-қадам (Тереңдеу): Fact(4) шақырамыз. 4! есептеу үшін 3! білу қажет. 4 * Fact(3) сақтаймыз." : "Шаг 1 (Погружение): Вызываем Fact(4). Чтобы посчитать 4!, надо знать 3! Запоминаем 4 * Fact(3).", html: `<div class="rec-frame f1"><b>Fact(4)</b> = 4 * Fact(3) <span class="wait">${isKZ ? "[Fact(3) нәтижесін күтуде]" : "[ждёт результат Fact(3)]"}</span></div>` },
+      { text: isKZ ? "2-қадам (Тереңдеу): Fact(3) шақырамыз. 3 * Fact(2) сақтаймыз." : "Шаг 2 (Погружение): Вызываем Fact(3). Чтобы посчитать 3!, надо знать 2! Запоминаем 3 * Fact(2).", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2"><b>Fact(3)</b> = 3 * Fact(2) <span class="wait">${isKZ ? "[Fact(2) күтуде]" : "[ждёт результат Fact(2)]"}</span></div>` },
+      { text: isKZ ? "3-қадам (Тереңдеу): Fact(2) шақырамыз. 2 * Fact(1) сақтаймыз." : "Шаг 3 (Погружение): Вызываем Fact(2). Запоминаем 2 * Fact(1).", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3"><b>Fact(2)</b> = 2 * Fact(1) <span class="wait">${isKZ ? "[Fact(1) күтуде]" : "[ждёт результат Fact(1)]"}</span></div>` },
+      { text: isKZ ? "4-қадам (Тереңдеу): Fact(1) шақырамыз. 1 * Fact(0) сақтаймыз." : "Шаг 4 (Погружение): Вызываем Fact(1). Запоминаем 1 * Fact(0).", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3">Fact(2) = 2 * Fact(1)</div><div class="rec-frame f4"><b>Fact(1)</b> = 1 * Fact(0) <span class="wait">${isKZ ? "[Fact(0) күтуде]" : "[ждёт результат Fact(0)]"}</span></div>` },
+      { text: isKZ ? "5-қадам (ТҮБІ!): Fact(0) негізгі шарт орындалды: if nb == 0 { return 1 }! Жаңа шақырулар жоқ!" : "Шаг 5 (ДНО МАТРЁШКИ!): Fact(0) срабатывает базовый случай if nb == 0 { return 1 }! Никаких новых вызовов!", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3">Fact(2) = 2 * Fact(1)</div><div class="rec-frame f4">Fact(1) = 1 * Fact(0)</div><div class="rec-frame f0 base"><b>Fact(0) = 1</b> (${isKZ ? "НЕГІЗГІ ШАРТҚА ЖЕТТІК ✓" : "БАЗОВЫЙ СЛУЧАЙ ДОСТИГНУТ ✓"})</div>` },
+      { text: isKZ ? "6-қадам (Қайту): Fact(0) 1 қайтарды. Fact(1) 1 * 1 = 1 есептеп аяқталады." : "Шаг 6 (Всплытие): Fact(0) вернул 1. Fact(1) вычисляет 1 * 1 = 1 и завершается.", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3">Fact(2) = 2 * Fact(1)</div><div class="rec-frame f4 ok"><b>Fact(1) = 1</b> ✓</div>` },
+      { text: isKZ ? "7-қадам (Қайту): Fact(1) 1 қайтарды. Fact(2) 2 * 1 = 2 есептеп аяқталады." : "Шаг 7 (Всплытие): Fact(1) вернул 1. Fact(2) вычисляет 2 * 1 = 2 и завершается.", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2">Fact(3) = 3 * Fact(2)</div><div class="rec-frame f3 ok"><b>Fact(2) = 2</b> ✓</div>` },
+      { text: isKZ ? "8-қадам (Қайту): Fact(2) 2 қайтарды. Fact(3) 3 * 2 = 6 есептеп аяқталады." : "Шаг 8 (Всплытие): Fact(2) вернул 2. Fact(3) вычисляет 3 * 2 = 6 и завершается.", html: `<div class="rec-frame f1">Fact(4) = 4 * Fact(3)</div><div class="rec-frame f2 ok"><b>Fact(3) = 6</b> ✓</div>` },
+      { text: isKZ ? "9-қадам (ҚОРЫТЫНДЫ): Fact(3) 6 қайтарды. Fact(4) 4 * 6 = 24 есептеді! Бастапқы шақыру 24 мәнін қайтарды." : "Шаг 9 (ФИНАЛ): Fact(3) вернул 6. Fact(4) вычисляет 4 * 6 = 24! Исходный вызов вернул ответ 24.", html: `<div class="rec-frame f1 done"><b>Fact(4) = 24 (${isKZ ? "ҚОРЫТЫНДЫ ЖАУАП ✓" : "ИТОГОВЫЙ ОТВЕТ ✓"})</b></div>` },
     ];
 
     document.getElementById("recStep").onclick = () => {
@@ -3442,7 +3445,7 @@ ${F}
 
     document.getElementById("recReset").onclick = () => {
       step = 0;
-      stack.innerHTML = `<div class="rec-frame init">Нажмите «Следующий шаг», чтобы начать анимацию.</div>`;
+      stack.innerHTML = `<div class="rec-frame init">${isKZ ? "Анимацияны бастау үшін «Келесі қадам» түймесін басыңыз." : "Нажмите «Следующий шаг», чтобы начать анимацию."}</div>`;
       desc.textContent = "";
     };
   }
@@ -3451,14 +3454,15 @@ ${F}
   function initMathViz(container) {
     const el = container || document.getElementById("piscineWidgetArea");
     if (!el) return;
+    const isKZ = (window.getLang && window.getLang()) === "kz";
 
     el.innerHTML = `
       <div class="math-widget">
-        <div class="qw-title">🔢 Интерактивная проверка простых чисел (Оптимизация i*i &le; N)</div>
+        <div class="qw-title">🔢 ${isKZ ? "Жай сандарды интерактивті тексеру (Оңтайландыру i*i ≤ N)" : "Интерактивная проверка простых чисел (Оптимизация i*i ≤ N)"}</div>
         <div class="mw-row">
-          <label style="font:500 13px var(--mono)">Число N: <input type="number" id="mwNum" value="29" min="1" max="999" style="width:70px;padding:6px 10px;background:#17151c;border:1px solid var(--line);border-radius:4px;color:#fff"></label>
-          <button class="btn small on" id="mwCheck">Проверить делители</button>
-          <button class="btn ghost small" id="mwNext">Найти следующее простое &rarr;</button>
+          <label style="font:500 13px var(--mono)">${isKZ ? "N саны:" : "Число N:"} <input type="number" id="mwNum" value="29" min="1" max="999" style="width:70px;padding:6px 10px;background:#17151c;border:1px solid var(--line);border-radius:4px;color:#fff"></label>
+          <button class="btn small on" id="mwCheck">${isKZ ? "Бөлгіштерді тексеру" : "Проверить делители"}</button>
+          <button class="btn ghost small" id="mwNext">${isKZ ? "Келесі жай санды табу →" : "Найти следующее простое →"}</button>
         </div>
         <div class="mw-steps" id="mwSteps"></div>
       </div>
@@ -3470,22 +3474,28 @@ ${F}
     const check = () => {
       const n = +inp.value;
       if (n <= 1) {
-        stepsEl.innerHTML = `<span style="color:var(--bad)">Число ${n} &le; 1: по определению НЕ является простым.</span>`;
+        stepsEl.innerHTML = `<span style="color:var(--bad)">${isKZ ? `N = ${n} ≤ 1: анықтама бойынша жай сан ЕМЕС.` : `Число ${n} ≤ 1: по определению НЕ является простым.`}</span>`;
         return;
       }
-      let log = `Проверяем N = ${n}. Корень &approx; ${Math.floor(Math.sqrt(n))}. Достаточно проверить делители от 2 до ${Math.floor(Math.sqrt(n))}:\n`;
+      let log = isKZ
+        ? `N = ${n} тексереміз. Түбірі ≈ ${Math.floor(Math.sqrt(n))}. Бөлгіштерді тек 2-ден ${Math.floor(Math.sqrt(n))}-ге дейін тексеру жеткілікті:\n`
+        : `Проверяем N = ${n}. Корень ≈ ${Math.floor(Math.sqrt(n))}. Достаточно проверить делители от 2 до ${Math.floor(Math.sqrt(n))}:\n`;
       let prime = true;
       for (let i = 2; i * i <= n; i++) {
         if (n % i === 0) {
-          log += `&bull; ${n} % ${i} == 0 &rarr; НАЙДЕН ДЕЛИТЕЛЬ ${i}! Число составное (${n} = ${i} * ${n / i}).\n`;
+          log += isKZ
+            ? `• ${n} % ${i} == 0 → ${i} БӨЛГІШІ ТАБЫЛДЫ! Бұл құрама сан (${n} = ${i} * ${n / i}).\n`
+            : `• ${n} % ${i} == 0 → НАЙДЕН ДЕЛИТЕЛЬ ${i}! Число составное (${n} = ${i} * ${n / i}).\n`;
           prime = false;
           break;
         } else {
-          log += `&bull; ${n} % ${i} = ${n % i} != 0 (не делится)\n`;
+          log += isKZ ? `• ${n} % ${i} = ${n % i} != 0 (бөлінбейді)\n` : `• ${n} % ${i} = ${n % i} != 0 (не делится)\n`;
         }
       }
       if (prime) {
-        log += `&bull; Все делители до ${Math.floor(Math.sqrt(n))} проверены. ДЕЛИТЕЛЕЙ НЕТ!\n&rarr; ${n} — ПРОСТОЕ ЧИСЛО! ✓`;
+        log += isKZ
+          ? `• ${Math.floor(Math.sqrt(n))}-ге дейінгі барлық бөлгіштер тексерілді. БӨЛГІШТЕР ЖОҚ!\n→ ${n} — ЖАЙ САН! ✓`
+          : `• Все делители до ${Math.floor(Math.sqrt(n))} проверены. ДЕЛИТЕЛЕЙ НЕТ!\n→ ${n} — ПРОСТОЕ ЧИСЛО! ✓`;
       }
       stepsEl.innerHTML = `<pre style="margin:0;white-space:pre-wrap;font-family:inherit">${log}</pre>`;
     };
@@ -3509,24 +3519,25 @@ ${F}
   function initChessViz(container) {
     const el = container || document.getElementById("piscineWidgetArea");
     if (!el) return;
+    const isKZ = (window.getLang && window.getLang()) === "kz";
 
     el.innerHTML = `
       <div class="chess-widget">
         <div class="cw-header">
-          <div class="cw-title">♟️ Интерактивная доска 8&times;8 (Задача о 8 ферзях)</div>
-          <div class="cw-status" id="cwStatus">Ферзей на доске: 0 / 8 &middot; Кликом ставьте ферзя в клетку</div>
+          <div class="cw-title">♟️ ${isKZ ? "8×8 интерактивті шахмат тақтасы (8 ферзь есебі)" : "Интерактивная доска 8×8 (Задача о 8 ферзях)"}</div>
+          <div class="cw-status" id="cwStatus">${isKZ ? "Тақтадағы ферзьдер: 0 / 8 · Торкөзге басып ферзь қойыңыз" : "Ферзей на доске: 0 / 8 · Кликом ставьте ферзя в клетку"}</div>
           <div class="cw-actions">
-            <button class="btn small on" id="cwDemo">Решение 01 Edu (15863724)</button>
-            <button class="btn small" id="cwAuto">▶ Рекурсивный поиск (Backtracking)</button>
-            <button class="btn ghost small" id="cwClear">Очистить</button>
+            <button class="btn small on" id="cwDemo">${isKZ ? "01 Edu шешімі (15863724)" : "Решение 01 Edu (15863724)"}</button>
+            <button class="btn small" id="cwAuto">${isKZ ? "▶ Рекурсивті іздеу (Backtracking)" : "▶ Рекурсивный поиск (Backtracking)"}</button>
+            <button class="btn ghost small" id="cwClear">${isKZ ? "Тазарту" : "Очистить"}</button>
           </div>
         </div>
         <div class="cw-board-wrap">
           <div class="cw-board" id="cwBoard"></div>
           <div class="cw-info" id="cwInfo">
-            <div class="cw-badge ok">Правило 01 Edu:</div>
-            <p>Каждый ферзь находится в своём столбце (от 1 до 8 слева направо). Запись <b>15863724</b> значит: 1-я строка в столбце 1, 5-я строка в столбце 2, 8-я строка в столбце 3 и т.д.</p>
-            <div class="cw-sol" id="cwSol">Текущая расстановка: <span>-</span></div>
+            <div class="cw-badge ok">${isKZ ? "01 Edu ережесі:" : "Правило 01 Edu:"}</div>
+            <p>${isKZ ? "Әр ферзь өз бағанында орналасады (солдан оңға қарай 1-ден 8-ге дейін). <b>15863724</b> жазбасы: 1-бағанда 1-жол, 2-бағанда 5-жол, 3-бағанда 8-жол және т.б." : "Каждый ферзь находится в своём столбце (от 1 до 8 слева направо). Запись <b>15863724</b> значит: 1-я строка в столбце 1, 5-я строка в столбце 2, 8-я строка в столбце 3 и т.д."}</p>
+            <div class="cw-sol" id="cwSol">${isKZ ? "Ағымдағы орналасу:" : "Текущая расстановка:"} <span>-</span></div>
           </div>
         </div>
       </div>

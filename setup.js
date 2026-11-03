@@ -12,7 +12,7 @@
       <div class="setup-wrap" style="max-width:1040px;margin:24px auto 70px;padding:0 20px">
         <div style="margin-bottom:24px">
           <a href="#/" class="btn ghost small" style="margin-bottom:14px;display:inline-flex;align-items:center;gap:6px">
-            ← ${isKZ ? "Басты бетке" : "На дашборд"}
+            ← ${isKZ ? "Басты бетке" : "На главную"}
           </a>
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
             <span style="font:600 12px var(--mono);text-transform:uppercase;color:var(--accent-l);background:rgba(153,105,255,0.12);padding:3px 10px;border-radius:12px;border:1px solid rgba(153,105,255,0.3)">
@@ -152,7 +152,7 @@
         )}
       `)}
 
-      ${stepCard("2", isKZ ? "Жұмыс папкасын жасау және VS Code-та ашу" : "Создание рабочей папки piscinego", "Рабочий стол", `
+      ${stepCard("2", isKZ ? "Жұмыс папкасын жасау және VS Code-та ашу" : "Создание рабочей папки piscinego", isKZ ? "Жұмыс үстелі" : "Рабочий стол", `
         <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
             ? "1. Жұмыс үстелінде (Desktop) тінтуірдің оң жағын басып, <b>Создать → Папку</b> таңдаңыз.<br>2. Атын дәл <b>piscinego</b> деп қойыңыз.<br>3. VS Code-ты ашып, <b>File → Open Folder…</b> арқылы осы <code>piscinego</code> папкасын таңдаңыз.<br>4. Сұрақ шықса, <b>Yes, I trust the authors</b> басыңыз."
@@ -168,7 +168,7 @@
         </p>
       `)}
 
-      ${stepCard("4", isKZ ? "Gitea 404 қатесін түзету (Кіруді сақтау)" : "Фикс ошибки Gitea 404 (Настройка сохранения входа)", "Критический шаг!", `
+      ${stepCard("4", isKZ ? "Gitea 404 қатесін түзету (Кіруді сақтау)" : "Фикс ошибки Gitea 404 (Настройка сохранения входа)", isKZ ? "Маңызды қадам!" : "Критический шаг!", `
         <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
             ? "Windows-та әдепкі Git көмекшісі браузерді ашып, 404 қатесін береді. Оны өшіріп, логин/құпиясөзді терминалда бір рет сақтайтын <b>store</b> режимін қосу керек:" 
@@ -223,7 +223,7 @@
         ${cmdBox('git config --global --replace-all credential.helper ""\ngit config --global --add credential.helper store\ngit config --global user.name "ВАШ_ЛОГИН_GITEA"\ngit config --global user.email "your-email@example.com"', isKZ ? "Логин мен поштаңызды көрсетіңіз" : "Укажите свои данные Gitea")}
       `)}
 
-      ${stepCard("3", isKZ ? "Жоба папкасын жасау және клондау" : "Создание папки piscinego и скачивание", "Рабочий стол", `
+      ${stepCard("3", isKZ ? "Жоба папкасын жасау және клондау" : "Создание папки piscinego и скачивание", isKZ ? "Жұмыс үстелі" : "Рабочий стол", `
         <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
             ? "Жұмыс үстелінде <b>piscinego</b> папкасын жасап, оны VS Code-та ашыңыз (File → Open Folder). Терминалда соңындағы <b>бос орын мен нүктені</b> ұмытпай клондаңыз:" 
@@ -248,7 +248,7 @@
         </p>
       </div>
 
-      ${stepCard("1", isKZ ? "1. Жұмыс үстелінде piscinego папкасын жасау" : "1. Создание папки на Рабочем столе", "Ubuntu Desktop", `
+      ${stepCard("1", isKZ ? "1. Жұмыс үстелінде piscinego папкасын жасау" : "1. Создание папки на Рабочем столе", isKZ ? "Ubuntu жұмыс үстелі" : "Ubuntu Desktop", `
         <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
             ? "1. Рабочий столда бос жерге тінтуірдің оң жағын басып → <b>New Folder</b> таңдаңыз.<br>2. Папканы <b>piscinego</b> деп атаңыз.<br>3. Папканың ішіне кіріп, бос жерге оң жақпен басып → <b>Open in Terminal</b> таңдаңыз." 
@@ -256,7 +256,7 @@
         </p>
       `)}
 
-      ${stepCard("2", isKZ ? "2. Терминалда логин мен store баптау" : "2. Настройка Git в терминале папки", "Ввести в открытом терминале", `
+      ${stepCard("2", isKZ ? "2. Терминалда логин мен store баптау" : "2. Настройка Git в терминале папки", isKZ ? "Ашылған терминалға енгізу" : "Ввести в открытом терминале", `
         <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ ? "Терминалға осы пәрмендерді енгізіңіз (Ubuntu терминалына мәтін қою: <b>Ctrl + Shift + V</b>):" : "Вставьте команды в терминал (вставка в терминал Ubuntu: <b>Ctrl + Shift + V</b>):"}
         </p>
@@ -285,7 +285,7 @@
   // ========================================================
   function getWorkflowSection(isKZ) {
     return `
-      ${stepCard("1", isKZ ? "1 рет орындау: Модуль және z01 кітапханасын қосу" : "Однократно: Инициализация модуля и библиотеки z01", "Квест 02 басы", `
+      ${stepCard("1", isKZ ? "1 рет орындау: Модуль және z01 кітапханасын қосу" : "Однократно: Инициализация модуля и библиотеки z01", isKZ ? "Квест 02 басы" : "Старт Квеста 02", `
         <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
             ? "Квест 02-ге өткен кезде <code>piscinego</code> папкасында <b>бір рет</b> модуль құрып, 01 Edu ресми z01 кітапханасын орнату керек:" 
@@ -297,17 +297,17 @@
         </p>
       `)}
 
-      ${stepCard("2", isKZ ? "Файлдар құрылымы: Қайда package piscine, қайда main?" : "Структура файлов: где package piscine, а где main?", "01 Edu стандарттары", `
+      ${stepCard("2", isKZ ? "Файлдар құрылымы: Қайда package piscine, қайда main?" : "Структура файлов: где package piscine, а где main?", isKZ ? "01 Edu стандарттары" : "Стандарты 01 Edu", `
         <div style="background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:14px;font:13px var(--mono);color:#e2e6ec;line-height:1.6">
           piscinego/<br>
-          ├── go.mod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← модуль параметрлері<br>
+          ├── go.mod&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← ${isKZ ? "модуль параметрлері" : "параметры модуля"}<br>
           ├── go.sum<br>
-          ├── <b>printdigits/</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Толық программа (папка)<br>
-          │&nbsp;&nbsp;&nbsp;└── main.go&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package main</b> (мұнда func main)<br>
-          ├── <b>isnegative.go</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Функция тапсырмасы (түбірде)<br>
-          ├── <b>pointone.go</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package piscine</b> (мұнда main ЖОҚ!)<br>
+          ├── <b>printdigits/</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← ${isKZ ? "Толық программа (папка)" : "Полная программа (папка)"}<br>
+          │&nbsp;&nbsp;&nbsp;└── main.go&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package main</b> (${isKZ ? "мұнда func main" : "здесь func main"})<br>
+          ├── <b>isnegative.go</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← ${isKZ ? "Функция тапсырмасы (түбірде)" : "Задание-функция (в корне)"}<br>
+          ├── <b>pointone.go</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package piscine</b> (${isKZ ? "мұнда main ЖОҚ!" : "здесь main НЕТ!"})<br>
           ├── <b>swap.go</b><br>
-          └── <b>tryquest2/</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Тексеру папкасы (өзіңіз үшін)<br>
+          └── <b>tryquest2/</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← ${isKZ ? "Тексеру папкасы (өзіңіз үшін)" : "Папка проверки (для себя)"}<br>
           &nbsp;&nbsp;&nbsp;&nbsp;└── main.go&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<b>package main</b> + import "piscine"
         </div>
 
@@ -326,7 +326,7 @@
         ${cmdBox("go run ./tryquest2\ngo run ./tryquest3", isKZ ? "Өз функцияларыңызды сынақ папкасы арқылы тексеру" : "Запуск проверки функций через тестовую папку")}
       `)}
 
-      ${stepCard("4", isKZ ? "Жұмысты Git-ке жіберу және платформада тапсыру" : "Отправка в Git и сдача задания на платформе", "Финал", `
+      ${stepCard("4", isKZ ? "Жұмысты Git-ке жіберу және платформада тапсыру" : "Отправка в Git и сдача задания на платформе", isKZ ? "Қорытынды" : "Финал", `
         <p style="color:var(--text);font-size:14px;line-height:1.55">
           ${isKZ 
             ? "Тапсырма дайын болғанда, оны 3 қадаммен Gitea-ға жібересіз:" 

@@ -62,11 +62,11 @@
       copied: "Скопировано!",
       
       // Crumb & Nav
-      crumbDash: "dashboard",
+      crumbDash: "главная",
       crumbTopic: "тема",
       crumbIntro: "введение",
-      crumbSetup: "setup",
-      crumbArena: "arena",
+      crumbSetup: "настройка",
+      crumbArena: "арена",
 
       // Dashboard
       welcome: "Добро пожаловать",

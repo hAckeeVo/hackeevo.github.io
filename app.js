@@ -304,7 +304,7 @@ $("#logout").onclick = async () => {
 // ---------- views ----------
 function viewLogin() {
   const isKZ = (window.getLang && window.getLang()) === "kz";
-  chrome(isKZ ? "кіру" : "login");
+  chrome(isKZ ? "кіру" : "вход");
   app.innerHTML = `
     <div class="login">
       <div class="robot">01</div>
@@ -484,12 +484,15 @@ function viewLogin() {
 function viewDashboard(u) {
   const lang = (window.getLang && window.getLang()) || "ru";
   const isKZ = lang === "kz";
-  chrome(`<span>${isKZ ? "басты бет" : "dashboard"}</span>`);
+  chrome(`<span>${isKZ ? "басты бет" : "главная"}</span>`);
   const done = getDone(u);
   const tasks = allTasks();
   const nDone = tasks.filter(t => done[t.id]).length;
   const pct = Math.round(nDone / tasks.length * 100);
-  const board = [...DEMO_USERS.filter(([n]) => n !== u), [u, xpOf(u)]].sort((a, b) => b[1] - a[1]);
+  const isGuestUser = store.get("is_guest", false) || (u && (u.startsWith("[Гость]") || u.startsWith("[Guest]") || u.toLowerCase().startsWith("guest_")));
+  const board = isGuestUser
+    ? [...DEMO_USERS].sort((a, b) => b[1] - a[1])
+    : [...DEMO_USERS.filter(([n]) => n !== u), [u, xpOf(u)]].sort((a, b) => b[1] - a[1]);
   const next = nextStep(done);
   const unlocked = isUnlocked();
 
@@ -652,20 +655,19 @@ function viewDashboard(u) {
   if (isSupabaseReady()) {
     sbFetchLeaderboard().then(liveBoard => {
       if (liveBoard && liveBoard.length > 0) {
-        const isGuest = store.get("is_guest", false);
+        const isGuestUser = store.get("is_guest", false) || (u && (u.startsWith("[Гость]") || u.startsWith("[Guest]") || u.toLowerCase().startsWith("guest_")));
         const myXp = xpOf(u);
 
         // В liveBoard попадают ТОЛЬКО зарегистрированные студенты (гости отфильтрованы в sbFetchLeaderboard)
         let fullBoard = [...liveBoard];
-        const existingIdx = fullBoard.findIndex(([n]) => n === u);
-
-        if (existingIdx !== -1) {
-          // Если текущий зарегистрированный студент заработал больше XP локально, обновляем его счёт
-          if (myXp > fullBoard[existingIdx][1]) fullBoard[existingIdx][1] = myXp;
-        } else if (isGuest) {
-          // ТОЛЬКО для самого гостя локально отображаем его результат с пометкой (Вы) / (Сіз)!
-          // В общем рейтинге для других пользователей этого гостя НЕТ!
-          fullBoard.push([`${u} (${isKZ ? "Сіз" : "Вы"})`, myXp]);
+        if (!isGuestUser) {
+          const existingIdx = fullBoard.findIndex(([n]) => n === u);
+          if (existingIdx !== -1) {
+            // Если текущий зарегистрированный студент заработал больше XP локально, обновляем его счёт
+            if (myXp > fullBoard[existingIdx][1]) fullBoard[existingIdx][1] = myXp;
+          } else {
+            fullBoard.push([u, myXp]);
+          }
         }
 
         fullBoard.sort((a, b) => b[1] - a[1]);
@@ -689,7 +691,7 @@ function viewLocked(u, topic, prev) {
   const isKZ = (window.getLang && window.getLang()) === "kz";
   const locTopic = window.getLocalizedTopicFull ? window.getLocalizedTopicFull(topic) : topic;
   const locPrev = prev ? (window.getLocalizedTopicFull ? window.getLocalizedTopicFull(prev) : prev) : null;
-  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <span>${tLabel(topic).toLowerCase()}</span>`);
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "главная"}</a> / <span>${tLabel(topic).toLowerCase()}</span>`);
   const done = getDone(u);
   const left = [];
   if (prev.quiz && !done["q" + prev.id]) left.push(isKZ ? "шағын-тестті тапсыру" : "пройти мини-тест");
@@ -702,7 +704,7 @@ function viewLocked(u, topic, prev) {
       <p class="sub">${esc(locTopic.title)} ${isKZ ? `алдыңғы ${tLabel(prev).toLowerCase()} («${esc(locPrev ? locPrev.title : "")}») толық өтілген соң ашылады.` : `откроется, когда будет полностью пройдена ${tLabel(prev).toLowerCase()} - ${esc(locPrev ? locPrev.title : "")}.`}</p>
       <p>${isKZ ? "Қалғаны:" : "Осталось:"} ${left.map(esc).join(", ")}.</p>
       <p><a class="btn" style="display:inline-block;text-decoration:none" href="#/topic/${prev.id}">${isKZ ? "Өту: " + tLabel(prev).toLowerCase() + " →" : "Перейти: " + tLabel(prev).toLowerCase() + " →"}</a>
-      <a class="btn ghost" style="display:inline-block;text-decoration:none" href="#/">${isKZ ? "Басты бетке" : "На дашборд"}</a></p>
+      <a class="btn ghost" style="display:inline-block;text-decoration:none" href="#/">${isKZ ? "Басты бетке" : "На главную"}</a></p>
     </div>`;
 }
 
@@ -714,12 +716,34 @@ function viewTopic(u, tid) {
   if (topicLock(rawTopic, done)) return viewLocked(u, rawTopic, prev);
   const isKZ = (window.getLang && window.getLang()) === "kz";
   const topic = window.getLocalizedTopicFull ? window.getLocalizedTopicFull(rawTopic) : rawTopic;
-  const crumb = `<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/topic/${topic.id}">${topic.id === 0 ? (isKZ ? "кіріспе" : "введение") : (isKZ ? topic.id + "-тақырып" : "тема " + topic.id)}</a>`;
+  const crumb = `<a href="#/">${isKZ ? "басты бет" : "главная"}</a> / <a href="#/topic/${topic.id}">${topic.id === 0 ? (isKZ ? "кіріспе" : "введение") : (isKZ ? topic.id + "-тақырып" : "тема " + topic.id)}</a>`;
   chrome(crumb);
   const hasQuiz = !!topic.quiz;
   const stepBase = hasQuiz ? 4 : 3;
   const hasSim = !!topic.widgetTitle || topic.track === "piscine" || (window.hasTopicWidget && window.hasTopicWidget(topic.id)) || (window.hasPedagogy && window.hasPedagogy(topic.id));
-  const simTitle = topic.widgetTitle || (window.getWidgetTitle && window.getWidgetTitle(topic.id)) || (window.hasPedagogy && window.hasPedagogy(topic.id) ? (isKZ ? "Белсенді оқыту зертханасы: Құрастырушы & Bug Hunter" : "Лаборатория активного обучения: Конструктор & Bug Hunter") : (isKZ ? "Интерактивті жаттықтырғыш" : "Интерактивный тренажёр"));
+  const PISCINE_SIM_TITLES_KZ = {
+    14: "Quad генераторы мен 2D-символдардың интерактивті симуляторы",
+    15: "Интерактивті жедел жад (RAM) және нұсқағыштарды баптау",
+    16: "Символдар, байттар, жолдар және ASCII-дің интерактивті рентгені",
+    17: "Шақыру стегінің (Call Stack) интерактивті симуляторы: факториал",
+    18: "Интерактивті математика: бөлгіштерді тексеру және жай сандарды іздеу",
+    19: "8x8 шахмат тақтасы және Backtracking интерактивті симуляторы",
+    20: "ASCII символдары мен жолдардың интерактивті сканері",
+    21: "CLI параметрлерінің интерактивті симуляторы (os.Args)",
+    22: "Тілімдердің жадын үнемдеу симуляторы: make vs append & Split",
+    23: "Виртуалды файлдық жүйе және DisplayFile симуляторы",
+    24: "Функциялар конвейерінің интерактивті симуляторы (DoOp)",
+    25: "Емтихан симуляторы және сұрыптау сараптамасы",
+    26: "PrintComb кодовый құлып жаттықтырғышы",
+    27: "Байланысқан тізім поезының интерактивті симуляторы (Linked List)",
+    28: "Екілік іздеу ағашының интерактивті симуляторы (BST)",
+    29: "Судоку шешушісі және кері шегіну интерактивті симуляторы"
+  };
+  const simTitle = (isKZ && PISCINE_SIM_TITLES_KZ[topic.id])
+    ? PISCINE_SIM_TITLES_KZ[topic.id]
+    : ((window.getWidgetTitle && window.getWidgetTitle(topic.id))
+      || topic.widgetTitle
+      || (window.hasPedagogy && window.hasPedagogy(topic.id) ? (isKZ ? "Белсенді оқыту зертханасы: Құрастырушы & Bug Hunter" : "Лаборатория активного обучения: Конструктор & Bug Hunter") : (isKZ ? "Интерактивті жаттықтырғыш" : "Интерактивный тренажёр")));
 
   const quizBlock = () => !hasQuiz ? "" : `
     <section class="sec-block quiz" id="s-quiz">
@@ -1140,13 +1164,13 @@ function celebrate(rawTopic) {
 
 function viewSetup(u) {
   const isKZ = (window.getLang && window.getLang()) === "kz";
-  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/setup">${isKZ ? "ортаны баптау" : "настройка окружения"}</a>`);
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "главная"}</a> / <a href="#/setup">${isKZ ? "ортаны баптау" : "настройка окружения"}</a>`);
   if (window.renderSetupPage) window.renderSetupPage(app, u);
 }
 
 function viewArena(u) {
   const isKZ = (window.getLang && window.getLang()) === "kz";
-  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/arena">${isKZ ? "тапсырмалар аренасы" : "арена задач"}</a>`);
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "главная"}</a> / <a href="#/arena">${isKZ ? "тапсырмалар аренасы" : "арена задач"}</a>`);
   if (window.renderArenaPage) window.renderArenaPage(app, u);
 }
 
@@ -1157,7 +1181,7 @@ function viewAdmin(u) {
   const isAuthed = sessionStorage.getItem("gp_admin_auth") === ADMIN_PIN;
 
   if (!isAuthed) {
-    chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <span>${isKZ ? "әкімші кіруі" : "вход администратора"}</span>`);
+    chrome(`<a href="#/">${isKZ ? "басты бет" : "главная"}</a> / <span>${isKZ ? "әкімші кіруі" : "вход администратора"}</span>`);
     app.innerHTML = `
       <div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:20px">
         <div style="max-width:380px;width:100%;background:#141318;border:1px solid rgba(153,105,255,0.3);border-radius:10px;padding:32px 28px;box-shadow:0 12px 36px rgba(0,0,0,0.5);text-align:center">
@@ -1170,7 +1194,7 @@ function viewAdmin(u) {
             <button class="btn" type="submit" style="width:100%;padding:12px;font-size:14px;font-weight:700">${isKZ ? "Кіру" : "Войти"}</button>
           </form>
           <div style="margin-top:18px">
-            <a href="#/" class="link" style="font-size:12.5px;color:var(--muted)">← ${isKZ ? "Басты бетке оралу" : "Вернуться на дашборд"}</a>
+            <a href="#/" class="link" style="font-size:12.5px;color:var(--muted)">← ${isKZ ? "Басты бетке оралу" : "Вернуться на главную"}</a>
           </div>
         </div>
       </div>
@@ -1198,7 +1222,7 @@ function viewAdmin(u) {
   }
 
   // Once authenticated with PIN 1465:
-  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <span>${isKZ ? "әкімші панелі" : "панель администратора"}</span>`);
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "главная"}</a> / <span>${isKZ ? "әкімші панелі" : "панель администратора"}</span>`);
 
   const unlocked = isUnlocked();
 
