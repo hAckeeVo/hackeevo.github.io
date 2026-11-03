@@ -181,3 +181,74 @@ async function sbFetchLeaderboard(limit = 30) {
   }
 }
 
+// --- Логирование и отслеживание гостя в Supabase ---
+async function sbLogGuest(guestName) {
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  try {
+    const cleanName = (guestName || "Gopher").trim().slice(0, 20);
+    const guestEmail = `guest_${Date.now()}_${Math.random().toString(36).slice(2, 6)}@guest.piscine.edu`;
+    const guestPass = "guest_" + Math.random().toString(36).slice(2, 12);
+
+    const { data, error } = await sb.auth.signUp({
+      email: guestEmail,
+      password: guestPass,
+      options: {
+        data: { username: cleanName, is_guest: true },
+      },
+    });
+
+    if (error) {
+      console.warn("Guest sign-up warning:", error.message);
+      return null;
+    }
+
+    if (data?.session && data?.user) {
+      const guestDisplay = `[Гость] ${cleanName}`;
+      await sb.from("profiles").upsert({
+        id: data.user.id,
+        username: guestDisplay,
+        xp: 0,
+        updated_at: new Date().toISOString(),
+      });
+      return { user: data.user, session: data.session };
+    }
+  } catch (e) {
+    console.warn("sbLogGuest error:", e);
+  }
+  return null;
+}
+
+// --- Статистика пользователей и гостей для панели администратора ---
+async function sbFetchAdminStats() {
+  const sb = getSupabase();
+  if (!sb) return null;
+
+  try {
+    const { data: profiles, error } = await sb
+      .from("profiles")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (error || !profiles) return null;
+
+    const registered = profiles.filter(p => !p.username.startsWith("[Гость]"));
+    const guests = profiles.filter(p => p.username.startsWith("[Гость]"));
+    const totalXp = profiles.reduce((acc, p) => acc + (p.xp || 0), 0);
+
+    return {
+      all: profiles,
+      registered,
+      guests,
+      totalUsers: profiles.length,
+      totalRegistered: registered.length,
+      totalGuests: guests.length,
+      totalXp,
+    };
+  } catch (e) {
+    console.warn("sbFetchAdminStats error:", e);
+    return null;
+  }
+}
+

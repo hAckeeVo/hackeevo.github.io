@@ -7,9 +7,9 @@
     8: "Пошаговый тренажёр цикла for и счётчика",
     10: "Рентген среза: Len vs Cap и аллокация памяти append()",
     11: "Интерактивная хеш-таблица (Map Key-Value)",
-    26: "Двусторонний конвертер: Go Struct ⇄ JSON (Marshal/Unmarshal)",
-    28: "Интерактивный REST API Клиент (Мини-Postman)",
-    29: "Интерактивная песочница SQLite и SQL-запросов",
+    30: "Двусторонний конвертер: Go Struct ⇄ JSON (Marshal/Unmarshal)",
+    32: "Интерактивный REST API Клиент (Мини-Postman)",
+    33: "Интерактивная песочница SQLite и SQL-запросов",
   };
 
   window.hasTopicWidget = function (tid) {
@@ -27,9 +27,9 @@
     if (tid === 8) return initForViz;
     if (tid === 10) return initSliceViz;
     if (tid === 11) return initMapViz;
-    if (tid === 26) return initJsonViz;
-    if (tid === 28) return initApiViz;
-    if (tid === 29) return initSqlViz;
+    if (tid === 30) return initJsonViz;
+    if (tid === 32) return initApiViz;
+    if (tid === 33) return initSqlViz;
     return null;
   };
 

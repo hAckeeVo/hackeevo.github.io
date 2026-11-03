@@ -187,3 +187,4 @@ fs.writeFileSync('i18n.js', i18nCode, 'utf8');
 console.log('✓ i18n.js updated');
 
 console.log('--- Quests update script finished successfully ---');
+

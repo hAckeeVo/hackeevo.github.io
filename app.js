@@ -14,7 +14,10 @@ const store = {
 };
 const getUser = () => store.get("user", null);
 const getDone = (u) => store.get("done:" + u, {});
-const getCode = (u, id, starter) => store.get(`code:${u}:${id}`, null) || starter;
+const getCode = (u, id, starter) => {
+  const v = store.get(`code:${u}:${id}`, null);
+  return (v && v.trim().length > 0) ? v : (starter || "");
+};
 // задача: 50 XP (25, если открывали ответ), мини-тест: 20 XP. Ключи тестов начинаются с "q".
 // задачи со звёздочкой (hard) стоят 75 XP, с открытым ответом - 35
 const XP_PARSONS = 15, XP_BUGHUNT = 15;
@@ -46,10 +49,12 @@ const topicLock = (t, done) => {
 
 // причина, по которой задача закрыта (или null)
 const taskLock = (t, k, done) => {
+  if (!t || !k) return null;
   if (isUnlocked()) return null;
   const isKZ = (window.getLang && window.getLang()) === "kz";
   if (t.quiz && !done["q" + t.id]) return isKZ ? "Алдымен жоғарыдағы шағын-тестті тапсырыңыз (3-қадам)." : "Сначала пройдите мини-тест выше (шаг 3).";
-  const prev = t.tasks[t.tasks.indexOf(k) - 1];
+  const idx = (t.tasks || []).findIndex(x => x.id === k.id);
+  const prev = idx > 0 ? t.tasks[idx - 1] : null;
   if (prev && !done[prev.id]) return isKZ ? `Алдымен «${prev.title}» тапсырмасын шешіңіз.` : `Сначала решите задачу «${prev.title}».`;
   return null;
 };
@@ -278,9 +283,10 @@ function chrome(crumbHtml) {
     lt.textContent = lang === "ru" ? "KZ" : "RU";
     lt.onclick = () => { if (window.toggleLang) window.toggleLang(); };
   }
-  const nArena = $("#navArena"), nSetup = $("#navSetup");
+  const nArena = $("#navArena"), nSetup = $("#navSetup"), nAdmin = $("#navAdmin");
   if (nArena) nArena.textContent = lang === "kz" ? "Арена" : "Арена";
   if (nSetup) nSetup.textContent = lang === "kz" ? "Баптау" : "Setup";
+  if (nAdmin) nAdmin.textContent = lang === "kz" ? "Админ" : "Админ";
   if ($("#logout")) $("#logout").textContent = lang === "kz" ? "шығу" : "выйти";
 
   if (u) {
@@ -466,6 +472,9 @@ function viewLogin() {
     if (!name) return $("#gName").focus();
     store.set("user", name);
     store.set("sb_session", false);
+    if (window.sbLogGuest) {
+      window.sbLogGuest(name);
+    }
     location.hash = "#/";
   };
 }
@@ -484,8 +493,8 @@ function viewDashboard(u) {
 
   const tracks = [
     { id: "base", title: isKZ ? "💡 Go негіздері (0–13 тақырыптар)" : "💡 Основы Go (Темы 0–13)", topics: TOPICS.filter(t => t.id >= 0 && t.id <= 13) },
-    { id: "piscine", title: isKZ ? "🏊 01 Edu Piscine (Алгоритмдер, Quad, Нұсқағыштар, Рекурсия)" : "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)", topics: TOPICS.filter(t => t.track === "piscine" || (t.id >= 14 && t.id <= 25)) },
-    { id: "backend", title: isKZ ? "🚀 Backend, Желі және Деректер қоры (26–30 тақырыптар)" : "🚀 Backend, Сеть и Базы данных (Темы 26–30)", topics: TOPICS.filter(t => t.track === "backend" || (t.id >= 26 && t.id <= 30)) },
+    { id: "piscine", title: isKZ ? "🏊 01 Edu Piscine (Алгоритмдер, Quad, Нұсқағыштар, Рекурсия)" : "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)", topics: TOPICS.filter(t => t.track === "piscine" || (t.id >= 14 && t.id <= 29)) },
+    { id: "backend", title: isKZ ? "🚀 Backend, Желі және Деректер қоры (30–34 тақырыптар)" : "🚀 Backend, Сеть и Базы данных (Темы 30–34)", topics: TOPICS.filter(t => t.track === "backend" || (t.id >= 30 && t.id <= 34)) },
   ];
 
   const renderTopicCard = t => {
@@ -538,6 +547,38 @@ function viewDashboard(u) {
             <span style="color:var(--dim);font-size:12.5px">${isKZ ? "Piscine, LeetCode, Backend және AI тапсырмалары" : "Задачи Piscine, LeetCode, Backend и AI Engineering"}</span>
           </div>
         </a>
+      </div>
+
+      <!-- Советы ментора 01 Edu (Computer Science менталдық моделі) -->
+      <div style="background:linear-gradient(135deg, rgba(153,105,255,0.08) 0%, rgba(20,19,24,0.95) 100%);border:1px solid rgba(153,105,255,0.3);border-radius:8px;padding:18px 22px;margin:20px 0">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:24px">🧠</span>
+            <div>
+              <b style="font-size:15px;color:#fff">${isKZ ? "01 Edu менторының кеңестері: Бағдарламашыша ойлау және тиімді оқу әдісі" : "Советы ментора 01 Edu: Как мыслить и учиться как программист"}</b>
+              <div style="font-size:12px;color:var(--dim)">${isKZ ? "Компьютерлік ғылымдарды (CS) нөлден бастап меңгеруге арналған 4 алтын ереже" : "4 золотых правила Computer Science для тех, кто учится с нуля и готовится к бассейну"}</div>
+            </div>
+          </div>
+          <span class="badge" style="background:rgba(153,105,255,0.2);color:var(--accent-l);font-size:11px;padding:4px 8px;border-radius:4px">${isKZ ? "💡 Бассейннен құламау құпиясы" : "💡 Секрет выживания в Piscine"}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:12px">
+          <div style="background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:6px;padding:12px 14px">
+            <div style="color:var(--accent-l);font-weight:700;font-size:13px;margin-bottom:4px">📝 1. ${isKZ ? "Таза парақ ережесі" : "Правило чистого листа"}</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.45">${isKZ ? "Кодты бірден жазуға асықпаңыз! Қағаз бен қалам алып, есепті қарапайым сандармен (1, 2, 3) қолмен орындап, сызбасын сызыңыз." : "Никогда не начинайте писать код сразу. Возьмите ручку и бумагу, прокрутите задачу на простых числах и нарисуйте алгоритм вручную."}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:6px;padding:12px 14px">
+            <div style="color:#f59e0b;font-weight:700;font-size:13px;margin-bottom:4px">❓ 2. ${isKZ ? "3 сұрақ фреймворкі" : "Фреймворк 3 вопросов"}</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.45">${isKZ ? "Кез келген есепте 3 нәрсені анықтаңыз: 1) Кірісте не берілді? 2) Шығыста не сұралуда? 3) Әр цикл қадамында қай әрекет қайталанады?" : "В любой задаче задайте 3 вопроса: 1) Что дано на входе? 2) Что требуется вернуть на выходе? 3) Какое повторяющееся действие нужно сделать на каждом шаге?"}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:6px;padding:12px 14px">
+            <div style="color:var(--ok);font-weight:700;font-size:13px;margin-bottom:4px">🛠️ 3. ${isKZ ? "Компилятор — сенің көмекшің" : "Ошибки компилятора — друзья"}</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.45">${isKZ ? "Қызыл қателерден қорықпаңыз. Go компиляторы сізге қатенің нақты жолын және себебін көрсетеді. Қатені баппен оқып, үлгімен салыстырыңыз." : "Красный текст ошибки — это бесплатный совет робота. Компилятор Go указывает точную строку и причину. Читайте текст ошибки вдумчиво."}</div>
+          </div>
+          <div style="background:rgba(0,0,0,0.3);border:1px solid var(--line);border-radius:6px;padding:12px 14px">
+            <div style="color:#60a5fa;font-weight:700;font-size:13px;margin-bottom:4px">🧱 4. ${isKZ ? "Бөліп ал да, билей бер" : "Разделяй и властвуй"}</div>
+            <div style="font-size:12.5px;color:var(--muted);line-height:1.45">${isKZ ? "Quad, SplitWhiteSpaces немесе Sudoku сияқты күрделі есептер — бұл жай ғана бір-біріне қосылған 3-4 қарапайым шағын тапсырма." : "Сложная задача бассейна (Quad, SplitWhiteSpaces, Sudoku) — это всего лишь 3–4 простейших шага, склеенных вместе. Решайте по кусочкам."}</div>
+          </div>
+        </div>
       </div>
 
       <div class="grid">
@@ -771,18 +812,22 @@ function viewTopic(u, tid) {
       <nav class="mobbar"><button data-p="left" class="on">${isKZ ? "Оқулық" : "Учебник"}</button><button data-p="right">${isKZ ? "Код" : "Код"}</button></nav>
     </div>`;
 
-  const mountEl = $("#piscineWidgetArea");
-  if (mountEl && window.mountActiveLearningLab) {
-    let simRenderer = null;
-    if (window.getPiscineRenderer && window.getPiscineRenderer(topic.id)) {
-      simRenderer = window.getPiscineRenderer(topic.id);
-    } else if (window.getTopicWidgetRenderer && window.getTopicWidgetRenderer(topic.id)) {
-      simRenderer = window.getTopicWidgetRenderer(topic.id);
+  try {
+    const mountEl = $("#piscineWidgetArea");
+    if (mountEl && window.mountActiveLearningLab) {
+      let simRenderer = null;
+      if (window.getPiscineRenderer && window.getPiscineRenderer(topic.id)) {
+        simRenderer = window.getPiscineRenderer(topic.id);
+      } else if (window.getTopicWidgetRenderer && window.getTopicWidgetRenderer(topic.id)) {
+        simRenderer = window.getTopicWidgetRenderer(topic.id);
+      }
+      window.mountActiveLearningLab(mountEl, topic.id, u, simRenderer);
+    } else {
+      if (window.initPiscineWidgets) { try { window.initPiscineWidgets(topic.id); } catch (e) { } }
+      if (window.initTopicWidgets) { try { window.initTopicWidgets(topic.id); } catch (e) { } }
     }
-    window.mountActiveLearningLab(mountEl, topic.id, u, simRenderer);
-  } else {
-    if (window.initPiscineWidgets) { try { window.initPiscineWidgets(topic.id); } catch (e) { } }
-    if (window.initTopicWidgets) { try { window.initTopicWidgets(topic.id); } catch (e) { } }
+  } catch (e) {
+    console.error("Widget mount error:", e);
   }
 
   // --- мобильная версия: переключатель «Учебник / Код»
@@ -793,7 +838,13 @@ function viewTopic(u, tid) {
 
   // --- левая панель: навигация и scrollspy
   const scroll = $("#scroll");
-  $$("#chips button").forEach(b => b.onclick = () => scrollToSec(b.dataset.s));
+  $$("#chips button").forEach(b => b.onclick = () => {
+    scrollToSec(b.dataset.s);
+    if (b.dataset.s && b.dataset.s.startsWith("s-t")) {
+      const tIdx = parseInt(b.dataset.s.replace("s-t", ""), 10);
+      if (topic.tasks && topic.tasks[tIdx]) open(topic.tasks[tIdx].id, false);
+    }
+  });
   function scrollToSec(id) {
     const el = $("#" + id);
     if (el) scroll.scrollTo({ top: el.offsetTop - 8, behavior: "smooth" });
@@ -949,7 +1000,7 @@ function viewTopic(u, tid) {
     if (scrollLeft) scrollToSec("s-t" + topic.tasks.indexOf(active));
     if (!isMobile() && !ta.readOnly) ta.focus();
   }
-  $$("#seg button").forEach(b => b.onclick = () => open(b.dataset.k));
+  $$("#seg button").forEach(b => b.onclick = () => open(b.dataset.k, true));
   $$("[data-open]").forEach(b => b.onclick = () => { open(b.dataset.open, false); toEditor(); });
   $("#reset").onclick = () => {
     if (!active) return;
@@ -1036,7 +1087,10 @@ function viewTopic(u, tid) {
   }
   $("#run").onclick = check;
 
-  open(topic.tasks.find(k => !done[k.id])?.id ?? topic.tasks[0].id, false);
+  if (topic.tasks && topic.tasks.length > 0) {
+    const initTask = topic.tasks.find(k => !done[k.id]) || topic.tasks[0];
+    open(initTask.id, false);
+  }
   ta.blur();
 }
 
@@ -1079,6 +1133,158 @@ function viewArena(u) {
   if (window.renderArenaPage) window.renderArenaPage(app, u);
 }
 
+function viewAdmin(u) {
+  const isKZ = (window.getLang && window.getLang()) === "kz";
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/admin">${isKZ ? "әкімші панелі" : "панель администратора"}</a>`);
+
+  app.innerHTML = `
+    <div class="wrap" style="max-width:1100px;margin:0 auto;padding:24px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+        <div>
+          <h1 style="font-size:24px;margin:0 0 6px;color:#fff">🛡️ ${isKZ ? "Әкімші панелі: Студенттер мен қонақтар мониторингі" : "Панель администратора: Мониторинг студентов и гостей"}</h1>
+          <p style="color:var(--dim);margin:0;font-size:13.5px">${isKZ ? "Supabase бұлтындағы барлық тіркелген қолданушылар мен қонақ сессияларын бақылау" : "Отслеживание реальных пользователей, гостевых сессий и набранного опыта в облаке Supabase"}</p>
+        </div>
+        <button class="btn ghost small" id="btnRefreshAdmin" style="display:inline-flex;align-items:center;gap:6px">🔄 ${isKZ ? "Деректерді жаңарту" : "Обновить данные"}</button>
+      </div>
+
+      <div id="adminKpiArea" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:24px">
+        <div style="background:#141318;border:1px solid var(--line);border-radius:6px;padding:16px"><div style="color:var(--dim);font-size:12px">${isKZ ? "Барлық қолданушылар" : "Всего пользователей"}</div><div style="font-size:28px;font-weight:700;color:#fff;margin-top:6px" id="kpiTotal">...</div></div>
+        <div style="background:#141318;border:1px solid var(--line);border-radius:6px;padding:16px"><div style="color:var(--dim);font-size:12px">${isKZ ? "Тіркелген студенттер" : "Студенты (аккаунты)"}</div><div style="font-size:28px;font-weight:700;color:var(--accent-l);margin-top:6px" id="kpiStudents">...</div></div>
+        <div style="background:#141318;border:1px solid var(--line);border-radius:6px;padding:16px"><div style="color:var(--dim);font-size:12px">${isKZ ? "Қонақ сессиялары" : "Гости (сессии)"}</div><div style="font-size:28px;font-weight:700;color:#f59e0b;margin-top:6px" id="kpiGuests">...</div></div>
+        <div style="background:#141318;border:1px solid var(--line);border-radius:6px;padding:16px"><div style="color:var(--dim);font-size:12px">${isKZ ? "Жалпы жиналған XP" : "Суммарный XP платформы"}</div><div style="font-size:28px;font-weight:700;color:var(--ok);margin-top:6px" id="kpiXp">...</div></div>
+      </div>
+
+      <div style="background:#141318;border:1px solid var(--line);border-radius:6px;padding:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="adminFilterTabs">
+            <button class="btn small on" data-filter="all">${isKZ ? "Барлығы" : "Все"}</button>
+            <button class="btn ghost small" data-filter="students">${isKZ ? "Студенттер" : "Студенты"}</button>
+            <button class="btn ghost small" data-filter="guests">${isKZ ? "Қонақтар" : "Гости"}</button>
+          </div>
+          <input type="text" id="adminSearchInp" placeholder="${isKZ ? "Никнейм бойынша іздеу..." : "Поиск по никнейму..."}" style="padding:6px 12px;background:#0d0c10;border:1px solid var(--line);border-radius:4px;color:#fff;font-size:13px;width:220px">
+        </div>
+
+        <div id="adminTableArea" style="overflow-x:auto">
+          <div style="text-align:center;padding:30px;color:var(--dim)">⏳ ${isKZ ? "Supabase деректері жүктелуде..." : "Загрузка данных из Supabase..."}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  let adminData = null;
+  let currentFilter = "all";
+  let searchQuery = "";
+
+  async function loadData() {
+    const tableArea = $("#adminTableArea");
+    if (!tableArea) return;
+    tableArea.innerHTML = `<div style="text-align:center;padding:30px;color:var(--dim)">⏳ ${isKZ ? "Supabase деректері жүктелуде..." : "Загрузка данных из Supabase..."}</div>`;
+
+    if (window.sbFetchAdminStats) {
+      adminData = await window.sbFetchAdminStats();
+    }
+
+    if (!adminData || !adminData.all) {
+      const localUsers = [...DEMO_USERS.map(([n, x]) => ({ username: n, xp: x, updated_at: new Date().toISOString() }))];
+      adminData = {
+        all: localUsers,
+        registered: localUsers.filter(p => !p.username.startsWith("[Гость]")),
+        guests: localUsers.filter(p => p.username.startsWith("[Гость]")),
+        totalUsers: localUsers.length,
+        totalRegistered: localUsers.filter(p => !p.username.startsWith("[Гость]")).length,
+        totalGuests: localUsers.filter(p => p.username.startsWith("[Гость]")).length,
+        totalXp: localUsers.reduce((acc, p) => acc + (p.xp || 0), 0)
+      };
+    }
+
+    $("#kpiTotal").textContent = adminData.totalUsers;
+    $("#kpiStudents").textContent = adminData.totalRegistered;
+    $("#kpiGuests").textContent = adminData.totalGuests;
+    $("#kpiXp").textContent = adminData.totalXp.toLocaleString() + " XP";
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const tableArea = $("#adminTableArea");
+    if (!tableArea || !adminData) return;
+
+    let list = adminData.all;
+    if (currentFilter === "students") list = adminData.registered;
+    if (currentFilter === "guests") list = adminData.guests;
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(p => (p.username || "").toLowerCase().includes(q));
+    }
+
+    if (!list.length) {
+      tableArea.innerHTML = `<div style="text-align:center;padding:24px;color:var(--dim)">${isKZ ? "Ешқандай жазба табылмады" : "Пользователи не найдены"}</div>`;
+      return;
+    }
+
+    let html = `
+      <table style="width:100%;border-collapse:collapse;font:13px var(--mono);text-align:left">
+        <thead>
+          <tr style="border-bottom:1px solid var(--line);color:var(--dim);font-size:12px">
+            <th style="padding:10px 8px">#</th>
+            <th style="padding:10px 8px">${isKZ ? "Қолданушы" : "Пользователь"}</th>
+            <th style="padding:10px 8px">${isKZ ? "Типі" : "Тип"}</th>
+            <th style="padding:10px 8px;text-align:right">XP</th>
+            <th style="padding:10px 8px;text-align:right">${isKZ ? "Соңғы белсенділік" : "Последняя активность"}</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    list.forEach((p, idx) => {
+      const isGuest = p.username.startsWith("[Гость]");
+      const cleanName = isGuest ? p.username.replace("[Гость] ", "") : p.username;
+      const typeBadge = isGuest
+        ? `<span style="background:rgba(245,158,11,0.15);color:#f59e0b;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${isKZ ? "ҚОНАҚ" : "ГОСТЬ"}</span>`
+        : `<span style="background:rgba(153,105,255,0.15);color:var(--accent-l);padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">${isKZ ? "СТУДЕНТ" : "СТУДЕНТ"}</span>`;
+      
+      const timeStr = p.updated_at ? new Date(p.updated_at).toLocaleString() : "—";
+
+      html += `
+        <tr style="border-bottom:1px solid rgba(255,255,255,0.04)">
+          <td style="padding:10px 8px;color:var(--dim)">${idx + 1}</td>
+          <td style="padding:10px 8px;font-weight:600;color:#fff">${esc(cleanName)}</td>
+          <td style="padding:10px 8px">${typeBadge}</td>
+          <td style="padding:10px 8px;text-align:right;color:var(--ok);font-weight:700">${(p.xp || 0)} XP</td>
+          <td style="padding:10px 8px;text-align:right;color:var(--dim);font-size:12px">${timeStr}</td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table>`;
+    tableArea.innerHTML = html;
+  }
+
+  $("#btnRefreshAdmin").onclick = loadData;
+
+  $$("#adminFilterTabs button").forEach(b => {
+    b.onclick = () => {
+      $$("#adminFilterTabs button").forEach(x => {
+        x.className = "btn ghost small";
+      });
+      b.className = "btn small on";
+      currentFilter = b.dataset.filter;
+      renderTable();
+    };
+  });
+
+  const sInp = $("#adminSearchInp");
+  if (sInp) {
+    sInp.oninput = () => {
+      searchQuery = sInp.value;
+      renderTable();
+    };
+  }
+
+  loadData();
+}
+
 // ---------- router ----------
 function route() {
   $$(".overlay").forEach(o => o.remove());
@@ -1097,6 +1303,7 @@ function route() {
   if (h === "#/login") { location.hash = "#/"; return; }
   if (h === "#/setup") return viewSetup(u);
   if (h === "#/arena") return viewArena(u);
+  if (h === "#/admin") return viewAdmin(u);
   let m = h.match(/^#\/topic\/(\d+)/);
   if (m) return viewTopic(u, +m[1]);
   m = h.match(/^#\/task\/(\w+)/); // старые ссылки
