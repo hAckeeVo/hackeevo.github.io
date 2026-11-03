@@ -3409,12 +3409,13 @@ ${F}
     el.innerHTML = `
       <div class="rec-widget">
         <div class="rec-title">🌲 ${isKZ ? "Рекурсия шақыруларының стегі (Факториал 4!)" : "Стек вызовов рекурсии (Факториал 4!)"}</div>
-        <div class="rec-btns">
-          <button class="btn small on" id="recStep">${isKZ ? "Келесі қадам (Қадам бойынша)" : "Следующий шаг (Шаг за шагом)"}</button>
-          <button class="btn ghost small" id="recReset">${isKZ ? "Қалпына келтіру" : "Сброс"}</button>
+        <div class="rec-btns" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <button class="btn small on" id="recAuto">▶ ${isKZ ? "Авто-ойнату" : "Авто-прогон"}</button>
+          <button class="btn small" id="recStep">⏭ ${isKZ ? "1 қадам" : "1 шаг"}</button>
+          <button class="btn ghost small" id="recReset">↺ ${isKZ ? "Қалпына келтіру" : "Сброс"}</button>
         </div>
         <div class="rec-stack" id="recStack">
-          <div class="rec-frame init">${isKZ ? "Шақырулар түбіне (0! = 1) жеткенше стекке қалай жиналатынын және кері қалай жабылатынын көру үшін «Келесі қадам» түймесін басыңыз." : "Нажмите «Следующий шаг», чтобы увидеть, как вызовы накапливаются в стеке до дна (0! = 1), а затем схлопываются обратно."}</div>
+          <div class="rec-frame init">${isKZ ? "Шақырулар түбіне (0! = 1) жеткенше стекке қалай жиналатынын және кері қалай жабылатынын көру үшін «Авто-ойнату» немесе «1 қадам» басыңыз." : "Нажмите «Авто-прогон» или «1 шаг», чтобы увидеть, как вызовы накапливаются в стеке до дна (0! = 1), а затем схлопываются обратно."}</div>
         </div>
         <div class="rec-desc" id="recDesc"></div>
       </div>
@@ -3422,7 +3423,11 @@ ${F}
 
     const stack = document.getElementById("recStack");
     const desc = document.getElementById("recDesc");
+    const autoBtn = document.getElementById("recAuto");
+    const stepBtn = document.getElementById("recStep");
     let step = 0;
+    let recTimer = null;
+    let isRunning = false;
 
     const steps = [
       { text: isKZ ? "1-қадам (Тереңдеу): Fact(4) шақырамыз. 4! есептеу үшін 3! білу қажет. 4 * Fact(3) сақтаймыз." : "Шаг 1 (Погружение): Вызываем Fact(4). Чтобы посчитать 4!, надо знать 3! Запоминаем 4 * Fact(3).", html: `<div class="rec-frame f1"><b>Fact(4)</b> = 4 * Fact(3) <span class="wait">${isKZ ? "[Fact(3) нәтижесін күтуде]" : "[ждёт результат Fact(3)]"}</span></div>` },
@@ -3436,16 +3441,60 @@ ${F}
       { text: isKZ ? "9-қадам (ҚОРЫТЫНДЫ): Fact(3) 6 қайтарды. Fact(4) 4 * 6 = 24 есептеді! Бастапқы шақыру 24 мәнін қайтарды." : "Шаг 9 (ФИНАЛ): Fact(3) вернул 6. Fact(4) вычисляет 4 * 6 = 24! Исходный вызов вернул ответ 24.", html: `<div class="rec-frame f1 done"><b>Fact(4) = 24 (${isKZ ? "ҚОРЫТЫНДЫ ЖАУАП ✓" : "ИТОГОВЫЙ ОТВЕТ ✓"})</b></div>` },
     ];
 
-    document.getElementById("recStep").onclick = () => {
-      if (step >= steps.length) step = 0;
-      stack.innerHTML = steps[step].html;
-      desc.textContent = steps[step].text;
+    const showStep = (idx) => {
+      stack.innerHTML = steps[idx].html;
+      desc.textContent = steps[idx].text;
+    };
+
+    const nextStep = () => {
+      if (step >= steps.length) {
+        pause();
+        return true;
+      }
+      showStep(step);
       step++;
+      if (step >= steps.length) {
+        pause();
+        return true;
+      }
+      return false;
+    };
+
+    const pause = () => {
+      isRunning = false;
+      clearInterval(recTimer);
+      autoBtn.textContent = `▶ ${isKZ ? "Авто-ойнату" : "Авто-прогон"}`;
+      autoBtn.className = "btn small on";
+    };
+
+    const play = () => {
+      if (step >= steps.length) step = 0;
+      isRunning = true;
+      autoBtn.textContent = `⏸ ${isKZ ? "Кідірту (Пауза)" : "Пауза"}`;
+      autoBtn.className = "btn small";
+      nextStep();
+      clearInterval(recTimer);
+      recTimer = setInterval(() => {
+        const done = nextStep();
+        if (done) clearInterval(recTimer);
+      }, 1200);
+    };
+
+    autoBtn.onclick = () => {
+      if (isRunning) pause();
+      else play();
+    };
+
+    stepBtn.onclick = () => {
+      pause();
+      if (step >= steps.length) step = 0;
+      nextStep();
     };
 
     document.getElementById("recReset").onclick = () => {
+      pause();
       step = 0;
-      stack.innerHTML = `<div class="rec-frame init">${isKZ ? "Анимацияны бастау үшін «Келесі қадам» түймесін басыңыз." : "Нажмите «Следующий шаг», чтобы начать анимацию."}</div>`;
+      stack.innerHTML = `<div class="rec-frame init">${isKZ ? "Анимацияны бастау үшін «Авто-ойнату» немесе «1 қадам» түймесін басыңыз." : "Нажмите «Авто-прогон» или «1 шаг», чтобы начать анимацию."}</div>`;
       desc.textContent = "";
     };
   }
@@ -3523,21 +3572,34 @@ ${F}
 
     el.innerHTML = `
       <div class="chess-widget">
-        <div class="cw-header">
-          <div class="cw-title">♟️ ${isKZ ? "8×8 интерактивті шахмат тақтасы (8 ферзь есебі)" : "Интерактивная доска 8×8 (Задача о 8 ферзях)"}</div>
-          <div class="cw-status" id="cwStatus">${isKZ ? "Тақтадағы ферзьдер: 0 / 8 · Торкөзге басып ферзь қойыңыз" : "Ферзей на доске: 0 / 8 · Кликом ставьте ферзя в клетку"}</div>
-          <div class="cw-actions">
-            <button class="btn small on" id="cwDemo">${isKZ ? "01 Edu шешімі (15863724)" : "Решение 01 Edu (15863724)"}</button>
-            <button class="btn small" id="cwAuto">${isKZ ? "▶ Рекурсивті іздеу (Backtracking)" : "▶ Рекурсивный поиск (Backtracking)"}</button>
-            <button class="btn ghost small" id="cwClear">${isKZ ? "Тазарту" : "Очистить"}</button>
+        <div class="cw-header" style="flex-wrap:wrap;gap:10px">
+          <div>
+            <div class="cw-title">♟️ ${isKZ ? "8×8 интерактивті шахмат тақтасы (8 ферзь есебі)" : "Интерактивная доска 8×8 (Задача о 8 ферзях)"}</div>
+            <div class="cw-status" id="cwStatus">${isKZ ? "Тақтадағы ферзьдер: 0 / 8 · Торкөзге басып ферзь қойыңыз" : "Ферзей на доске: 0 / 8 · Кликом ставьте ферзя в клетку"}</div>
+          </div>
+          <div class="cw-actions" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="btn small on" id="cwAuto">▶ ${isKZ ? "Рекурсивті іздеу" : "Запустить Backtracking"}</button>
+            <button class="btn small" id="cwStep">⏭ ${isKZ ? "1 қадам" : "1 шаг"}</button>
+            <button class="btn ghost small" id="cwDemo">${isKZ ? "01 Edu шешімі" : "Решение 01 Edu"}</button>
+            <button class="btn ghost small" id="cwClear">↺ ${isKZ ? "Тазарту" : "Сброс"}</button>
           </div>
         </div>
+
+        <div style="display:flex;gap:8px;align-items:center;margin:8px 0 14px;background:#141318;padding:8px 12px;border-radius:4px;border:1px solid var(--line);font-size:12px">
+          <span style="color:var(--muted);font-weight:600">${isKZ ? "Жылдамдық:" : "Скорость:"}</span>
+          <button class="btn ghost small cw-spd" data-spd="400">0.5x</button>
+          <button class="btn small on cw-spd" data-spd="180">1x</button>
+          <button class="btn ghost small cw-spd" data-spd="35">5x</button>
+          <span style="margin-left:auto;color:#f59e0b;font:600 12px var(--mono)">${isKZ ? "Кері шегінулер (Backtracks):" : "Откатов назад (Backtracks):"} <b id="cwBacktracks">0</b></span>
+        </div>
+
         <div class="cw-board-wrap">
           <div class="cw-board" id="cwBoard"></div>
           <div class="cw-info" id="cwInfo">
             <div class="cw-badge ok">${isKZ ? "01 Edu ережесі:" : "Правило 01 Edu:"}</div>
             <p>${isKZ ? "Әр ферзь өз бағанында орналасады (солдан оңға қарай 1-ден 8-ге дейін). <b>15863724</b> жазбасы: 1-бағанда 1-жол, 2-бағанда 5-жол, 3-бағанда 8-жол және т.б." : "Каждый ферзь находится в своём столбце (от 1 до 8 слева направо). Запись <b>15863724</b> значит: 1-я строка в столбце 1, 5-я строка в столбце 2, 8-я строка в столбце 3 и т.д."}</p>
             <div class="cw-sol" id="cwSol">${isKZ ? "Ағымдағы орналасу:" : "Текущая расстановка:"} <span>-</span></div>
+            <div id="cwStepLog" style="margin-top:10px;font-size:12.5px;color:var(--accent-l);line-height:1.5"></div>
           </div>
         </div>
       </div>
@@ -3546,8 +3608,18 @@ ${F}
     const boardEl = document.getElementById("cwBoard");
     const statusEl = document.getElementById("cwStatus");
     const solEl = document.getElementById("cwSol");
+    const logEl = document.getElementById("cwStepLog");
+    const autoBtn = document.getElementById("cwAuto");
+    const stepBtn = document.getElementById("cwStep");
+    const btCountEl = document.getElementById("cwBacktracks");
+
     let queens = [-1, -1, -1, -1, -1, -1, -1, -1]; // queens[col] = row (0..7)
     let animTimer = null;
+    let isRunning = false;
+    let speedMs = 180;
+    let col = 0;
+    let row = 0;
+    let backtracks = 0;
 
     const conflicts = () => {
       let conf = 0;
@@ -3595,64 +3667,135 @@ ${F}
     boardEl.onclick = e => {
       const sq = e.target.closest(".cw-sq");
       if (!sq) return;
-      clearInterval(animTimer);
+      pauseAuto();
       const c = +sq.dataset.c, r = +sq.dataset.r;
       if (queens[c] === r) queens[c] = -1;
       else queens[c] = r;
       renderBoard();
     };
 
-    document.getElementById("cwClear").onclick = () => {
+    const isSafe = (c, r) => {
+      for (let prevC = 0; prevC < c; prevC++) {
+        const prevR = queens[prevC];
+        if (prevR === -1) continue;
+        if (prevR === r || Math.abs(prevR - r) === Math.abs(prevC - c)) return false;
+      }
+      return true;
+    };
+
+    const stepChess = () => {
+      if (col >= 8) {
+        pauseAuto();
+        logEl.innerHTML = `<b style="color:var(--ok)">🎉 ${isKZ ? "Шешім табылды! Барлық 8 ферзь қауіпсіз тұр." : "Решение найдено! Все 8 ферзей расставлены."}</b>`;
+        return true;
+      }
+
+      while (row < 8 && !isSafe(col, row)) {
+        row++;
+      }
+
+      if (row < 8) {
+        queens[col] = row;
+        logEl.innerHTML = isKZ
+          ? `✓ <b>Қадам:</b> ${col + 1}-бағанға ферзьді ${row + 1}-жолға қойдық. Әзірге қақтығыс жоқ.`
+          : `✓ <b>Ход:</b> Столбец ${col + 1}: ставим ферзя на строку ${row + 1}. Конфликтов нет.`;
+        col++;
+        row = 0;
+        renderBoard();
+        if (col >= 8) {
+          pauseAuto();
+          logEl.innerHTML = `<b style="color:var(--ok)">🎉 ${isKZ ? "Шешім табылды! Барлық 8 ферзь қауіпсіз тұр." : "Решение найдено! Все 8 ферзей расставлены."}</b>`;
+          return true;
+        }
+        return false;
+      } else {
+        // Backtrack
+        backtracks++;
+        btCountEl.textContent = backtracks;
+        queens[col] = -1;
+        col--;
+        if (col < 0) {
+          pauseAuto();
+          logEl.innerHTML = `<b style="color:#ff4d4f">❌ ${isKZ ? "Барлық мүмкін нұсқалар тексерілді." : "Все возможные варианты перебраны."}</b>`;
+          return true;
+        }
+        row = queens[col] + 1;
+        queens[col] = -1;
+        logEl.innerHTML = isKZ
+          ? `↩️ <b>Кері шегіну (Backtrack):</b> ${col + 2}-бағанда орын қалмады. ${col + 1}-бағанға оралып, келесі жолды сынаймыз.`
+          : `↩️ <b>Откат (Backtrack):</b> В столбце ${col + 2} нет безопасных клеток. Возвращаемся в столбец ${col + 1} и двигаем ферзя ниже!`;
+        renderBoard();
+        return false;
+      }
+    };
+
+    const pauseAuto = () => {
+      isRunning = false;
       clearInterval(animTimer);
+      autoBtn.textContent = `▶ ${isKZ ? "Жалғастыру" : "Продолжить"}`;
+      autoBtn.className = "btn small on";
+    };
+
+    const startAuto = () => {
+      isRunning = true;
+      autoBtn.textContent = `⏸ ${isKZ ? "Кідірту (Пауза)" : "Пауза"}`;
+      autoBtn.className = "btn small";
+      clearInterval(animTimer);
+      animTimer = setInterval(() => {
+        const done = stepChess();
+        if (done) clearInterval(animTimer);
+      }, speedMs);
+    };
+
+    autoBtn.onclick = () => {
+      if (isRunning) {
+        pauseAuto();
+      } else {
+        if (col >= 8) {
+          // Reset before restart
+          queens = [-1, -1, -1, -1, -1, -1, -1, -1];
+          col = 0; row = 0; backtracks = 0;
+          btCountEl.textContent = 0;
+        }
+        startAuto();
+      }
+    };
+
+    stepBtn.onclick = () => {
+      pauseAuto();
+      stepChess();
+    };
+
+    document.getElementById("cwClear").onclick = () => {
+      pauseAuto();
       queens = [-1, -1, -1, -1, -1, -1, -1, -1];
+      col = 0; row = 0; backtracks = 0;
+      btCountEl.textContent = 0;
+      logEl.textContent = "";
+      autoBtn.textContent = `▶ ${isKZ ? "Рекурсивті іздеу" : "Запустить Backtracking"}`;
       renderBoard();
     };
 
     document.getElementById("cwDemo").onclick = () => {
-      clearInterval(animTimer);
+      pauseAuto();
       // 15863724 -> 0-based: 0, 4, 7, 5, 2, 6, 1, 3
       queens = [0, 4, 7, 5, 2, 6, 1, 3];
+      col = 8; row = 0;
+      logEl.innerHTML = `<b style="color:var(--ok)">01 Edu шешімі (15863724) жүктелді!</b>`;
       renderBoard();
     };
 
-    document.getElementById("cwAuto").onclick = () => {
-      clearInterval(animTimer);
-      queens = [-1, -1, -1, -1, -1, -1, -1, -1];
-      let col = 0;
-      let row = 0;
-
-      const isSafe = (c, r) => {
-        for (let prevC = 0; prevC < c; prevC++) {
-          const prevR = queens[prevC];
-          if (prevR === r || Math.abs(prevR - r) === Math.abs(prevC - c)) return false;
-        }
-        return true;
-      };
-
-      animTimer = setInterval(() => {
-        if (col >= 8) {
+    document.querySelectorAll(".cw-spd").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".cw-spd").forEach(b => b.className = "btn ghost small cw-spd");
+        btn.className = "btn small on cw-spd";
+        speedMs = parseInt(btn.dataset.spd, 10);
+        if (isRunning) {
           clearInterval(animTimer);
-          return;
+          startAuto();
         }
-        while (row < 8 && !isSafe(col, row)) {
-          row++;
-        }
-        if (row < 8) {
-          queens[col] = row;
-          col++;
-          row = 0;
-          renderBoard();
-        } else {
-          // Backtrack
-          queens[col] = -1;
-          col--;
-          if (col < 0) { clearInterval(animTimer); return; }
-          row = queens[col] + 1;
-          queens[col] = -1;
-          renderBoard();
-        }
-      }, 180);
-    };
+      };
+    });
 
     renderBoard();
   }
@@ -4036,39 +4179,44 @@ ${F}
       const raw = inp.value.trim();
       const args = raw ? raw.split(/\s+/) : [];
 
-      runBtn.style.opacity = "0.7";
+      // Visual feedback on button and console
+      runBtn.style.transform = "scale(0.96)";
       runBtn.textContent = isKZ ? "⏳ Орындалуда..." : "⏳ Запуск...";
+      outArea.style.opacity = "0.5";
+
       setTimeout(() => {
-        runBtn.style.opacity = "1";
+        runBtn.style.transform = "none";
         runBtn.textContent = `▶ ${isKZ ? "Іске қосу" : "Выполнить"}`;
-      }, 200);
+        outArea.style.opacity = "1";
+        outArea.style.transition = "opacity .15s";
 
-      const promptHtml = `<div style="color:var(--dim);margin-bottom:8px"><span style="color:var(--ok)">student@piscine</span>:<span style="color:var(--accent)">~</span>$ ./displayfile ${raw ? raw : ""}</div>`;
+        const promptHtml = `<div style="color:var(--dim);margin-bottom:8px"><span style="color:var(--ok)">student@piscine</span>:<span style="color:var(--accent)">~</span>$ ./displayfile ${raw ? raw : ""}<span style="display:inline-block;width:7px;height:14px;background:var(--accent-l);margin-left:4px;vertical-align:middle;animation:pulse 0.8s infinite"></span></div>`;
 
-      if (args.length === 0) {
-        outArea.innerHTML = promptHtml + `
-          <div style="color:#ff6b6b;font-weight:700">File name missing</div>
-          <div style="font-size:11px;color:var(--dim);margin-top:8px">// 01 Edu тест: 0 аргументов &rarr; вывод строго 'File name missing\\n'</div>
-        `;
-      } else if (args.length > 1) {
-        outArea.innerHTML = promptHtml + `
-          <div style="color:#ff6b6b;font-weight:700">Too many arguments</div>
-          <div style="font-size:11px;color:var(--dim);margin-top:8px">// 01 Edu тест: >1 аргумента &rarr; вывод строго 'Too many arguments\\n'</div>
-        `;
-      } else {
-        const fname = args[0];
-        if (VFS[fname]) {
+        if (args.length === 0) {
           outArea.innerHTML = promptHtml + `
-            <div style="color:#4fd18b;white-space:pre-wrap;line-height:1.6">${VFS[fname]}</div>
-            <div style="font-size:11px;color:var(--dim);margin-top:10px">// Файл '${fname}' успешно прочитан через os.ReadFile! ✓</div>
+            <div style="color:#ff6b6b;font-weight:700">File name missing</div>
+            <div style="font-size:11px;color:var(--dim);margin-top:8px">${isKZ ? "// 01 Edu тесті: 0 аргумент -> қатаң түрде 'File name missing\\n' шығуы тиіс" : "// 01 Edu тест: 0 аргументов -> вывод строго 'File name missing\\n'"}</div>
+          `;
+        } else if (args.length > 1) {
+          outArea.innerHTML = promptHtml + `
+            <div style="color:#ff6b6b;font-weight:700">Too many arguments</div>
+            <div style="font-size:11px;color:var(--dim);margin-top:8px">${isKZ ? "// 01 Edu тесті: >1 аргумент -> қатаң түрде 'Too many arguments\\n' шығуы тиіс" : "// 01 Edu тест: >1 аргумента -> вывод строго 'Too many arguments\\n'"}</div>
           `;
         } else {
-          outArea.innerHTML = promptHtml + `
-            <div style="color:#ff6b6b;font-weight:700">Cannot read file</div>
-            <div style="font-size:11px;color:var(--dim);margin-top:8px">// 01 Edu тест: файл '${fname}' не найден &rarr; вывод 'Cannot read file\\n'</div>
-          `;
+          const fname = args[0];
+          if (VFS[fname]) {
+            outArea.innerHTML = promptHtml + `
+              <div style="color:#4fd18b;white-space:pre-wrap;line-height:1.6">${VFS[fname]}</div>
+              <div style="font-size:11px;color:var(--dim);margin-top:10px">${isKZ ? `// '${fname}' файлы os.ReadFile арқылы сәтті оқылды! ✓` : `// Файл '${fname}' успешно прочитан через os.ReadFile! ✓`}</div>
+            `;
+          } else {
+            outArea.innerHTML = promptHtml + `
+              <div style="color:#ff6b6b;font-weight:700">Cannot read file</div>
+              <div style="font-size:11px;color:var(--dim);margin-top:8px">${isKZ ? `// 01 Edu тесті: '${fname}' файлы табылмады -> 'Cannot read file\\n'` : `// 01 Edu тест: файл '${fname}' не найден -> вывод 'Cannot read file\\n'`}</div>
+            `;
+          }
         }
-      }
+      }, 120);
     };
 
     runBtn.onclick = runCommand;
@@ -4272,10 +4420,18 @@ ${F}
             <div class="qw-title">🔒 ${isKZ ? "Сандық құлып симуляторы (Quest 02: PrintComb)" : "Интерактивный кодовый замок (Quest 02: PrintComb)"}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">${isKZ ? "Цифрларды таңдаңыз немесе генерацияны қадам бойынша көріңіз" : "Крутите колёсики или запустите пошаговую генерацию всех комбинаций"}</div>
           </div>
-          <div class="qw-controls">
-            <button class="btn small on" id="btnPlayComb">▶ ${isKZ ? "Барлық комбинацияларды жинау" : "Сгенерировать все"}</button>
-            <button class="btn ghost small" id="btnStopComb">${isKZ ? "Тоқтату" : "Стоп"}</button>
+          <div class="qw-controls" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="btn small on" id="btnPlayComb">▶ ${isKZ ? "Генерация" : "Запустить"}</button>
+            <button class="btn small" id="btnStepComb">⏭ ${isKZ ? "1 қадам" : "1 шаг"}</button>
+            <button class="btn ghost small" id="btnResetComb">↺ ${isKZ ? "Қалпына келтіру" : "Сброс"}</button>
           </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin:8px 0 14px;background:#141318;padding:8px 12px;border-radius:4px;border:1px solid var(--line);font-size:12px">
+          <span style="color:var(--muted);font-weight:600">${isKZ ? "Жылдамдық:" : "Скорость:"}</span>
+          <button class="btn ghost small comb-spd" data-spd="250">0.5x</button>
+          <button class="btn small on comb-spd" data-spd="70">1x</button>
+          <button class="btn ghost small comb-spd" data-spd="12">5x</button>
+          <span style="margin-left:auto;color:var(--dim)">${isKZ ? "Комбинациялар:" : "Всего комбинаций:"} <b style="color:var(--ok)">120</b></span>
         </div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;align-items:center">
           <div style="display:flex;gap:12px;background:#141318;border:1px solid var(--line);border-radius:6px;padding:16px" id="combLockDials">
@@ -4304,10 +4460,16 @@ ${F}
     `;
 
     let i = 0, j = 1, k = 2, anim = null;
+    let isRunning = false;
+    let speedMs = 70;
+    const all = ["012"];
     const dI = document.getElementById("dialI");
     const dJ = document.getElementById("dialJ");
     const dK = document.getElementById("dialK");
     const log = document.getElementById("combLog");
+    const playBtn = document.getElementById("btnPlayComb");
+    const stepBtn = document.getElementById("btnStepComb");
+    const resetBtn = document.getElementById("btnResetComb");
 
     const updateDials = () => {
       dI.textContent = i;
@@ -4315,38 +4477,80 @@ ${F}
       dK.textContent = k;
     };
 
+    const nextCombStep = () => {
+      k++;
+      if (k > 9) {
+        j++;
+        if (j > 8) {
+          i++;
+          if (i > 7) {
+            pauseComb();
+            log.textContent = all.join(", ") + (isKZ ? " (Барлық 120 комбинация жиналды! ✓)" : " (Все 120 комбинаций сгенерированы! ✓)");
+            return true;
+          }
+          j = i + 1;
+        }
+        k = j + 1;
+      }
+      all.push(`${i}${j}${k}`);
+      log.textContent = all.join(", ");
+      updateDials();
+      return false;
+    };
+
+    const pauseComb = () => {
+      isRunning = false;
+      clearInterval(anim);
+      playBtn.textContent = `▶ ${isKZ ? "Жалғастыру" : "Продолжить"}`;
+      playBtn.className = "btn small on";
+    };
+
+    const startComb = () => {
+      isRunning = true;
+      playBtn.textContent = `⏸ ${isKZ ? "Кідірту (Пауза)" : "Пауза"}`;
+      playBtn.className = "btn small";
+      clearInterval(anim);
+      anim = setInterval(() => {
+        const done = nextCombStep();
+        if (done) clearInterval(anim);
+      }, speedMs);
+    };
+
+    playBtn.onclick = () => {
+      if (isRunning) pauseComb();
+      else startComb();
+    };
+
+    stepBtn.onclick = () => {
+      pauseComb();
+      nextCombStep();
+    };
+
+    resetBtn.onclick = () => {
+      pauseComb();
+      i = 0; j = 1; k = 2;
+      all.length = 0;
+      all.push("012");
+      updateDials();
+      log.textContent = "012";
+      playBtn.textContent = `▶ ${isKZ ? "Генерация" : "Запустить"}`;
+    };
+
+    document.querySelectorAll(".comb-spd").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".comb-spd").forEach(b => b.className = "btn ghost small comb-spd");
+        btn.className = "btn small on comb-spd";
+        speedMs = parseInt(btn.dataset.spd, 10);
+        if (isRunning) startComb();
+      };
+    });
+
     document.getElementById("upI").onclick = () => { if (i < 7) { i++; if (j <= i) j = i + 1; if (k <= j) k = j + 1; updateDials(); } };
     document.getElementById("downI").onclick = () => { if (i > 0) { i--; updateDials(); } };
     document.getElementById("upJ").onclick = () => { if (j < 8) { j++; if (k <= j) k = j + 1; updateDials(); } };
     document.getElementById("downJ").onclick = () => { if (j > i + 1) { j--; updateDials(); } };
     document.getElementById("upK").onclick = () => { if (k < 9) { k++; updateDials(); } };
     document.getElementById("downK").onclick = () => { if (k > j + 1) { k--; updateDials(); } };
-
-    document.getElementById("btnPlayComb").onclick = () => {
-      clearInterval(anim);
-      i = 0; j = 1; k = 2;
-      const all = [];
-      anim = setInterval(() => {
-        all.push(`${i}${j}${k}`);
-        log.textContent = all.join(", ");
-        updateDials();
-        k++;
-        if (k > 9) {
-          j++;
-          if (j > 8) {
-            i++;
-            if (i > 7) {
-              clearInterval(anim);
-              return;
-            }
-            j = i + 1;
-          }
-          k = j + 1;
-        }
-      }, 50);
-    };
-
-    document.getElementById("btnStopComb").onclick = () => clearInterval(anim);
   }
 
   // --- 2. Quest 11: Linked List Train ---
@@ -4443,7 +4647,7 @@ ${F}
     if (!el) return;
     const isKZ = (window.getLang && window.getLang()) === "kz";
 
-    let treeData = [4, 2, 6, 1, 3, 5, 7];
+    let animTimer = null;
 
     el.innerHTML = `
       <div class="quad-widget">
@@ -4452,15 +4656,15 @@ ${F}
             <div class="qw-title">🌳 ${isKZ ? "Екілік іздеу ағашы (Quest 12: Binary Search Tree)" : "Интерактивное двоичное дерево поиска (Quest 12: BST)"}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">${isKZ ? "Кіші мәндер солға (Left), үлкен мәндер оңға (Right) орналасады" : "Меньшие значения всегда идут влево (Left), большие — вправо (Right)"}</div>
           </div>
-          <div class="qw-controls">
+          <div class="qw-controls" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
             <input type="number" id="treeValInp" value="8" style="width:60px;padding:4px 6px;font:13px var(--mono);background:#1a1922;border:1px solid var(--line);border-radius:4px;color:#fff">
-            <button class="btn small on" id="btnTreeInsert">BTreeInsertData</button>
-            <button class="btn small" id="btnTreeInorder">Inorder Sort ▶</button>
-            <button class="btn ghost small" id="btnTreeReset">Reset</button>
+            <button class="btn small on" id="btnTreeInsert">${isKZ ? "Іздеп қосу ➔" : "Вставить ➔"}</button>
+            <button class="btn small" id="btnTreeInorder">${isKZ ? "▶ Inorder аралау" : "▶ Обход Inorder"}</button>
+            <button class="btn ghost small" id="btnTreeReset">${isKZ ? "Қалпына келтіру ↺" : "Сброс ↺"}</button>
           </div>
         </div>
         <div style="margin-top:14px;background:#141318;border:1px solid var(--line);border-radius:6px;padding:16px;text-align:center" id="treeCanvasArea"></div>
-        <div style="margin-top:8px;font:13px var(--mono);color:var(--ok)" id="treeOutputArea"></div>
+        <div style="margin-top:8px;font:13px var(--mono);color:var(--ok);min-height:22px" id="treeOutputArea"></div>
       </div>
     `;
 
@@ -4468,40 +4672,112 @@ ${F}
     const out = document.getElementById("treeOutputArea");
     const valInp = document.getElementById("treeValInp");
 
-    const renderTree = () => {
+    const renderTree = (activeNode = null, highlightColor = "var(--accent)") => {
+      const getNodeStyle = (val) => {
+        const isActive = activeNode === val;
+        const bg = isActive ? highlightColor : "#1a1922";
+        const border = isActive ? "2px solid #fff" : "1px solid var(--line)";
+        const color = isActive ? "#fff" : (val === 4 ? "#fff" : "#4fd18b");
+        const scale = isActive ? "transform:scale(1.2);box-shadow:0 0 12px " + highlightColor + ";" : "";
+        return `display:inline-block;padding:5px 11px;border-radius:50%;background:${bg};border:${border};color:${color};font-weight:700;transition:all 0.25s ease;${scale}`;
+      };
+
       canvas.innerHTML = `
-        <div style="font:var(--mono);line-height:2">
-          <div style="display:inline-block;padding:6px 12px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700">4 (Root)</div>
+        <div style="font:var(--mono);line-height:2.1">
+          <div style="${getNodeStyle(4)}">4 (Root)</div>
           <div style="color:var(--dim)">/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; \\</div>
           <div>
-            <span style="display:inline-block;padding:5px 10px;border-radius:50%;background:#1a1922;border:1px solid var(--accent);color:#fff">2</span>
+            <span style="${getNodeStyle(2)}">2</span>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span style="display:inline-block;padding:5px 10px;border-radius:50%;background:#1a1922;border:1px solid var(--accent);color:#fff">6</span>
+            <span style="${getNodeStyle(6)}">6</span>
           </div>
           <div style="color:var(--dim)">/ &nbsp;&nbsp;&nbsp;&nbsp; \\ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; / &nbsp;&nbsp;&nbsp;&nbsp; \\</div>
           <div>
-            <span style="display:inline-block;padding:4px 8px;border-radius:50%;background:#1a1922;border:1px solid var(--line);color:#4fd18b">1</span>
+            <span style="${getNodeStyle(1)}">1</span>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span style="display:inline-block;padding:4px 8px;border-radius:50%;background:#1a1922;border:1px solid var(--line);color:#4fd18b">3</span>
+            <span style="${getNodeStyle(3)}">3</span>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span style="display:inline-block;padding:4px 8px;border-radius:50%;background:#1a1922;border:1px solid var(--line);color:#4fd18b">5</span>
+            <span style="${getNodeStyle(5)}">5</span>
             &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-            <span style="display:inline-block;padding:4px 8px;border-radius:50%;background:#1a1922;border:1px solid var(--line);color:#4fd18b">7</span>
+            <span style="${getNodeStyle(7)}">7</span>
           </div>
         </div>
       `;
     };
 
     document.getElementById("btnTreeInsert").onclick = () => {
+      if (animTimer) clearInterval(animTimer);
       const v = parseInt(valInp.value, 10);
-      out.innerHTML = `Вставка ${v}: спускаемся от корня 4 &rarr; ${v < 4 ? 'Left' : 'Right'} &rarr; узел добавлен! ✓`;
+      if (isNaN(v)) return;
+
+      const path = [4];
+      if (v < 4) {
+        path.push(2);
+        if (v < 2) path.push(1);
+        else if (v > 2) path.push(3);
+      } else if (v > 4) {
+        path.push(6);
+        if (v < 6) path.push(5);
+        else if (v > 6) path.push(7);
+      }
+
+      let step = 0;
+      renderTree(path[0], "#f59e0b");
+      out.innerHTML = isKZ
+        ? `Түбірден (Root 4) бастаймыз: ${v} мәнін салыстыру...`
+        : `Начинаем с корня (Root 4): сравниваем значение ${v}...`;
+
+      animTimer = setInterval(() => {
+        step++;
+        if (step < path.length) {
+          const curr = path[step];
+          renderTree(curr, "#f59e0b");
+          const dir = v < path[step - 1] ? (isKZ ? "Солға (Left)" : "Влево (Left)") : (isKZ ? "Оңға (Right)" : "Вправо (Right)");
+          out.innerHTML = isKZ
+            ? `${v} ${v < path[step - 1] ? '<' : '>'} ${path[step - 1]} ➔ ${dir} тармағына түсеміз ➔ Түйін ${curr}`
+            : `${v} ${v < path[step - 1] ? '<' : '>'} ${path[step - 1]} ➔ Идём ${dir} ➔ Узел ${curr}`;
+        } else {
+          clearInterval(animTimer);
+          const finalDir = v < path[path.length - 1] ? (isKZ ? "сол" : "левым") : (isKZ ? "оң" : "правым");
+          out.innerHTML = isKZ
+            ? `<b>Нәтиже:</b> ${v} саны ағашқа <b>${path[path.length - 1]}</b> түйінінің ${finalDir} жапырағы ретінде сәтті қосылды! ✓`
+            : `<b>Результат:</b> число ${v} успешно вставлено как ${finalDir} потомок узла <b>${path[path.length - 1]}</b>! ✓`;
+          renderTree(path[path.length - 1], "var(--ok)");
+        }
+      }, 700);
     };
 
     document.getElementById("btnTreeInorder").onclick = () => {
-      out.innerHTML = `Симметричный обход Inorder: <b>1, 2, 3, 4, 5, 6, 7</b> (автоматическая сортировка за $O(N)$) 🎉`;
+      if (animTimer) clearInterval(animTimer);
+      const inorderOrder = [1, 2, 3, 4, 5, 6, 7];
+      const visited = [];
+      let idx = 0;
+
+      out.innerHTML = isKZ
+        ? `<b>Inorder аралау басталды:</b> Сол жақ ➔ Түбір ➔ Оң жақ...`
+        : `<b>Запущен Inorder обход:</b> Левое поддерево ➔ Корень ➔ Правое поддерево...`;
+
+      animTimer = setInterval(() => {
+        if (idx < inorderOrder.length) {
+          const current = inorderOrder[idx];
+          visited.push(current);
+          renderTree(current, "var(--accent)");
+          out.innerHTML = (isKZ ? `Inorder аралау қадамы: ` : `Шаг обхода Inorder: `) +
+            `<b>${visited.join(" ➔ ")}</b>` +
+            ` <span style="color:var(--dim);font-size:11px">(${isKZ ? "қазір тексерілуде: " : "посещён узел: "}${current})</span>`;
+          idx++;
+        } else {
+          clearInterval(animTimer);
+          out.innerHTML = (isKZ
+            ? `🎉 <b>Дайын!</b> Inorder реттілігі: <b>${visited.join(", ")}</b> (ағаш деректері автоматты түрде O(N) уақытта өсу ретімен сұрыпталды)`
+            : `🎉 <b>Готово!</b> Порядок Inorder: <b>${visited.join(", ")}</b> (данные автоматически отсортированы по возрастанию за O(N))`);
+          renderTree(null);
+        }
+      }, 550);
     };
 
     document.getElementById("btnTreeReset").onclick = () => {
+      if (animTimer) clearInterval(animTimer);
       renderTree();
       out.textContent = "";
     };
@@ -4515,7 +4791,7 @@ ${F}
     if (!el) return;
     const isKZ = (window.getLang && window.getLang()) === "kz";
 
-    const puzzle = [
+    const PUZZLE_RAID = [
       [5, 3, 0, 0, 7, 0, 0, 0, 0],
       [6, 0, 0, 1, 9, 5, 0, 0, 0],
       [0, 9, 8, 0, 0, 0, 0, 6, 0],
@@ -4527,28 +4803,109 @@ ${F}
       [0, 0, 0, 0, 8, 0, 0, 7, 9]
     ];
 
+    const PUZZLE_EASY = [
+      [5, 3, 4, 0, 7, 0, 9, 1, 2],
+      [6, 0, 0, 1, 9, 5, 3, 4, 8],
+      [0, 9, 8, 3, 4, 2, 5, 6, 7],
+      [8, 0, 9, 7, 6, 1, 4, 2, 3],
+      [4, 0, 0, 8, 5, 3, 7, 9, 1],
+      [7, 0, 3, 9, 2, 4, 8, 5, 6],
+      [0, 6, 1, 5, 3, 7, 2, 8, 4],
+      [2, 0, 0, 4, 1, 9, 6, 3, 5],
+      [0, 0, 0, 2, 8, 6, 1, 7, 9]
+    ];
+
+    let currentPreset = PUZZLE_RAID;
+    let initialBoard = currentPreset.map(r => [...r]);
+    let board = currentPreset.map(r => [...r]);
+
+    // Backtracking State Machine
+    let emptyCells = [];
+    let curIdx = 0;
+    let curDigit = 1;
+    let stepsCount = 0;
+    let backtracksCount = 0;
+    let isRunning = false;
+    let speedMs = 120; // 0.5x = 500, 1x = 120, 5x = 25, turbo = 1
+    let animTimer = null;
+    let activeHighlight = null; // { r, c, d, status: 'testing'|'placed'|'conflict'|'backtrack', confR, confC }
+
+    const initEmptyCells = () => {
+      emptyCells = [];
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (initialBoard[r][c] === 0) emptyCells.push({ r, c });
+        }
+      }
+      curIdx = 0;
+      curDigit = 1;
+      stepsCount = 0;
+      backtracksCount = 0;
+      activeHighlight = null;
+    };
+
     el.innerHTML = `
       <div class="quad-widget">
-        <div class="qw-header">
+        <div class="qw-header" style="flex-wrap:wrap;gap:10px">
           <div>
-            <div class="qw-title">🧩 ${isKZ ? "Судоку Солвер (01 Edu Raid 02: Backtracking)" : "Судоку Солвер и Backtracking (01 Edu Raid 02)"}</div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px">${isKZ ? "Жол, баған және 3х3 шаршы ережелері бойынша рекурсивті іздеу" : "Рекурсивный поиск с возвратом: отсечение неверных ходов за микросекунды"}</div>
+            <div class="qw-title">🧩 ${isKZ ? "Судоку Солвер және Backtracking (01 Edu Raid 02)" : "Судоку Солвер и Backtracking (01 Edu Raid 02)"}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${isKZ ? "Рекурсивті іздеу: жол, баған және 3х3 блок ережелері бойынша қадамдық визуалдау" : "Пошаговый визуализатор рекурсии с возвратом: отсечение неверных ходов"}</div>
           </div>
-          <div class="qw-controls">
-            <button class="btn small on" id="btnSolveSudoku">▶ Solve Sudoku</button>
-            <button class="btn ghost small" id="btnResetSudoku">Reset</button>
+          <div class="qw-controls" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <button class="btn small on" id="btnToggleSudoku">▶ ${isKZ ? "Іске қосу" : "Запустить"}</button>
+            <button class="btn small" id="btnStepSudoku">⏭ ${isKZ ? "1 қадам" : "1 шаг"}</button>
+            <button class="btn ghost small" id="btnFastSudoku">⚡ ${isKZ ? "Мгновенно" : "Мгновенно"}</button>
+            <button class="btn ghost small" id="btnResetSudoku">↺ ${isKZ ? "Қалпына келтіру" : "Сброс"}</button>
           </div>
         </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;justify-content:center">
-          <div id="sudokuGridArea" style="display:grid;grid-template-columns:repeat(9, 32px);gap:2px;background:#2a2833;padding:4px;border-radius:4px"></div>
-          <div style="flex:1;min-width:240px;background:#141318;border:1px solid var(--line);border-radius:4px;padding:14px;font:13px var(--mono)" id="sudokuStatusArea">
-            <div style="color:var(--accent);font-weight:700">3 правила валидности:</div>
-            <ul style="margin:6px 0;padding-left:18px;color:var(--muted);line-height:1.6">
-              <li>Нет дубликатов в строке</li>
-              <li>Нет дубликатов в столбце</li>
-              <li>Нет дубликатов в квадрате 3х3</li>
+
+        <!-- Скорость и пресеты -->
+        <div style="display:flex;gap:12px;align-items:center;margin:12px 0 16px;flex-wrap:wrap;background:#141318;padding:10px 14px;border-radius:6px;border:1px solid var(--line);font-size:12.5px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="color:var(--muted);font-weight:600">${isKZ ? "Жылдамдық:" : "Скорость:"}</span>
+            <button class="btn ghost small s-spd" data-spd="500">0.5x (${isKZ ? "Баяу" : "Медленно"})</button>
+            <button class="btn small on s-spd" data-spd="120">1x (${isKZ ? "Қалыпты" : "Нормально"})</button>
+            <button class="btn ghost small s-spd" data-spd="25">5x (${isKZ ? "Жылдам" : "Быстро"})</button>
+            <button class="btn ghost small s-spd" data-spd="1">20x (${isKZ ? "Турбо" : "Турбо"})</button>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+            <span style="color:var(--muted);font-weight:600">${isKZ ? "Пазл:" : "Пазл:"}</span>
+            <select id="sudokuPresetSel" style="background:#0d0c10;border:1px solid var(--line);border-radius:4px;color:#fff;padding:4px 8px;font:12.5px var(--sans)">
+              <option value="raid02">01 Edu Raid 02 (Толық / Полный)</option>
+              <option value="easy">Демо-жаттығу (15 бос ұяшық / Обучающий)</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+          <!-- 9x9 Grid -->
+          <div id="sudokuGridArea" style="display:grid;grid-template-columns:repeat(9, 36px);background:#22202c;padding:6px;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,0.4)"></div>
+
+          <!-- Status & Log Dashboard -->
+          <div style="flex:1;min-width:280px;background:#141318;border:1px solid var(--line);border-radius:6px;padding:16px;font:13px var(--mono)">
+            <!-- Counters -->
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <div style="background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:10px;text-align:center">
+                <div style="font-size:11px;color:var(--dim);margin-bottom:4px">${isKZ ? "Қадамдар саны" : "Проверено ходов"}</div>
+                <div style="font:700 20px var(--mono);color:var(--accent-l)" id="sudokuStepsCount">0</div>
+              </div>
+              <div style="background:#0d0c10;border:1px solid var(--line);border-radius:4px;padding:10px;text-align:center">
+                <div style="font-size:11px;color:var(--dim);margin-bottom:4px">${isKZ ? "Кері шегінулер (Backtracks)" : "Откатов назад (Backtracks)"}</div>
+                <div style="font:700 20px var(--mono);color:#f59e0b" id="sudokuBacktracksCount">0</div>
+              </div>
+            </div>
+
+            <div style="color:var(--accent);font-weight:700;font-size:13px;margin-bottom:6px">${isKZ ? "3 негізгі ереже (Валидация):" : "3 правила валидности:"}</div>
+            <ul style="margin:4px 0 12px;padding-left:18px;color:var(--muted);font-size:12.5px;line-height:1.6">
+              <li>${isKZ ? "Қатарда қайталанбау (строка)" : "Нет дубликатов в строке"}</li>
+              <li>${isKZ ? "Бағанда қайталанбау (столбец)" : "Нет дубликатов в столбце"}</li>
+              <li>${isKZ ? "3х3 блогында қайталанбау" : "Нет дубликатов в квадрате 3х3"}</li>
             </ul>
-            <div style="margin-top:10px;color:var(--ok)" id="sudokuLog">Готово к решению.</div>
+
+            <div style="border-top:1px solid var(--line);padding-top:12px">
+              <div style="font-size:11px;color:var(--dim);margin-bottom:4px;text-transform:uppercase">${isKZ ? "Ағымдағы қадам логы:" : "Текущее действие:"}</div>
+              <div id="sudokuLog" style="font-size:13px;line-height:1.55;color:var(--ok);min-height:54px">${isKZ ? "Шешуге дайын. «Іске қосу» немесе «1 қадам» басыңыз." : "Готово к запуску. Нажмите «Запустить» или «1 шаг»."}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -4556,47 +4913,274 @@ ${F}
 
     const grid = document.getElementById("sudokuGridArea");
     const log = document.getElementById("sudokuLog");
+    const stepsCountEl = document.getElementById("sudokuStepsCount");
+    const backtracksCountEl = document.getElementById("sudokuBacktracksCount");
+    const toggleBtn = document.getElementById("btnToggleSudoku");
+    const stepBtn = document.getElementById("btnStepSudoku");
+    const fastBtn = document.getElementById("btnFastSudoku");
+    const resetBtn = document.getElementById("btnResetSudoku");
+    const presetSel = document.getElementById("sudokuPresetSel");
 
-    const renderGrid = (board) => {
+    const isValid = (b, r, c, d) => {
+      // Check row
+      for (let i = 0; i < 9; i++) {
+        if (i !== c && b[r][i] === d) return { ok: false, reason: "row", r, c: i };
+      }
+      // Check column
+      for (let i = 0; i < 9; i++) {
+        if (i !== r && b[i][c] === d) return { ok: false, reason: "col", r: i, c };
+      }
+      // Check 3x3 box
+      const br = Math.floor(r / 3) * 3, bc = Math.floor(c / 3) * 3;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          const nr = br + i, nc = bc + j;
+          if ((nr !== r || nc !== c) && b[nr][nc] === d) {
+            return { ok: false, reason: "box", r: nr, c: nc };
+          }
+        }
+      }
+      return { ok: true };
+    };
+
+    const renderGrid = () => {
       let html = "";
       for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
           const val = board[r][c];
-          const isFixed = puzzle[r][c] !== 0;
-          const bg = isFixed ? "#1a1922" : "rgba(153,105,255,0.15)";
-          const col = isFixed ? "#fff" : "var(--ok)";
+          const isFixed = initialBoard[r][c] !== 0;
+
+          // 3x3 block borders
+          const borderRight = (c === 2 || c === 5) ? "3px solid var(--accent)" : "1px solid rgba(255,255,255,0.06)";
+          const borderBottom = (r === 2 || r === 5) ? "3px solid var(--accent)" : "1px solid rgba(255,255,255,0.06)";
+
+          let bg = isFixed ? "#17151f" : "rgba(255,255,255,0.03)";
+          let col = isFixed ? "#ffffff" : "var(--accent-l)";
+          let extraStyle = "";
+
+          // Active guide highlighting
+          if (activeHighlight) {
+            const isCur = (activeHighlight.r === r && activeHighlight.c === c);
+            const isConflict = (activeHighlight.confR === r && activeHighlight.confC === c);
+            const inRow = (activeHighlight.r === r);
+            const inCol = (activeHighlight.c === c);
+            const inBox = (Math.floor(activeHighlight.r / 3) === Math.floor(r / 3) && Math.floor(activeHighlight.c / 3) === Math.floor(c / 3));
+
+            if (isCur) {
+              if (activeHighlight.status === "conflict") {
+                bg = "rgba(255, 77, 79, 0.4)";
+                extraStyle = "outline: 2px solid #ff4d4f; z-index: 2;";
+              } else if (activeHighlight.status === "placed") {
+                bg = "rgba(79, 209, 139, 0.4)";
+                col = "var(--ok)";
+                extraStyle = "outline: 2px solid var(--ok); z-index: 2;";
+              } else if (activeHighlight.status === "backtrack") {
+                bg = "rgba(245, 158, 11, 0.35)";
+                extraStyle = "outline: 2px dashed #f59e0b; z-index: 2;";
+              } else {
+                bg = "rgba(153, 105, 255, 0.35)";
+                extraStyle = "outline: 2px solid var(--accent-l); z-index: 2;";
+              }
+            } else if (isConflict) {
+              bg = "rgba(255, 77, 79, 0.55)";
+              col = "#fff";
+              extraStyle = "outline: 2px solid #ff4d4f; animation: pulse 0.4s infinite;";
+            } else if (inRow || inCol || inBox) {
+              bg = isFixed ? "#1f1d2a" : "rgba(153, 105, 255, 0.08)";
+            }
+          }
+
           html += `
-            <div style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:${bg};font:700 14px var(--mono);color:${col};border-radius:2px">
+            <div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:${bg};font:700 15px var(--mono);color:${col};border-right:${borderRight};border-bottom:${borderBottom};border-radius:2px;box-sizing:border-box;transition:background .08s;${extraStyle}">
               ${val === 0 ? "" : val}
             </div>
           `;
         }
       }
       grid.innerHTML = html;
+      stepsCountEl.textContent = stepsCount;
+      backtracksCountEl.textContent = backtracksCount;
     };
 
-    document.getElementById("btnSolveSudoku").onclick = () => {
-      const solved = [
-        [5, 3, 4, 6, 7, 8, 9, 1, 2],
-        [6, 7, 2, 1, 9, 5, 3, 4, 8],
-        [1, 9, 8, 3, 4, 2, 5, 6, 7],
-        [8, 5, 9, 7, 6, 1, 4, 2, 3],
-        [4, 2, 6, 8, 5, 3, 7, 9, 1],
-        [7, 1, 3, 9, 2, 4, 8, 5, 6],
-        [9, 6, 1, 5, 3, 7, 2, 8, 4],
-        [2, 8, 7, 4, 1, 9, 6, 3, 5],
-        [3, 4, 5, 2, 8, 6, 1, 7, 9]
-      ];
-      renderGrid(solved);
-      log.textContent = "Судоку решено алгоритмом Backtracking! Все 81 клеток валидны. ✓";
+    const doOneStep = () => {
+      if (curIdx >= emptyCells.length) {
+        isRunning = false;
+        clearInterval(animTimer);
+        toggleBtn.textContent = `▶ ${isKZ ? "Басынан бастау" : "Решено!"}`;
+        toggleBtn.classList.remove("on");
+        log.innerHTML = `<b style="color:var(--ok)">🎉 ${isKZ ? "Судоку толық шешілді!" : "Судоку полностью решено!"}</b><br>${isKZ ? `Барлығы ${stepsCount} тексеру қадамы және ${backtracksCount} кері шегіну орындалды.` : `Алгоритм успешно проверил ${stepsCount} шагов с ${backtracksCount} откатами (Backtracks).`}`;
+        activeHighlight = null;
+        renderGrid();
+        return true;
+      }
+
+      if (curIdx < 0) {
+        isRunning = false;
+        clearInterval(animTimer);
+        toggleBtn.textContent = `▶ ${isKZ ? "Іске қосу" : "Запустить"}`;
+        log.innerHTML = `<b style="color:#ff4d4f">❌ ${isKZ ? "Судокудың шешімі жоқ!" : "Судоку не имеет решений!"}</b>`;
+        activeHighlight = null;
+        renderGrid();
+        return true;
+      }
+
+      stepsCount++;
+      const { r, c } = emptyCells[curIdx];
+
+      if (curDigit > 9) {
+        // BACKTRACK!
+        board[r][c] = 0;
+        backtracksCount++;
+        activeHighlight = { r, c, d: 0, status: "backtrack" };
+        log.innerHTML = isKZ
+          ? `↩️ <b>Кері шегіну (Backtrack):</b> (${r + 1}, ${c + 1}) ұяшығы үшін 1–9 сандарының ешқайсысы келмеді. Ұяшықты тазартып, алдыңғы ұяшыққа ораламыз.`
+          : `↩️ <b>Откат (Backtrack):</b> В клетке (${r + 1}, ${c + 1}) ни одна цифра 1-9 не подошла. Стираем клетку и возвращаемся назад!`;
+
+        curIdx--;
+        if (curIdx >= 0) {
+          const prev = emptyCells[curIdx];
+          curDigit = board[prev.r][prev.c] + 1;
+        }
+        renderGrid();
+        return false;
+      }
+
+      const check = isValid(board, r, c, curDigit);
+      if (check.ok) {
+        board[r][c] = curDigit;
+        activeHighlight = { r, c, d: curDigit, status: "placed" };
+        log.innerHTML = isKZ
+          ? `✓ <b>Дұрыс қадам:</b> (${r + 1}, ${c + 1}) ұяшығына <b>${curDigit}</b> саны сәйкес келді! Енді келесі ұяшыққа көшеміз.`
+          : `✓ <b>Валидный ход:</b> Ставим цифру <b>${curDigit}</b> в клетку (${r + 1}, ${c + 1})! Конфликтов нет, идём дальше.`;
+
+        curIdx++;
+        curDigit = 1;
+        renderGrid();
+        return false;
+      } else {
+        // Conflict!
+        activeHighlight = { r, c, d: curDigit, status: "conflict", confR: check.r, confC: check.c };
+        const reasonText = check.reason === "row" 
+          ? (isKZ ? `${r + 1}-қатарда` : `строке ${r + 1}`) 
+          : check.reason === "col" 
+          ? (isKZ ? `${c + 1}-бағанда` : `столбце ${c + 1}`) 
+          : (isKZ ? "3х3 блогында" : "квадрате 3х3");
+
+        log.innerHTML = isKZ
+          ? `⚠️ <b>Қақтығыс:</b> (${r + 1}, ${c + 1}) ұяшығына <b>${curDigit}</b> санын қоюға болмайды — ол ${reasonText} қайталанып тұр!`
+          : `⚠️ <b>Конфликт:</b> Цифра <b>${curDigit}</b> не подходит для (${r + 1}, ${c + 1}) — дубликат в ${reasonText}! Пробуем дальше...`;
+
+        curDigit++;
+        renderGrid();
+        return false;
+      }
     };
 
-    document.getElementById("btnResetSudoku").onclick = () => {
-      renderGrid(puzzle);
-      log.textContent = "Исходная доска.";
+    const runLoop = () => {
+      clearInterval(animTimer);
+      if (!isRunning) return;
+
+      const batchSize = speedMs === 1 ? 40 : speedMs <= 25 ? 6 : 1;
+      animTimer = setInterval(() => {
+        for (let b = 0; b < batchSize; b++) {
+          const isDone = doOneStep();
+          if (isDone) return;
+        }
+      }, Math.max(10, speedMs));
     };
 
-    renderGrid(puzzle);
+    const toggleRun = () => {
+      if (isRunning) {
+        // Pause
+        isRunning = false;
+        clearInterval(animTimer);
+        toggleBtn.textContent = `▶ ${isKZ ? "Жалғастыру" : "Продолжить"}`;
+        toggleBtn.className = "btn small on";
+        log.innerHTML = isKZ ? "⏸ <b>Кідіртілді (Пауза).</b> Қадамдарды көру үшін «1 қадам» немесе жалғастыру үшін «Іске қосу» басыңыз." : "⏸ <b>Пауза.</b> Нажмите «1 шаг» для ручной проверки или «Продолжить».";
+      } else {
+        // Start / Resume
+        if (curIdx >= emptyCells.length) {
+          // Reset if already solved
+          resetBoard();
+        }
+        isRunning = true;
+        toggleBtn.textContent = `⏸ ${isKZ ? "Кідірту (Пауза)" : "Пауза"}`;
+        toggleBtn.className = "btn small";
+        runLoop();
+      }
+    };
+
+    const resetBoard = () => {
+      isRunning = false;
+      clearInterval(animTimer);
+      board = initialBoard.map(r => [...r]);
+      initEmptyCells();
+      toggleBtn.textContent = `▶ ${isKZ ? "Іске қосу" : "Запустить"}`;
+      toggleBtn.className = "btn small on";
+      log.textContent = isKZ ? "Тақта бастапқы күйге келтірілді." : "Доска сброшена к исходному состоянию.";
+      renderGrid();
+    };
+
+    const solveInstant = () => {
+      isRunning = false;
+      clearInterval(animTimer);
+      const b = initialBoard.map(r => [...r]);
+
+      function solveRec(r = 0, c = 0) {
+        if (r === 9) return true;
+        if (c === 9) return solveRec(r + 1, 0);
+        if (b[r][c] !== 0) return solveRec(r, c + 1);
+        for (let d = 1; d <= 9; d++) {
+          if (isValid(b, r, c, d).ok) {
+            b[r][c] = d;
+            if (solveRec(r, c + 1)) return true;
+            b[r][c] = 0;
+          }
+        }
+        return false;
+      }
+
+      solveRec();
+      board = b;
+      curIdx = emptyCells.length;
+      activeHighlight = null;
+      toggleBtn.textContent = `▶ ${isKZ ? "Басынан бастау" : "Решено!"}`;
+      log.innerHTML = `<b style="color:var(--ok)">⚡ ${isKZ ? "Судоку алгоритммен лезде шешілді!" : "Судоку решено мгновенно!"}</b>`;
+      renderGrid();
+    };
+
+    // Event listeners
+    toggleBtn.onclick = toggleRun;
+    stepBtn.onclick = () => {
+      if (isRunning) {
+        isRunning = false;
+        clearInterval(animTimer);
+        toggleBtn.textContent = `▶ ${isKZ ? "Жалғастыру" : "Продолжить"}`;
+      }
+      doOneStep();
+    };
+    fastBtn.onclick = solveInstant;
+    resetBtn.onclick = resetBoard;
+
+    presetSel.onchange = e => {
+      currentPreset = e.target.value === "easy" ? PUZZLE_EASY : PUZZLE_RAID;
+      initialBoard = currentPreset.map(r => [...r]);
+      resetBoard();
+    };
+
+    document.querySelectorAll(".s-spd").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".s-spd").forEach(b => {
+          b.className = "btn ghost small s-spd";
+        });
+        btn.className = "btn small on s-spd";
+        speedMs = parseInt(btn.dataset.spd, 10);
+        if (isRunning) runLoop();
+      };
+    });
+
+    initEmptyCells();
+    renderGrid();
   }
 
   // Export

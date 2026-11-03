@@ -141,14 +141,20 @@
       <div class="quad-widget">
         <div class="qw-header">
           <div class="qw-title">🔁 ${isKZ ? "for циклі мен есептегіштің қадамдық жаттықтырғышы" : "Пошаговый тренажёр цикла for: for i := 0; i < N; i++"}</div>
-          <div class="qw-controls">
-            <label>${isKZ ? "Итерация саны N:" : "Число итераций N:"} <b id="forNval">5</b> <input type="range" id="forN" min="1" max="8" value="5" style="width:90px;accent-color:var(--accent)"></label>
-            <button class="btn small on" id="forStep">${isKZ ? "Алға қадам →" : "Шаг вперёд →"}</button>
-            <button class="btn small" id="forAuto">${isKZ ? "▶ Авто-өткізу" : "▶ Авто-прогон"}</button>
-            <button class="btn ghost small" id="forReset">${isKZ ? "Қалпына келтіру" : "Сброс"}</button>
+          <div class="qw-controls" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <label>${isKZ ? "Итерация саны N:" : "Число итераций N:"} <b id="forNval">5</b> <input type="range" id="forN" min="1" max="8" value="5" style="width:70px;accent-color:var(--accent)"></label>
+            <button class="btn small on" id="forAuto">▶ ${isKZ ? "Авто-өткізу" : "Авто-прогон"}</button>
+            <button class="btn small" id="forStep">⏭ ${isKZ ? "1 қадам" : "1 шаг"}</button>
+            <button class="btn ghost small" id="forReset">↺ ${isKZ ? "Қалпына келтіру" : "Сброс"}</button>
           </div>
         </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px">
+        <div style="display:flex;gap:8px;align-items:center;margin:8px 0 12px;background:#141318;padding:6px 12px;border-radius:4px;border:1px solid var(--line);font-size:12px">
+          <span style="color:var(--muted);font-weight:600">${isKZ ? "Жылдамдық:" : "Скорость:"}</span>
+          <button class="btn ghost small for-spd" data-spd="800">0.5x</button>
+          <button class="btn small on for-spd" data-spd="350">1x</button>
+          <button class="btn ghost small for-spd" data-spd="100">3x</button>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:10px">
           <div style="flex:1;min-width:280px;background:#141318;border:1px solid var(--line);border-radius:4px;padding:14px;font:13px var(--mono)" id="forCodeBox"></div>
           <div style="flex:1;min-width:240px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:4px;padding:14px" id="forStateBox"></div>
         </div>
@@ -159,12 +165,16 @@
     const nVal = document.getElementById("forNval");
     const codeBox = document.getElementById("forCodeBox");
     const stateBox = document.getElementById("forStateBox");
+    const autoBtn = document.getElementById("forAuto");
+    const stepBtn = document.getElementById("forStep");
 
     let n = 5;
     let i = 0;
     let sum = 0;
     let stage = "init"; // "init", "check", "body", "post", "done"
     let timer = null;
+    let isAutoRunning = false;
+    let speedMs = 350;
 
     const render = () => {
       nVal.textContent = n;
@@ -217,26 +227,61 @@
       render();
     };
 
-    nInp.oninput = e => {
-      n = +e.target.value;
-      i = 0; sum = 0; stage = "init";
+    const pauseForAuto = () => {
+      isAutoRunning = false;
       clearInterval(timer);
-      render();
+      autoBtn.textContent = `▶ ${isKZ ? "Авто-өткізу" : "Авто-прогон"}`;
+      autoBtn.className = "btn small on";
     };
 
-    document.getElementById("forStep").onclick = () => { clearInterval(timer); stepForward(); };
-    document.getElementById("forReset").onclick = () => {
-      clearInterval(timer);
-      i = 0; sum = 0; stage = "init";
-      render();
-    };
-    document.getElementById("forAuto").onclick = () => {
+    const startForAuto = () => {
+      if (stage === "done") {
+        i = 0; sum = 0; stage = "init";
+        render();
+      }
+      isAutoRunning = true;
+      autoBtn.textContent = `⏸ ${isKZ ? "Кідірту (Пауза)" : "Пауза"}`;
+      autoBtn.className = "btn small";
       clearInterval(timer);
       timer = setInterval(() => {
         stepForward();
-        if (stage === "done") clearInterval(timer);
-      }, 350);
+        if (stage === "done") {
+          pauseForAuto();
+        }
+      }, speedMs);
     };
+
+    nInp.oninput = e => {
+      n = +e.target.value;
+      i = 0; sum = 0; stage = "init";
+      pauseForAuto();
+      render();
+    };
+
+    stepBtn.onclick = () => {
+      pauseForAuto();
+      stepForward();
+    };
+
+    document.getElementById("forReset").onclick = () => {
+      pauseForAuto();
+      i = 0; sum = 0; stage = "init";
+      render();
+    };
+
+    autoBtn.onclick = () => {
+      if (isAutoRunning) pauseForAuto();
+      else startForAuto();
+    };
+
+    document.querySelectorAll(".for-spd").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".for-spd").forEach(b => b.className = "btn ghost small for-spd");
+        btn.className = "btn small on for-spd";
+        speedMs = parseInt(btn.dataset.spd, 10);
+        if (isAutoRunning) startForAuto();
+      };
+    });
 
     render();
   }
