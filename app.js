@@ -484,8 +484,8 @@ function viewDashboard(u) {
 
   const tracks = [
     { id: "base", title: isKZ ? "💡 Go негіздері (0–13 тақырыптар)" : "💡 Основы Go (Темы 0–13)", topics: TOPICS.filter(t => t.id >= 0 && t.id <= 13) },
-    { id: "piscine", title: isKZ ? "🏊 01 Edu Piscine (Алгоритмдер, Quad, Нұсқағыштар, Рекурсия)" : "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)", topics: TOPICS.filter(t => t.track === "piscine" || (t.id >= 14 && t.id <= 19)) },
-    { id: "backend", title: isKZ ? "🚀 Backend, Желі және Деректер қоры (20–24 тақырыптар)" : "🚀 Backend, Сеть и Базы данных (Темы 20–24)", topics: TOPICS.filter(t => t.track === "backend" || (t.id >= 20 && t.id <= 24)) },
+    { id: "piscine", title: isKZ ? "🏊 01 Edu Piscine (Алгоритмдер, Quad, Нұсқағыштар, Рекурсия)" : "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)", topics: TOPICS.filter(t => t.track === "piscine" || (t.id >= 14 && t.id <= 25)) },
+    { id: "backend", title: isKZ ? "🚀 Backend, Желі және Деректер қоры (26–30 тақырыптар)" : "🚀 Backend, Сеть и Базы данных (Темы 26–30)", topics: TOPICS.filter(t => t.track === "backend" || (t.id >= 26 && t.id <= 30)) },
   ];
 
   const renderTopicCard = t => {

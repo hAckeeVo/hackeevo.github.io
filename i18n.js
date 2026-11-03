@@ -26,7 +26,7 @@
       tracks: {
         base: "💡 Основы Go (Темы 0–13)",
         piscine: "🏊 01 Edu Piscine (Алгоритмы, Quad, Указатели, Рекурсия)",
-        backend: "🚀 Backend, Сеть и Базы данных (Темы 20–24)"
+        backend: "🚀 Backend, Сеть и Базы данных (Темы 26–30)"
       },
       topicPassed: "пройдена",
       topicLocked: "закрыта",
@@ -187,7 +187,7 @@
       tracks: {
         base: "💡 Go негіздері (0–13 тақырыптар)",
         piscine: "🏊 01 Edu Piscine (Алгоритмдер, Quad, Нұсқағыштар, Рекурсия)",
-        backend: "🚀 Backend, Желі және Деректер қоры (20–24 тақырыптар)"
+        backend: "🚀 Backend, Желі және Деректер қоры (26–30 тақырыптар)"
       },
       topicPassed: "өтті",
       topicLocked: "жабық",
