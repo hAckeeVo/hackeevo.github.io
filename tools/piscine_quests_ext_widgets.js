@@ -348,3 +348,4 @@
   window.initTreeViz = initTreeViz;
   window.initSudokuViz = initSudokuViz;
 })();
+

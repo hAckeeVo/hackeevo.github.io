@@ -36,7 +36,7 @@ const topicComplete = (t, done) => topicDone(t, done) && (!t.quiz || !!done["q" 
 const topicXp = (t, done) => t.tasks.reduce((s, k) => s + xpFor(k, done[k.id]), 0) + (done["q" + t.id] ? XP_QUIZ : 0) + (done["parsons_" + t.id] ? XP_PARSONS : 0) + (done["bughunt_" + t.id] ? XP_BUGHUNT : 0);
 
 // ---------- блокировки и промокоды ----------
-const PROMO_CODES = ["01EDU", "PISCINE", "MENTOR", "HACKEEVO", "2026", "FREE"];
+const PROMO_CODES = ["1465", "01EDU", "PISCINE", "MENTOR", "HACKEEVO", "2026", "FREE"];
 const isUnlocked = () => store.get("promoUnlocked", false);
 
 // тема открыта, если предыдущая пройдена целиком ИЛИ активирован промокод
@@ -283,10 +283,9 @@ function chrome(crumbHtml) {
     lt.textContent = lang === "ru" ? "KZ" : "RU";
     lt.onclick = () => { if (window.toggleLang) window.toggleLang(); };
   }
-  const nArena = $("#navArena"), nSetup = $("#navSetup"), nAdmin = $("#navAdmin");
+  const nArena = $("#navArena"), nSetup = $("#navSetup");
   if (nArena) nArena.textContent = lang === "kz" ? "Арена" : "Арена";
   if (nSetup) nSetup.textContent = lang === "kz" ? "Баптау" : "Setup";
-  if (nAdmin) nAdmin.textContent = lang === "kz" ? "Админ" : "Админ";
   if ($("#logout")) $("#logout").textContent = lang === "kz" ? "шығу" : "выйти";
 
   if (u) {
@@ -519,14 +518,7 @@ function viewDashboard(u) {
           <p class="sub">${TOPICS.length} ${isKZ ? "тақырып" : "тем"} · ${tasks.length} ${isKZ ? "тапсырма" : "задач"} · ${isKZ ? "орындалғаны" : "выполнено"} ${nDone} (${pct}%)</p>
         </div>
         <div class="unlock-bar">
-          ${unlocked
-            ? `<span>${isKZ ? "🔓 Барлық тақырыптар ашық" : "🔓 Все темы открыты"}</span><button class="btn ghost small" id="relockBtn">${isKZ ? "Құлыптарды қосу" : "Включить замки обратно"}</button>`
-            : `<button class="btn ghost small" id="unlockBtn">${isKZ ? "Барлық тақырыптарды ашу" : "Разблокировать все темы"}</button>
-               <form id="promoForm" style="display:none" class="promo-inline">
-                 <input id="promoInput" placeholder="${isKZ ? "Промокодты енгізіңіз" : "Введите промокод"}" autocomplete="off">
-                 <button class="btn small" type="submit">ОК</button>
-                 <button class="btn ghost small" type="button" id="cancelPromo">✕</button>
-               </form>`}
+          ${unlocked ? `<span style="font-size:12px;color:var(--dim);background:#1a1922;padding:4px 10px;border-radius:4px;border:1px solid var(--line)">🔓 ${isKZ ? "Барлық тақырыптар ашық" : "Все темы открыты"}</span><button class="btn ghost small" id="relockBtn" style="margin-left:6px">${isKZ ? "Құлыптарды қосу" : "Включить замки обратно"}</button>` : ""}
         </div>
       </div>
       <div class="progress"><i style="width:${pct}%"></i></div>
@@ -1133,9 +1125,57 @@ function viewArena(u) {
   if (window.renderArenaPage) window.renderArenaPage(app, u);
 }
 
+const ADMIN_PIN = "1465";
+
 function viewAdmin(u) {
   const isKZ = (window.getLang && window.getLang()) === "kz";
-  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <a href="#/admin">${isKZ ? "әкімші панелі" : "панель администратора"}</a>`);
+  const isAuthed = sessionStorage.getItem("gp_admin_auth") === ADMIN_PIN;
+
+  if (!isAuthed) {
+    chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <span>${isKZ ? "әкімші кіруі" : "вход администратора"}</span>`);
+    app.innerHTML = `
+      <div style="min-height:70vh;display:flex;align-items:center;justify-content:center;padding:20px">
+        <div style="max-width:380px;width:100%;background:#141318;border:1px solid rgba(153,105,255,0.3);border-radius:10px;padding:32px 28px;box-shadow:0 12px 36px rgba(0,0,0,0.5);text-align:center">
+          <div style="width:54px;height:54px;background:rgba(153,105,255,0.12);border:1px solid var(--accent);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px">🔐</div>
+          <h2 style="font-size:20px;color:#fff;margin:0 0 8px">${isKZ ? "Әкімшіге қолжетімділік" : "Панель администратора"}</h2>
+          <p style="color:var(--dim);font-size:13px;margin:0 0 24px;line-height:1.5">${isKZ ? "Бұл бөлім тек иесіне арналған. Жалғастыру үшін PIN-кодты енгізіңіз." : "Закрытый раздел управления. Введите секретный PIN-код администратора для входа."}</p>
+          <form id="adminPinForm">
+            <input type="password" id="adminPinInput" maxlength="6" autocomplete="off" autofocus placeholder="••••" style="width:100%;text-align:center;font:700 24px var(--mono);letter-spacing:8px;padding:12px;background:#0d0c10;border:1px solid var(--line);border-radius:6px;color:#fff;margin-bottom:10px;outline:none;transition:border-color .15s">
+            <div id="adminPinError" style="color:#ff6b6b;font-size:12.5px;font-weight:600;min-height:20px;margin-bottom:12px"></div>
+            <button class="btn" type="submit" style="width:100%;padding:12px;font-size:14px;font-weight:700">${isKZ ? "Кіру" : "Войти"}</button>
+          </form>
+          <div style="margin-top:18px">
+            <a href="#/" class="link" style="font-size:12.5px;color:var(--muted)">← ${isKZ ? "Басты бетке оралу" : "Вернуться на дашборд"}</a>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const form = $("#adminPinForm");
+    const input = $("#adminPinInput");
+    const err = $("#adminPinError");
+
+    form.onsubmit = (e) => {
+      e.preventDefault();
+      const val = (input.value || "").trim();
+      if (val === ADMIN_PIN) {
+        sessionStorage.setItem("gp_admin_auth", ADMIN_PIN);
+        viewAdmin(u);
+      } else {
+        err.textContent = isKZ ? "Қате PIN-код! Қолжетімділік жабық." : "Неверный PIN-код! Доступ запрещён.";
+        input.value = "";
+        input.focus();
+        input.style.borderColor = "#ff6b6b";
+        setTimeout(() => { if (input) input.style.borderColor = "var(--line)"; }, 800);
+      }
+    };
+    return;
+  }
+
+  // Once authenticated with PIN 1465:
+  chrome(`<a href="#/">${isKZ ? "басты бет" : "dashboard"}</a> / <span>${isKZ ? "әкімші панелі" : "панель администратора"}</span>`);
+
+  const unlocked = isUnlocked();
 
   app.innerHTML = `
     <div class="wrap" style="max-width:1100px;margin:0 auto;padding:24px 16px">
@@ -1144,7 +1184,26 @@ function viewAdmin(u) {
           <h1 style="font-size:24px;margin:0 0 6px;color:#fff">🛡️ ${isKZ ? "Әкімші панелі: Студенттер мен қонақтар мониторингі" : "Панель администратора: Мониторинг студентов и гостей"}</h1>
           <p style="color:var(--dim);margin:0;font-size:13.5px">${isKZ ? "Supabase бұлтындағы барлық тіркелген қолданушылар мен қонақ сессияларын бақылау" : "Отслеживание реальных пользователей, гостевых сессий и набранного опыта в облаке Supabase"}</p>
         </div>
-        <button class="btn ghost small" id="btnRefreshAdmin" style="display:inline-flex;align-items:center;gap:6px">🔄 ${isKZ ? "Деректерді жаңарту" : "Обновить данные"}</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn ghost small" id="btnRefreshAdmin" style="display:inline-flex;align-items:center;gap:6px">🔄 ${isKZ ? "Деректерді жаңарту" : "Обновить данные"}</button>
+          <button class="btn ghost small" id="btnAdminLogout" style="color:#ff6b6b;border-color:rgba(255,107,107,0.3)">🚪 ${isKZ ? "Шығу" : "Выйти"}</button>
+        </div>
+      </div>
+
+      <!-- Quick Admin Controls -->
+      <div style="background:#141318;border:1px solid var(--accent);border-radius:6px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <b style="color:var(--accent-l);font-size:14px">⚙️ ${isKZ ? "Тақырыптарды құлыптау / ашу режимі" : "Режим доступа к темам (для проверки платформы)"}</b>
+          <div style="font-size:12.5px;color:var(--dim);margin-top:2px">
+            ${isKZ ? "Ағымдағы күй:" : "Текущее состояние:"} 
+            <b style="color:${unlocked ? 'var(--ok)' : '#f59e0b'}">${unlocked ? (isKZ ? "🔓 Барлық тақырыптар ашық" : "🔓 Все темы открыты (промо-режим)") : (isKZ ? "🔒 Қалыпты режим (кезегімен ашылу)" : "🔒 Обычный режим (строго по цепочке)")}</b>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px">
+          ${unlocked
+            ? `<button class="btn small" id="btnAdminRelock">🔒 ${isKZ ? "Құлыптарды қосу" : "Включить замки"}</button>`
+            : `<button class="btn small on" id="btnAdminUnlock">🔓 ${isKZ ? "Барлық тақырыптарды ашу" : "Открыть все темы"}</button>`}
+        </div>
       </div>
 
       <div id="adminKpiArea" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:14px;margin-bottom:24px">
@@ -1170,6 +1229,30 @@ function viewAdmin(u) {
       </div>
     </div>
   `;
+
+  const btnAdminLogout = $("#btnAdminLogout");
+  if (btnAdminLogout) {
+    btnAdminLogout.onclick = () => {
+      sessionStorage.removeItem("gp_admin_auth");
+      location.hash = "#/";
+    };
+  }
+
+  const btnAdminUnlock = $("#btnAdminUnlock");
+  if (btnAdminUnlock) {
+    btnAdminUnlock.onclick = () => {
+      store.set("promoUnlocked", true);
+      viewAdmin(u);
+    };
+  }
+
+  const btnAdminRelock = $("#btnAdminRelock");
+  if (btnAdminRelock) {
+    btnAdminRelock.onclick = () => {
+      store.set("promoUnlocked", false);
+      viewAdmin(u);
+    };
+  }
 
   let adminData = null;
   let currentFilter = "all";
