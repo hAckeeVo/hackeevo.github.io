@@ -127,6 +127,12 @@ async function sbRestoreProgress(userId, username) {
   }
 }
 
+function isGuestUsername(name) {
+  if (!name) return false;
+  const s = String(name).toLowerCase();
+  return s.startsWith("[гость]") || s.startsWith("[guest]") || s.includes("(гость)") || s.includes("(guest)");
+}
+
 // --- Синхронизация решённой задачи ---
 async function sbSyncTask(taskId, xpGained, assisted) {
   const sb = getSupabase();
@@ -138,6 +144,7 @@ async function sbSyncTask(taskId, xpGained, assisted) {
 
     const userId = session.user.id;
     const u = getUser();
+    const isGuest = (window.store && window.store.get("is_guest", false)) || isGuestUsername(u);
 
     // 1. Сохраняем в таблицу progress
     await sb.from("progress").upsert({
@@ -148,11 +155,12 @@ async function sbSyncTask(taskId, xpGained, assisted) {
       solved_at: new Date().toISOString(),
     });
 
-    // 2. Обновляем общий XP в profiles
+    // 2. Обновляем общий XP в profiles (для гостя сохраняем префикс [Гость])
     const totalXp = xpOf(u);
+    const profileName = isGuest ? (u.startsWith("[Гость]") ? u : `[Гость] ${u}`) : u;
     await sb.from("profiles").upsert({
       id: userId,
-      username: u,
+      username: profileName,
       xp: totalXp,
       updated_at: new Date().toISOString(),
     });
@@ -161,7 +169,7 @@ async function sbSyncTask(taskId, xpGained, assisted) {
   }
 }
 
-// --- Живой лидерборд из облака ---
+// --- Живой лидерборд из облака (публичный: только зарегистрированные студенты) ---
 async function sbFetchLeaderboard(limit = 30) {
   const sb = getSupabase();
   if (!sb) return null;
@@ -171,10 +179,16 @@ async function sbFetchLeaderboard(limit = 30) {
       .from("profiles")
       .select("username, xp")
       .order("xp", { ascending: false })
-      .limit(limit);
+      .limit(limit * 3); // берём с запасом для отсева гостей
 
     if (error || !data || data.length === 0) return null;
-    return data.map(p => [p.username, p.xp]);
+
+    // В публичный рейтинг попадают ТОЛЬКО зарегистрированные студенты!
+    const studentsOnly = data
+      .filter(p => !isGuestUsername(p.username))
+      .slice(0, limit);
+
+    return studentsOnly.map(p => [p.username, p.xp]);
   } catch (e) {
     console.warn("Leaderboard fetch error:", e);
     return null;
@@ -233,8 +247,8 @@ async function sbFetchAdminStats() {
 
     if (error || !profiles) return null;
 
-    const registered = profiles.filter(p => !p.username.startsWith("[Гость]"));
-    const guests = profiles.filter(p => p.username.startsWith("[Гость]"));
+    const registered = profiles.filter(p => !isGuestUsername(p.username));
+    const guests = profiles.filter(p => isGuestUsername(p.username));
     const totalXp = profiles.reduce((acc, p) => acc + (p.xp || 0), 0);
 
     return {

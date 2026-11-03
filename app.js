@@ -285,7 +285,7 @@ function chrome(crumbHtml) {
   }
   const nArena = $("#navArena"), nSetup = $("#navSetup");
   if (nArena) nArena.textContent = lang === "kz" ? "Арена" : "Арена";
-  if (nSetup) nSetup.textContent = lang === "kz" ? "Баптау" : "Setup";
+  if (nSetup) nSetup.textContent = lang === "kz" ? "Баптау" : "Настройка";
   if ($("#logout")) $("#logout").textContent = lang === "kz" ? "шығу" : "выйти";
 
   if (u) {
@@ -422,6 +422,7 @@ function viewLogin() {
 
     const username = res.username || email.split("@")[0];
     store.set("user", username);
+    store.set("is_guest", false);
     store.set("sb_session", true);
     location.hash = "#/";
   };
@@ -454,6 +455,7 @@ function viewLogin() {
 
     if (res.data?.session) {
       store.set("user", username);
+      store.set("is_guest", false);
       store.set("sb_session", true);
       location.hash = "#/";
     } else {
@@ -470,6 +472,7 @@ function viewLogin() {
     const name = $("#gName").value.trim().replace(/[^\p{L}\p{N}_. -]/gu, "").replace(/\s+/g, " ");
     if (!name) return $("#gName").focus();
     store.set("user", name);
+    store.set("is_guest", true);
     store.set("sb_session", false);
     if (window.sbLogGuest) {
       window.sbLogGuest(name);
@@ -518,7 +521,14 @@ function viewDashboard(u) {
           <p class="sub">${TOPICS.length} ${isKZ ? "тақырып" : "тем"} · ${tasks.length} ${isKZ ? "тапсырма" : "задач"} · ${isKZ ? "орындалғаны" : "выполнено"} ${nDone} (${pct}%)</p>
         </div>
         <div class="unlock-bar">
-          ${unlocked ? `<span style="font-size:12px;color:var(--dim);background:#1a1922;padding:4px 10px;border-radius:4px;border:1px solid var(--line)">🔓 ${isKZ ? "Барлық тақырыптар ашық" : "Все темы открыты"}</span><button class="btn ghost small" id="relockBtn" style="margin-left:6px">${isKZ ? "Құлыптарды қосу" : "Включить замки обратно"}</button>` : ""}
+          ${unlocked
+            ? `<span>${isKZ ? "🔓 Барлық тақырыптар ашық" : "🔓 Все темы открыты"}</span><button class="btn ghost small" id="relockBtn">${isKZ ? "Құлыптарды қосу" : "Включить замки обратно"}</button>`
+            : `<button class="btn ghost small" id="unlockBtn">${isKZ ? "Барлық тақырыптарды ашу" : "Разблокировать все темы"}</button>
+               <form id="promoForm" style="display:none" class="promo-inline">
+                 <input id="promoInput" placeholder="${isKZ ? "Промокодты енгізіңіз" : "Введите промокод"}" autocomplete="off">
+                 <button class="btn small" type="submit">ОК</button>
+                 <button class="btn ghost small" type="button" id="cancelPromo">✕</button>
+               </form>`}
         </div>
       </div>
       <div class="progress"><i style="width:${pct}%"></i></div>
@@ -603,9 +613,7 @@ function viewDashboard(u) {
       </div>
     </div>`;
 
-  const ub = $("#unlockBtn");
-  const pf = $("#promoForm");
-  const cancelP = $("#cancelPromo");
+  const ub = $("#unlockBtn"), pf = $("#promoForm"), cancelP = $("#cancelPromo");
   if (ub && pf) {
     ub.onclick = () => {
       ub.style.display = "none";
@@ -627,7 +635,7 @@ function viewDashboard(u) {
         store.set("promoUnlocked", true);
         viewDashboard(u);
       } else {
-        alert("Неверный промокод.");
+        alert(isKZ ? "Қате промокод." : "Неверный промокод.");
       }
     };
   }
@@ -640,17 +648,34 @@ function viewDashboard(u) {
     };
   }
 
-  // Живая синхронизация лидерборда из Supabase
+  // Живая синхронизация лидерборда из Supabase (только зарегистрированные студенты в общем рейтинге)
   if (isSupabaseReady()) {
     sbFetchLeaderboard().then(liveBoard => {
       if (liveBoard && liveBoard.length > 0) {
-        const hasMe = liveBoard.some(([n]) => n === u);
-        const fullBoard = hasMe ? liveBoard : [...liveBoard, [u, xpOf(u)]].sort((a, b) => b[1] - a[1]);
+        const isGuest = store.get("is_guest", false);
+        const myXp = xpOf(u);
+
+        // В liveBoard попадают ТОЛЬКО зарегистрированные студенты (гости отфильтрованы в sbFetchLeaderboard)
+        let fullBoard = [...liveBoard];
+        const existingIdx = fullBoard.findIndex(([n]) => n === u);
+
+        if (existingIdx !== -1) {
+          // Если текущий зарегистрированный студент заработал больше XP локально, обновляем его счёт
+          if (myXp > fullBoard[existingIdx][1]) fullBoard[existingIdx][1] = myXp;
+        } else if (isGuest) {
+          // ТОЛЬКО для самого гостя локально отображаем его результат с пометкой (Вы) / (Сіз)!
+          // В общем рейтинге для других пользователей этого гостя НЕТ!
+          fullBoard.push([`${u} (${isKZ ? "Сіз" : "Вы"})`, myXp]);
+        }
+
+        fullBoard.sort((a, b) => b[1] - a[1]);
+
         const lbEl = $(".lb");
         if (lbEl) {
-          lbEl.innerHTML = fullBoard.map(([n, x], i) =>
-            `<li class="${n === u ? "me" : ""}"><span>${i + 1}. ${esc(n)}</span><span>${x} XP</span></li>`
-          ).join("");
+          lbEl.innerHTML = fullBoard.map(([n, x], i) => {
+            const isMe = n === u || n.startsWith(u + " (");
+            return `<li class="${isMe ? "me" : ""}"><span>${i + 1}. ${esc(n)}</span><span>${x} XP</span></li>`;
+          }).join("");
           const noteEl = $(".lb + .note");
           if (noteEl) noteEl.textContent = isKZ ? "☁️ Ағымның онлайн рейтингі (Supabase)." : "☁️ Живой облачный рейтинг потока (Supabase).";
         }
